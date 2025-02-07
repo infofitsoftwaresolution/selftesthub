@@ -1,0 +1,28 @@
+from pydantic_settings import BaseSettings
+from typing import List, Optional
+
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "Quiz App"
+    API_V1_STR: str = "/api/v1"
+    SECRET_KEY: str = "your-secret-key-here"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:3000",  # React frontend
+        "http://localhost:8000",  # FastAPI backend
+    ]
+    
+    # Database settings
+    POSTGRES_SERVER: str = "infofitscore.c7yic444gxi0.ap-south-1.rds.amazonaws.com"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "infofitsoftware"
+    POSTGRES_DB: str = "postgres"
+
+    @property
+    def DATABASE_URL(self) -> str:
+        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+
+    class Config:
+        case_sensitive = True
+
+settings = Settings() 

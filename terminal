@@ -1,0 +1,30 @@
+project-root/
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   └── Quiz/
+│   │   │   │   ├── QuizInterface.tsx
+│   │   │   │   ├── Timer.tsx
+│   │   │   │   └── QuestionNavigation.tsx
+│   │   │   ├── types/
+│   │   │   │   └── quiz.ts
+│   │   │   ├── App.tsx
+│   │   │   ├── main.tsx
+│   │   │   ├── index.css
+│   │   │   └── vite-env.d.ts
+│   │   ├── pages/
+│   │   ├── store/
+│   │   ├── services/
+│   │   └── types/
+│   └── backend/
+│       ├── app/
+│       │   ├── api/
+│       │   ├── core/
+│       │   ├── models/
+│       │   └── schemas/
+│       └── tests/
+├── package.json
+├── tsconfig.json
+├── tsconfig.node.json
+├── tailwind.config.js
+└── postcss.config.js 
