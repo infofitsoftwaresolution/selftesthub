@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import TimerDebug from './TimerDebug';
+// import TimerDebug from './TimerDebug';
 import { Quiz, Question } from '../../types/quiz';
 import { API_BASE_URL } from '../../config/api';
 
