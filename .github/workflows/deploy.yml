@@ -42,13 +42,30 @@ jobs:
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # Configure git credentials
+          # Create the directory if it doesn't exist
+          mkdir -p /home/ubuntu/infofitscore
+          
+          # Configure git
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
+          # Set up credentials
           git config --global credential.helper store
           echo "https://${{ secrets.GH_PAT }}@github.com" > ~/.git-credentials
+          chmod 600 ~/.git-credentials
           
-          # Clone repository if it doesn't exist
-          if [ ! -d "/home/ubuntu/infofitscore" ]; then
-            git clone https://github.com/infofitsoftware/infofitscore.git /home/ubuntu/infofitscore
+          # Initialize and update repository
+          cd /home/ubuntu/infofitscore
+          
+          if [ ! -d ".git" ]; then
+            # If not a git repo, initialize and set remote
+            git init
+            git remote add origin https://github.com/infofitsoftware/infofitscore.git
+            git fetch
+            git checkout main
+          else
+            # If already a git repo, just pull changes
+            git pull origin main
           fi
           
           # Export environment variables
@@ -56,8 +73,6 @@ jobs:
           export EC2_PUBLIC_IP="${{ secrets.EC2_PUBLIC_IP }}"
           
           # Run deployment script
-          cd /home/ubuntu/infofitscore/infofitscore
-          git pull
           bash deploy.sh
 
     - name: Remove GitHub Actions IP from security group
