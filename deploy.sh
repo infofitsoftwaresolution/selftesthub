@@ -33,5 +33,5 @@ echo "Deployment completed successfully!"
 
 # Print the URLs
 echo "Application URLs:"
-echo "Frontend: https://your-domain.com"
-echo "Backend API: https://your-domain.com/api" 
+echo "Frontend: http://${EC2_PUBLIC_IP}:3000"
+echo "Backend API: http://${EC2_PUBLIC_IP}:8000/api/v1" 

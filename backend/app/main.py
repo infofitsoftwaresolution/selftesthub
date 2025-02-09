@@ -11,22 +11,22 @@ app = FastAPI(
 )
 
 # Configure CORS
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=settings.ALLOWED_ORIGINS,
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
-
-# Ensure CORS is correctly configured
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Explicitly allow localhost:3000
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+# Ensure CORS is correctly configured
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["http://localhost:3000"],  # Explicitly allow localhost:3000
+#     allow_credentials=True,
+#     allow_methods=["*"],  # Allow all HTTP methods
+#     allow_headers=["*"],  # Allow all headers
+# )
 
 # Import and include routers
 from app.api.v1.api import api_router
