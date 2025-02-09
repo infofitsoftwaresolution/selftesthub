@@ -9,7 +9,9 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://backend:8000',
+        target: process.env.NODE_ENV === 'production' 
+          ? 'http://localhost:8000'  // Production
+          : 'http://localhost:8000',  // Development
         changeOrigin: true,
       }
     }
@@ -17,7 +19,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      'react-router-dom': path.resolve(__dirname, './node_modules/react-router-dom')
     }
+  },
+  define: {
+    'process.env.API_URL': JSON.stringify(process.env.API_URL),
   }
 }) 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../../config/api';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -15,7 +16,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -32,8 +33,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       } else {
         setError(data.detail || 'Login failed');
       }
-    } catch (err) {
-      setError('Something went wrong. Please try again.');
+    } catch (error) {
+      setError('Failed to connect to server');
+      console.error('Login error:', error);
     }
   };
 

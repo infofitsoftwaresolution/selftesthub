@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List, Optional
+import os
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Quiz App"
@@ -8,10 +9,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:3000",  # Local development
-        "http://localhost:8000",  # Local backend
-        "http://${EC2_PUBLIC_IP}:3000",  # EC2 frontend
-        "http://${EC2_PUBLIC_IP}:8000",  # EC2 backend
+        "http://localhost:3000",
+        f"http://{os.getenv('EC2_PUBLIC_IP', 'localhost')}:3000",
+        f"http://{os.getenv('EC2_PUBLIC_IP', 'localhost')}:8000",
     ]
     
     # Database settings
