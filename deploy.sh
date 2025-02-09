@@ -29,6 +29,10 @@ EOL
 echo "Setting permissions for entrypoint.sh..."
 chmod +x backend/entrypoint.sh
 
+# Add before rebuilding containers
+echo "Cleaning up Docker resources..."
+sudo docker system prune -a -f
+
 # Rebuild and restart containers
 echo "Rebuilding and restarting containers..."
 sudo docker-compose down
