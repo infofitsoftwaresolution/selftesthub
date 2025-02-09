@@ -6,7 +6,7 @@ set -e
 echo "Starting deployment process..."
 
 # Pull the latest changes
-cd /home/ubuntu/mcq-exam-system
+cd /home/ubuntu/infofitscore
 git pull
 
 # Update environment variables
