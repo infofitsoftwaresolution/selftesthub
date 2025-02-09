@@ -1,33 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config/api';
 import CreateQuizModal from '../../components/Admin/CreateQuizModal';
-
-interface Quiz {
-  id: number;
-  title: string;
-  type: 'mcq' | 'test';
-  questions: any[];
-  duration: number;
-  is_active: boolean;
-}
+import EditQuizModal from '../../components/Admin/EditQuizModal';
+import { Quiz } from '../../types/quiz';
 
 const ManageQuizzes: React.FC = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  // Fetch quizzes on component mount
-  useEffect(() => {
-    fetchQuizzes();
-  }, []);
+  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
 
   const fetchQuizzes = async () => {
     try {
-      setLoading(true);
-      const response = await fetch('http://localhost:8000/api/v1/quizzes/', {
+      const response = await fetch(`${API_BASE_URL}/quizzes/`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         }
       });
       if (response.ok) {
@@ -37,42 +26,26 @@ const ManageQuizzes: React.FC = () => {
         const data = await response.json();
         setError(data.detail || 'Failed to fetch quizzes');
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Error fetching quizzes:', error);
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateQuiz = async (quizData: any) => {
-    try {
-      setLoading(true);
-      const response = await fetch('http://localhost:8000/api/v1/quizzes/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(quizData)
-      });
+  useEffect(() => {
+    fetchQuizzes();
+  }, []);
 
-      if (response.ok) {
-        setShowCreateModal(false);
-        await fetchQuizzes(); // Refresh quiz list
-      } else {
-        const data = await response.json();
-        setError(data.detail || 'Failed to create quiz');
-      }
-    } catch (err) {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const handleQuizCreated = () => {
+    setIsCreateModalOpen(false);
+    fetchQuizzes(); // Refresh the quiz list
   };
 
   const handleToggleActive = async (quizId: number, currentStatus: boolean) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/quizzes/${quizId}`, {
+      const response = await fetch(`${API_BASE_URL}/quizzes/${quizId}/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +66,7 @@ const ManageQuizzes: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this quiz?')) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/quizzes/${quizId}`, {
+      const response = await fetch(`${API_BASE_URL}/quizzes/${quizId}/`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -108,21 +81,44 @@ const ManageQuizzes: React.FC = () => {
     }
   };
 
+  const handleEditQuiz = (quiz: Quiz) => {
+    setEditingQuiz(quiz);
+  };
+
   if (loading) return <div className="p-4">Loading...</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
 
   return (
-    <div className="p-6">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Manage Quizzes</h1>
         <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          <FaPlus className="mr-2" />
           Create Quiz
         </button>
       </div>
+
+      {isCreateModalOpen && (
+        <CreateQuizModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onQuizCreated={handleQuizCreated}
+        />
+      )}
+
+      {editingQuiz && (
+        <EditQuizModal
+          quiz={editingQuiz}
+          isOpen={!!editingQuiz}
+          onClose={() => setEditingQuiz(null)}
+          onUpdate={() => {
+            setEditingQuiz(null);
+            fetchQuizzes();
+          }}
+        />
+      )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
@@ -158,7 +154,7 @@ const ManageQuizzes: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-right">
                   <button 
                     className="text-blue-600 hover:text-blue-800 mr-3"
-                    onClick={() => {/* TODO: Implement edit */}}
+                    onClick={() => handleEditQuiz(quiz)}
                   >
                     <FaEdit />
                   </button>
@@ -174,12 +170,6 @@ const ManageQuizzes: React.FC = () => {
           </tbody>
         </table>
       </div>
-
-      <CreateQuizModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateQuiz}
-      />
     </div>
   );
 };

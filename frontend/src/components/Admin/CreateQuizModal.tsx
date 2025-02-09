@@ -11,10 +11,10 @@ interface Question {
 interface CreateQuizModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (quizData: any) => void;
+  onQuizCreated: () => void;
 }
 
-const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onSubmit }) => {
+const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQuizCreated }) => {
   const [quizData, setQuizData] = useState({
     title: '',
     type: 'mcq',
@@ -86,8 +86,8 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onSu
         throw new Error(data.detail || 'Failed to create quiz');
       }
 
-      const createdQuiz = await response.json();
-      onSubmit(createdQuiz);
+      await response.json(); // Just consume the response
+      onQuizCreated();
       onClose();
       
       // Reset form

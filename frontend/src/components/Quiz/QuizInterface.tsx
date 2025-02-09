@@ -1,23 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import TimerDebug from './TimerDebug';
-
-interface Question {
-  id: number;
-  text: string;
-  options: string[];
-}
-
-interface Quiz {
-  id: number;
-  title: string;
-  duration: number;
-  questions: Question[];
-  type: string;
-  is_active: boolean;
-  created_at: string;
-  created_by: number;
-}
+import { Quiz, Question } from '../../types/quiz';
+import { API_BASE_URL } from '../../config/api';
 
 const QuizInterface: React.FC = () => {
   const { quizId } = useParams();
@@ -28,16 +13,19 @@ const QuizInterface: React.FC = () => {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Add submit handler
   const handleSubmit = useCallback(async () => {
     if (!window.confirm('Are you sure you want to submit the quiz?')) {
       return;
     }
+    
+    setIsSubmitting(true); // Set submitting state when starting submission
+    
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/quiz-attempts/${attemptId}/submit`, {
+      const response = await fetch(`${API_BASE_URL}/quiz-attempts/${attemptId}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,9 +40,14 @@ const QuizInterface: React.FC = () => {
       if (response.ok) {
         const result = await response.json();
         navigate('/quiz-result', { state: { result } });
+      } else {
+        throw new Error('Failed to submit quiz');
       }
     } catch (err) {
       console.error('Failed to submit quiz:', err);
+      alert('Failed to submit quiz. Please try again.');
+    } finally {
+      setIsSubmitting(false); // Reset submitting state regardless of outcome
     }
   }, [attemptId, answers, navigate]);
 
@@ -62,20 +55,29 @@ const QuizInterface: React.FC = () => {
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/v1/quizzes/${quizId}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/quizzes/${quizId}`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+            'Authorization': `Bearer ${token}`,
+          },
         });
         if (response.ok) {
           const data = await response.json();
-          console.log('Quiz loaded:', data);
-          setQuiz(data);
+          // Ensure quiz_id is set for each question
+          const quizWithIds = {
+            ...data,
+            questions: data.questions.map((q: Question) => ({
+              ...q,
+              quiz_id: parseInt(quizId as string)
+            }))
+          };
+          setQuiz(quizWithIds);
+          setTimeLeft(data.duration * 60); // Convert minutes to seconds
+        } else {
+          throw new Error('Failed to fetch quiz');
         }
-      } catch (err) {
-        console.error('Error fetching quiz:', err);
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching quiz:', error);
       }
     };
 
@@ -93,10 +95,10 @@ const QuizInterface: React.FC = () => {
       const endTime = new Date(startTime.getTime() + durationInMs);
       
       const initialRemaining = Math.max(0, Math.floor((endTime.getTime() - new Date().getTime()) / 1000));
-      setTimeRemaining(initialRemaining);
+      setTimeLeft(initialRemaining);
 
       const interval = setInterval(() => {
-        setTimeRemaining(prev => {
+        setTimeLeft(prev => {
           if (prev === null || prev <= 0) {
             clearInterval(interval);
             return 0;
@@ -109,116 +111,129 @@ const QuizInterface: React.FC = () => {
     }
   }, [quiz]);
 
-  // Handle answer selection
-  const handleAnswer = (questionIndex: number, optionIndex: number) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionIndex]: optionIndex
-    }));
-  };
+  // Add answer handler with auto-navigation
+  const handleAnswer = useCallback((questionIndex: number, optionIndex: number) => {
+    setAnswers(prev => ({ ...prev, [questionIndex]: optionIndex }));
+    
+    setTimeout(() => {
+      if (questionIndex < (quiz?.questions.length || 0) - 1) {
+        setCurrentQuestion(questionIndex + 1);
+      }
+    }, 500);
+  }, [quiz?.questions.length]);
 
-  // Format time display
-  const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  if (loading || !quiz) return <div>Loading...</div>;
+  if (isSubmitting || !quiz) return <div>Loading...</div>;
 
   return (
-    <div className="fixed inset-0 bg-gray-100">
-      {/* Header */}
-      <div className="h-16 bg-white shadow-md flex items-center justify-between px-6">
-        <h1 className="text-xl font-bold">{quiz.title}</h1>
-        <div className="flex items-center space-x-4">
-          <div className="text-lg font-semibold">
-            Time Left: {formatTime(timeRemaining || 0)}
-          </div>
-          {/* Add Submit Button */}
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-          >
-            Submit Quiz
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex h-[calc(100vh-4rem)]">
-        {/* Questions Area */}
-        <div className="flex-1 p-6 overflow-auto">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl mb-4">
-              Question {currentQuestion + 1} of {quiz.questions.length}
-            </h2>
-            <p className="text-lg mb-6">{quiz.questions[currentQuestion].text}</p>
-            <div className="space-y-4">
-              {quiz.questions[currentQuestion].options.map((option, index) => (
-                <div
-                  key={index}
-                  onClick={() => handleAnswer(currentQuestion, index)}
-                  className={`p-4 rounded-lg cursor-pointer transition-colors ${
-                    answers[currentQuestion] === index
-                      ? 'bg-blue-600 text-white'
-                      : 'border border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  {option}
-                </div>
-              ))}
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        {/* Quiz Header */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">{quiz?.title}</h1>
+          <div className="flex justify-between items-center">
+            <div className="text-gray-600">
+              Question {currentQuestion + 1} of {quiz?.questions.length}
+            </div>
+            <div className="text-gray-600 font-semibold">
+              Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
             </div>
           </div>
         </div>
 
-        {/* Question Navigation */}
-        <div className="w-80 bg-white shadow-lg p-6 overflow-auto">
-          <h3 className="text-lg font-semibold mb-4">Questions Overview</h3>
-          <div className="grid grid-cols-5 gap-2">
-            {quiz.questions.map((_, index) => (
+        {/* Question Card */}
+        {quiz && (
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 className="text-xl text-gray-800 mb-6">
+              {quiz.questions[currentQuestion].text}
+            </h2>
+            
+            <div className="space-y-4">
+              {quiz.questions[currentQuestion].options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnswer(currentQuestion, index)}
+                  className={`w-full p-4 text-left rounded-lg transition-all duration-200 ${
+                    answers[currentQuestion] === index 
+                      ? 'bg-blue-100 border-blue-500 text-blue-700' 
+                      : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                  } border-2`}
+                >
+                  <div className="flex items-center">
+                    <div className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 ${
+                      answers[currentQuestion] === index 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-200'
+                    }`}>
+                      {String.fromCharCode(65 + index)}
+                    </div>
+                    {option}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Navigation and Submit */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}
+            disabled={currentQuestion === 0}
+            className={`px-6 py-2 rounded-lg ${
+              currentQuestion === 0 
+                ? 'bg-gray-300 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+          >
+            Previous
+          </button>
+
+          {currentQuestion === (quiz?.questions.length || 0) - 1 ? (
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:bg-gray-400"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
+            </button>
+          ) : (
+            <button
+              onClick={() => setCurrentQuestion(prev => prev + 1)}
+              disabled={currentQuestion === (quiz?.questions.length || 0) - 1}
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+            >
+              Next
+            </button>
+          )}
+        </div>
+
+        {/* Question Navigation Pills */}
+        <div className="mt-6">
+          <div className="flex flex-wrap gap-2">
+            {quiz?.questions.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentQuestion(index)}
-                className={`
-                  h-10 w-10 rounded-lg flex items-center justify-center font-medium
-                  ${
-                    currentQuestion === index
-                      ? 'bg-blue-600 text-white'
-                      : answers[index] !== undefined
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100'
-                  }
-                `}
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  currentQuestion === index
+                    ? 'bg-blue-600 text-white'
+                    : answers[index] !== undefined
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-200 text-gray-600'
+                }`}
               >
                 {index + 1}
               </button>
             ))}
           </div>
-          
-          <div className="mt-6 space-y-2">
-            <div className="flex items-center">
-              <div className="w-4 h-4 bg-green-100 rounded mr-2"></div>
-              <span>Answered</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 bg-gray-100 rounded mr-2"></div>
-              <span>Not Attempted</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 bg-blue-600 rounded mr-2"></div>
-              <span>Current Question</span>
-            </div>
-          </div>
         </div>
-      </div>
 
-      {/* Add TimerDebug component */}
-      <TimerDebug 
-        quiz={quiz}
-        startTime={location.state?.startedAt ? new Date(location.state.startedAt) : null}
-        timeRemaining={timeRemaining}
-      />
+        {/* <TimerDebug 
+          quiz={quiz}
+          startTime={location.state?.startedAt ? new Date(location.state.startedAt) : null}
+          timeRemaining={timeLeft}
+        /> */}
+      </div>
     </div>
   );
 };

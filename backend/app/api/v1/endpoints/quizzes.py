@@ -3,10 +3,15 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.api import deps
 from app.crud import quiz as quiz_crud
-from app.schemas.quiz import Quiz as QuizSchema
-from app.schemas.quiz import QuizCreate, QuizUpdate
+from app.schemas.quiz import (
+    Quiz as QuizSchema,
+    QuizCreate,
+    QuizUpdate,
+    QuizResponse
+)
 from app.models.quiz import Quiz as QuizModel
 from app.models.user import User
+from app.models.quiz_attempt import QuizAttempt
 import logging
 
 router = APIRouter()
@@ -84,7 +89,13 @@ def create_quiz(
     current_user: User = Depends(deps.get_current_user)
 ) -> QuizSchema:
     """Create new quiz"""
-    return quiz_crud.create_quiz(db, quiz_in, current_user.id)
+    try:
+        return quiz_crud.create_quiz(db=db, quiz=quiz_in, user_id=current_user.id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 @router.get("/", response_model=List[QuizSchema])
 def read_quizzes(
@@ -123,32 +134,91 @@ def read_quiz(
         logger.error(f"Error fetching quiz: {str(e)}")
         raise
 
-@router.patch("/{quiz_id}", response_model=QuizSchema)
-def update_quiz(
+@router.patch("/{quiz_id}", response_model=QuizResponse)
+async def update_quiz(
     quiz_id: int,
-    quiz_in: QuizUpdate,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
-) -> QuizSchema:
-    """Update quiz"""
-    quiz = quiz_crud.get_quiz(db, quiz_id)
+    quiz_update: QuizUpdate,
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db)
+):
+    """
+    Update a quiz.
+    Only the quiz creator or an admin can update the quiz.
+    """
+    # Get the quiz
+    quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
     if not quiz:
-        raise HTTPException(status_code=404, detail="Quiz not found")
-    if quiz.created_by != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    return quiz_crud.update_quiz(db, quiz, quiz_in)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Quiz not found"
+        )
+    
+    # Check if user has permission to update
+    if quiz.created_by != current_user.id and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions to update this quiz"
+        )
+    
+    try:
+        # Update quiz fields
+        for field, value in quiz_update.dict(exclude_unset=True).items():
+            if hasattr(quiz, field):
+                setattr(quiz, field, value)
+        
+        db.commit()
+        db.refresh(quiz)
+        
+        return quiz
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating quiz: {str(e)}"
+        )
 
-@router.delete("/{quiz_id}")
-def delete_quiz(
+@router.delete("/{quiz_id}", response_model=dict)
+async def delete_quiz(
     quiz_id: int,
-    db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_user)
-) -> dict:
-    """Delete quiz"""
-    quiz = quiz_crud.get_quiz(db, quiz_id)
+    current_user: User = Depends(deps.get_current_user),
+    db: Session = Depends(deps.get_db)
+):
+    """
+    Delete a quiz.
+    Only the quiz creator or an admin can delete the quiz.
+    """
+    # Get the quiz
+    quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
     if not quiz:
-        raise HTTPException(status_code=404, detail="Quiz not found")
-    if quiz.created_by != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    quiz_crud.delete_quiz(db, quiz)
-    return {"message": "Quiz deleted successfully"} 
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Quiz not found"
+        )
+    
+    # Check if user has permission to delete
+    if quiz.created_by != current_user.id and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions to delete this quiz"
+        )
+    
+    try:
+        # First delete all quiz attempts associated with this quiz
+        db.query(QuizAttempt).filter(QuizAttempt.quiz_id == quiz_id).delete()
+        
+        # Then delete the quiz
+        db.delete(quiz)
+        db.commit()
+        
+        return {
+            "message": "Quiz deleted successfully",
+            "quiz_id": quiz_id
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting quiz: {str(e)}"
+        ) 

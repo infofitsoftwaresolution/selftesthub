@@ -40,6 +40,11 @@ export EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
 echo "Rebuilding and restarting containers..."
 sudo -E docker-compose down
 sudo -E docker-compose build --no-cache
+
+# Run database migrations
+echo "Running database migrations..."
+sudo -E docker-compose run --rm backend alembic upgrade head
+
 sudo -E docker-compose up -d
 
 echo "Deployment completed successfully!"

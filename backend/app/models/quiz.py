@@ -27,7 +27,4 @@ class Quiz(Base):
                 q.dict() if hasattr(q, 'dict') else q 
                 for q in kwargs['questions']
             ]
-        super().__init__(**kwargs)
-
-    # Remove this if QuizAttempt is not implemented yet
-    # attempts = relationship("QuizAttempt", back_populates="quiz") 
+        super().__init__(**kwargs) 

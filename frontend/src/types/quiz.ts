@@ -13,6 +13,7 @@ export interface QuizQuestion {
 
 export interface Question {
     id: number;
+    quiz_id: number;
     text: string;
     options: string[];
 }
@@ -21,11 +22,18 @@ export interface Quiz {
     id: number;
     title: string;
     duration: number;
-    questions: Question[];
     type: string;
+    questions: Question[];
     is_active: boolean;
-    created_at: string;
     created_by: number;
+    created_at: string;
+}
+
+export interface QuizUpdate {
+    title?: string;
+    duration?: number;
+    type?: string;
+    is_active?: boolean;
 }
 
 export function isQuiz(obj: any): obj is Quiz {
@@ -38,7 +46,7 @@ export function isQuiz(obj: any): obj is Quiz {
         typeof obj.duration === 'number' &&
         Array.isArray(obj.questions) &&
         typeof obj.is_active === 'boolean' &&
-        typeof obj.created_at === 'string' &&
-        typeof obj.created_by === 'number'
+        typeof obj.created_by === 'number' &&
+        typeof obj.created_at === 'string'
     );
 } 

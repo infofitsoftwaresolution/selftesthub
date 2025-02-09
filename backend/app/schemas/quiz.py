@@ -1,40 +1,50 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
 class QuestionBase(BaseModel):
-    text: str = Field(..., description="Question text")
-    options: List[str] = Field(..., description="List of options")
-    correctAnswer: int = Field(..., description="Index of correct answer")
+    text: str
+    options: List[str]
+    correctAnswer: int  # Keep camelCase for API consistency
+
+class QuestionCreate(QuestionBase):
+    pass
+
+class Question(QuestionBase):
+    id: int
+    quiz_id: int
+
+    class Config:
+        from_attributes = True
 
 class QuizBase(BaseModel):
     title: str
-    type: str  # 'mcq' or 'test'
-    duration: int  # in minutes
-    questions: List[QuestionBase]  # Changed back to QuestionBase for validation
+    duration: int
+    type: str
     is_active: bool = True
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_encoders={datetime: str}
-    )
-
 class QuizCreate(QuizBase):
-    pass
+    questions: List[QuestionCreate]
+
+class QuizUpdate(BaseModel):
+    title: Optional[str] = None
+    duration: Optional[int] = None
+    type: Optional[str] = None
+    is_active: Optional[bool] = None
 
 class Quiz(QuizBase):
     id: int
     created_by: int
     created_at: datetime
+    questions: List[dict]  # Keep as dict for JSON compatibility
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_encoders={datetime: str}
-    )
+    class Config:
+        from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
-class QuizUpdate(BaseModel):
-    title: Optional[str] = None
-    type: Optional[str] = None
-    duration: Optional[int] = None
-    questions: Optional[List[QuestionBase]] = None
-    is_active: Optional[bool] = None 
+# Add this new class for response
+class QuizResponse(Quiz):
+    """Response model for quiz operations"""
+    pass 
