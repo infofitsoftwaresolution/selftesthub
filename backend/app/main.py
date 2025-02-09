@@ -13,7 +13,10 @@ app = FastAPI(
 # Configure CORS - Move this before any routes
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Temporarily allow all origins for testing
+    allow_origins=[
+        "http://localhost:3000",
+        f"http://{os.getenv('EC2_PUBLIC_IP', 'localhost')}:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

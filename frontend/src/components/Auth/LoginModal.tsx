@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { API_BASE_URL } from '../../config/api';
+import { API_BASE_URL, fetchOptions } from '../../config/api';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -17,11 +17,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     e.preventDefault();
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        ...fetchOptions,
         method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(formData),
       });
 

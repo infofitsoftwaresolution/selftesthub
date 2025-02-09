@@ -15,8 +15,7 @@ class Settings(BaseSettings):
         "http://localhost:8000",
         f"http://{os.getenv('EC2_PUBLIC_IP', 'localhost')}:3000",
         f"http://{os.getenv('EC2_PUBLIC_IP', 'localhost')}:8000",
-        "*"  # Temporarily allow all origins for testing
-    ]
+    ]  # Remove the wildcard "*"
     
     # Database settings
     POSTGRES_SERVER: str = "infofitscore.c7yic444gxi0.ap-south-1.rds.amazonaws.com"

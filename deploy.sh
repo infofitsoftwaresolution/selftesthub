@@ -17,7 +17,7 @@ SECRET_KEY=${SECRET_KEY}
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
-ALLOWED_ORIGINS=["http://localhost:3000","http://${EC2_PUBLIC_IP}:3000","http://${EC2_PUBLIC_IP}:8000","*"]
+ALLOWED_ORIGINS=["http://localhost:3000","http://${EC2_PUBLIC_IP}:3000"]
 EOL
 
 # Set frontend environment
