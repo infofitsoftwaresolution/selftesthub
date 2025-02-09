@@ -16,13 +16,14 @@ DATABASE_URL=postgresql://postgres:infofitsoftware@infofitscore.c7yic444gxi0.ap-
 SECRET_KEY=${SECRET_KEY}
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-ALLOWED_ORIGINS=["http://localhost:3000","http://${EC2_PUBLIC_IP}:3000","http://${EC2_PUBLIC_IP}:8000"]
+EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+ALLOWED_ORIGINS=["http://localhost:3000","http://${EC2_PUBLIC_IP}:3000","http://${EC2_PUBLIC_IP}:8000","*"]
 EOL
 
 # Set frontend environment
 cat > frontend/.env << EOL
 NODE_ENV=production
-API_URL=http://${EC2_PUBLIC_IP}:8000
+VITE_API_URL=http://${EC2_PUBLIC_IP}:8000
 EOL
 
 # Set permissions for entrypoint.sh

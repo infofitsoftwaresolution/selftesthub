@@ -8,10 +8,14 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "bc678a9427f54284ff421052bea33678067e2476acfc87c144e33d6ba4fba5ee"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    
+    # Update ALLOWED_ORIGINS to include all necessary URLs
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
+        "http://localhost:8000",
         f"http://{os.getenv('EC2_PUBLIC_IP', 'localhost')}:3000",
         f"http://{os.getenv('EC2_PUBLIC_IP', 'localhost')}:8000",
+        "*"  # Temporarily allow all origins for testing
     ]
     
     # Database settings
