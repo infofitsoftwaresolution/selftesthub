@@ -12,7 +12,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
       with:
-        token: ${{ secrets.GH_PAT }}  # Personal Access Token for private repo access
+        token: ${{ secrets.GH_PAT }}
         repository: infofitsoftware/infofitscore
         ref: main
 
@@ -40,15 +40,15 @@ jobs:
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY }}  # This will use your .pem file content
+        key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # Configure git for private repo access
+          # Configure git credentials
           git config --global credential.helper store
           echo "https://${{ secrets.GH_PAT }}@github.com" > ~/.git-credentials
           
           # Clone repository if it doesn't exist
-          if [ ! -d "/home/ubuntu/mcq-exam-system" ]; then
-            git clone https://github.com/infofitsoftware/infofitscore.git /home/ubuntu/mcq-exam-system
+          if [ ! -d "/home/ubuntu/infofitscore" ]; then
+            git clone https://github.com/infofitsoftware/infofitscore.git /home/ubuntu/infofitscore
           fi
           
           # Export environment variables
@@ -56,7 +56,7 @@ jobs:
           export EC2_PUBLIC_IP="${{ secrets.EC2_PUBLIC_IP }}"
           
           # Run deployment script
-          cd /home/ubuntu/mcq-exam-system
+          cd /home/ubuntu/infofitscore
           git pull
           bash deploy.sh
 
