@@ -15,6 +15,7 @@ origins = [
     "http://localhost:3000",
     f"http://{os.getenv('EC2_PUBLIC_IP')}:3000",
     f"http://{os.getenv('EC2_PUBLIC_IP')}:8000",
+    "http://13.233.157.162:3000",
 ]
 
 app.add_middleware(

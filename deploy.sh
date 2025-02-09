@@ -33,11 +33,14 @@ chmod +x backend/entrypoint.sh
 echo "Cleaning up Docker resources..."
 sudo docker system prune -a -f
 
+# Export EC2_PUBLIC_IP for docker-compose
+export EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+
 # Rebuild and restart containers
 echo "Rebuilding and restarting containers..."
-sudo docker-compose down
-sudo docker-compose build --no-cache
-sudo docker-compose up -d
+sudo -E docker-compose down
+sudo -E docker-compose build --no-cache
+sudo -E docker-compose up -d
 
 echo "Deployment completed successfully!"
 
