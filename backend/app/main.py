@@ -14,7 +14,7 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",
     f"http://{os.getenv('EC2_PUBLIC_IP')}:3000",
-    # Add any other origins you need
+    f"http://{os.getenv('EC2_PUBLIC_IP')}:8000",
 ]
 
 app.add_middleware(
@@ -23,6 +23,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["Content-Type", "Authorization", "Accept"],
+    expose_headers=["*"]
 )
 
 # Ensure CORS is correctly configured
