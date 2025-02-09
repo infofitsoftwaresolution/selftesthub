@@ -12,10 +12,8 @@ class Settings(BaseSettings):
     # Update ALLOWED_ORIGINS to include all necessary URLs
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
-        "http://localhost:8000",
-        f"http://{os.getenv('EC2_PUBLIC_IP', 'localhost')}:3000",
-        f"http://{os.getenv('EC2_PUBLIC_IP', 'localhost')}:8000",
-    ]  # Remove the wildcard "*"
+        f"http://{os.getenv('EC2_PUBLIC_IP')}:3000"
+    ]
     
     # Database settings
     POSTGRES_SERVER: str = "infofitscore.c7yic444gxi0.ap-south-1.rds.amazonaws.com"
