@@ -12,17 +12,17 @@ export interface QuizQuestion {
 }
 
 export interface Question {
+    id: number;
     text: string;
     options: string[];
-    correctAnswer: number;
 }
 
 export interface Quiz {
     id: number;
     title: string;
-    type: string;
     duration: number;
     questions: Question[];
+    type: string;
     is_active: boolean;
     created_at: string;
     created_by: number;

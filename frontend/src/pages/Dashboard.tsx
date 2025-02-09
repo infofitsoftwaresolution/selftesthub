@@ -1,12 +1,10 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import QuickStats from '../components/Dashboard/QuickStats';
 import AvailableQuizzes from '../components/Dashboard/AvailableQuizzes';
 import PerformanceChart from '../components/Dashboard/PerformanceChart';
 import Leaderboard from '../components/Dashboard/Leaderboard';
 
 const Dashboard: React.FC = () => {
-  const navigate = useNavigate();
   const userName = "Student"; // TODO: Get from user context
 
   return (
