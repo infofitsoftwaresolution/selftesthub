@@ -9,7 +9,7 @@ COPY . .
 
 ENV PYTHONPATH=/app
 
-# Add migration command to entrypoint
+# Add migration command to entrypoint and set permissions
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 

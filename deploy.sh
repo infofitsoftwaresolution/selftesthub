@@ -19,6 +19,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 ALLOWED_ORIGINS=["http://localhost:3000","http://${EC2_PUBLIC_IP}:3000"]
 EOL
 
+# Set permissions for entrypoint.sh
+echo "Setting permissions for entrypoint.sh..."
+chmod +x backend/entrypoint.sh
+
 # Rebuild and restart containers
 echo "Rebuilding and restarting containers..."
 sudo docker-compose down
