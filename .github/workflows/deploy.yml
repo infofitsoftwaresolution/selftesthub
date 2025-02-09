@@ -42,31 +42,14 @@ jobs:
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # Create the directory if it doesn't exist
-          mkdir -p /home/ubuntu/infofitscore
+          # Remove existing directory if it exists
+          rm -rf /home/ubuntu/infofitscore
           
-          # Configure git
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
+          # Clone the repository directly
+          git clone https://${{ secrets.GH_PAT }}@github.com/infofitsoftware/infofitscore.git /home/ubuntu/infofitscore
           
-          # Set up credentials
-          git config --global credential.helper store
-          echo "https://${{ secrets.GH_PAT }}@github.com" > ~/.git-credentials
-          chmod 600 ~/.git-credentials
-          
-          # Initialize and update repository
+          # Change to repository directory
           cd /home/ubuntu/infofitscore
-          
-          if [ ! -d ".git" ]; then
-            # If not a git repo, initialize and set remote
-            git init
-            git remote add origin https://github.com/infofitsoftware/infofitscore.git
-            git fetch
-            git checkout main
-          else
-            # If already a git repo, just pull changes
-            git pull origin main
-          fi
           
           # Export environment variables
           export SECRET_KEY="${{ secrets.SECRET_KEY }}"
