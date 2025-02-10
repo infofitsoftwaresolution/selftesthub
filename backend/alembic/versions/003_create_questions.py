@@ -1,17 +1,16 @@
 """create questions table
 
-Revision ID: create_questions_table
-Revises: <previous_revision_id>
+Revision ID: 003
+Revises: 002
 Create Date: 2024-02-05
-
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSON
 
-# revision identifiers, used by Alembic.
-revision = 'create_questions_table'
-down_revision = '<previous_revision_id>'  # Set this to your last migration
+# revision identifiers
+revision = '003'
+down_revision = '002'
 branch_labels = None
 depends_on = None
 

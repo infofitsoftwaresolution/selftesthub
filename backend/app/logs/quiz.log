@@ -2034,3 +2034,7 @@ WHERE quizzes.id = %(id_1)s
 2025-02-09 19:20:32,331 - Request: OPTIONS http://localhost:8000/api/v1/quiz-attempts/51/submit
 2025-02-09 19:20:32,340 - Request: POST http://localhost:8000/api/v1/quiz-attempts/51/submit
 2025-02-09 19:20:35,584 - Request: GET http://localhost:8000/api/v1/quizzes/active
+2025-02-09 19:24:49,100 - Request: OPTIONS http://localhost:8000/api/v1/quizzes/active
+2025-02-09 19:24:49,142 - Request: GET http://localhost:8000/api/v1/quizzes/active
+2025-02-09 19:51:38,608 - Request: OPTIONS http://localhost:8000/api/v1/quizzes/active
+2025-02-09 19:51:38,618 - Request: GET http://localhost:8000/api/v1/quizzes/active
