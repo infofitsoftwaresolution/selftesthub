@@ -4,6 +4,9 @@ import Home from '../pages/Home';
 import Dashboard from '../pages/Dashboard';
 import UserProfile from '../components/Profile/UserProfile';
 import ProtectedRoute from '../components/Auth/ProtectedRoute';
+import DashboardLayout from '../components/Layout/DashboardLayout';
+import ManageQuizzes from '../pages/admin/ManageQuizzes';
+import StudentReports from '../components/Admin/StudentReports';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -11,21 +14,18 @@ const AppRoutes: React.FC = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route
-          path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <DashboardLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <UserProfile />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<UserProfile />} />
+          {/* Admin Routes */}
+          <Route path="/admin/quizzes" element={<ManageQuizzes />} />
+          <Route path="/admin/students" element={<StudentReports />} />
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

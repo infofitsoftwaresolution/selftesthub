@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import LoginModal from '../Auth/LoginModal';
 
 const Navbar: React.FC = () => {
+  const [showLogin, setShowLogin] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -20,7 +22,8 @@ const Navbar: React.FC = () => {
               <a href="#" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Features</a>
               <a href="#" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">About</a>
               <a href="#" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Contact</a>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+              <button onClick={() => setShowLogin(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
                 Login
               </button>
             </div>
@@ -56,6 +59,11 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Modals with higher z-index */}
+      <div className="z-50 relative">
+        <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
+        
+      </div>
     </nav>
   );
 };

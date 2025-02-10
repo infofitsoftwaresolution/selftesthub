@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { FaHome, FaBook, FaTrophy, FaUser, FaCog } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config/api';
 
 interface SidebarItemProps {
   to: string;
@@ -23,7 +24,30 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ to, icon, text, isActive }) =
 
 const DashboardLayout: React.FC = () => {
   const location = useLocation();
-  const isAdmin = true; // TODO: Get from user context
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/me`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
+          console.log('User Data:', userData);
+          setIsAdmin(userData.is_superuser);
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-100">
