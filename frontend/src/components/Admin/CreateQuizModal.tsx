@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config/api';
 
 interface Question {
   id: number;
@@ -67,7 +68,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
       }));
 
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/v1/quizzes', {
+      const response = await fetch(`${API_BASE_URL}/quizzes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

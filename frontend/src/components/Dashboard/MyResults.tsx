@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaCheck, FaTimes, FaClock } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config/api';
+
 
 interface Question {
   text: string;
@@ -36,7 +38,7 @@ const MyResults: React.FC = () => {
 
   const fetchAttempts = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/quiz-attempts/my-attempts', {
+      const response = await fetch(`${API_BASE_URL}/quiz-attempts/my-attempts`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Accept': 'application/json',
@@ -53,7 +55,7 @@ const MyResults: React.FC = () => {
       const attemptsWithQuizzes = await Promise.all(
         data.map(async (attempt: QuizAttempt) => {
           try {
-            const quizResponse = await fetch(`http://localhost:8000/api/v1/quizzes/${attempt.quiz_id}`, {
+            const quizResponse = await fetch(`${API_BASE_URL}/quizzes/${attempt.quiz_id}`, {
               headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 'Accept': 'application/json',

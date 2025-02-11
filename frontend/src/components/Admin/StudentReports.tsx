@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaDownload } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config/api';
 
 interface User {
   id: number;
@@ -38,7 +39,7 @@ const StudentReports: React.FC = () => {
 
   const fetchReports = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/admin/student-reports', {
+      const response = await fetch(`${API_BASE_URL}/admin/student-reports`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Accept': 'application/json',
