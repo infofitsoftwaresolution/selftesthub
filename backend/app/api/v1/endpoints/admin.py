@@ -5,6 +5,8 @@ from app.models.user import User
 from app.models.quiz_attempt import QuizAttempt
 from typing import List
 from statistics import mean
+from app.crud.quiz_attempt import get_all_quiz_attempts
+from app.schemas.quiz_attempt import QuizAttemptWithDetails
 
 router = APIRouter()
 
@@ -52,4 +54,16 @@ async def get_student_reports(
             "averageScore": avg_score
         })
     
-    return reports 
+    return reports
+
+@router.get("/quiz-attempts", response_model=List[QuizAttemptWithDetails])
+async def get_quiz_attempts(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_admin_user)
+):
+    """
+    Get all quiz attempts with user and quiz details.
+    Only accessible by admin users.
+    """
+    attempts = get_all_quiz_attempts(db)
+    return attempts 

@@ -14,6 +14,7 @@ import QuizResult from './components/Quiz/QuizResult';
 import MyResults from './components/Dashboard/MyResults';
 import StudentReports from './components/Admin/StudentReports';
 import Features from './pages/Features';
+import QuizReports from './components/Admin/QuizReports';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
           <Route path="/available-quizzes" element={<AvailableQuizzes />} />
           <Route path="/admin/quizzes" element={<ManageQuizzes />} />
           <Route path="/admin/students" element={<StudentReports />} />
+          <Route path="/admin/quiz-reports" element={<QuizReports />} />
           <Route path="/profile" element={<UserProfile />} />
         </Route>
 

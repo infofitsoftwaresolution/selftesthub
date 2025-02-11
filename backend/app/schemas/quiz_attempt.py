@@ -20,4 +20,32 @@ class QuizAttempt(BaseModel):
     is_completed: bool = False
 
     class Config:
+        from_attributes = True
+
+class UserBase(BaseModel):
+    id: int
+    full_name: str
+    email: str
+
+    class Config:
+        from_attributes = True
+
+class QuizBase(BaseModel):
+    id: int
+    title: str
+    duration: int
+
+    class Config:
+        from_attributes = True
+
+class QuizAttemptWithDetails(BaseModel):
+    id: int
+    user: UserBase
+    quiz: QuizBase
+    started_at: datetime
+    completed_at: datetime
+    score: int
+    answers: Dict[str, int]
+
+    class Config:
         from_attributes = True 

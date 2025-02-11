@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { FaHome, FaBook, FaTrophy, FaUser, FaCog } from 'react-icons/fa';
+import { FaHome, FaBook, FaTrophy, FaUser, FaChartBar } from 'react-icons/fa';
 import { API_BASE_URL } from '../../config/api';
 
 interface SidebarItemProps {
@@ -81,7 +81,7 @@ const DashboardLayout: React.FC = () => {
               <h2 className="mb-2 text-sm font-semibold text-gray-600">Admin</h2>
               <SidebarItem
                 to="/admin/quizzes"
-                icon={<FaCog className="w-4 h-4 mr-2" />}
+                icon={<FaBook className="w-4 h-4 mr-2" />}
                 text="Manage Quizzes"
                 isActive={location.pathname === '/admin/quizzes'}
               />
@@ -90,6 +90,12 @@ const DashboardLayout: React.FC = () => {
                 icon={<FaUser className="w-4 h-4 mr-2" />}
                 text="Student Reports"
                 isActive={location.pathname === '/admin/students'}
+              />
+              <SidebarItem
+                to="/admin/quiz-reports"
+                icon={<FaChartBar className="w-4 h-4 mr-2" />}
+                text="Quiz Reports"
+                isActive={location.pathname === '/admin/quiz-reports'}
               />
             </>
           )}
