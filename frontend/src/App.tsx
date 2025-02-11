@@ -5,12 +5,15 @@ import ManageQuizzes from './pages/admin/ManageQuizzes';
 import UserProfile from './components/Profile/UserProfile';
 import Login from './pages/Login/index';
 import Home from './pages/Home';
+import About from './pages/About';
+import Contact from './pages/Contact';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import AvailableQuizzes from './components/Dashboard/AvailableQuizzes';
 import QuizInterface from './components/Quiz/QuizInterface';
 import QuizResult from './components/Quiz/QuizResult';
 import MyResults from './components/Dashboard/MyResults';
 import StudentReports from './components/Admin/StudentReports';
+import Features from './pages/Features';
 
 function App() {
   return (
@@ -18,6 +21,9 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/features" element={<Features />} />
         <Route path="/login" element={<Login />} />
 
         {/* Protected Routes with DashboardLayout */}
