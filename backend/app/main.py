@@ -6,7 +6,7 @@ import os
 
 app = FastAPI(
     title="MCQ Exam API",
-    description="Backend API for MCQ Examination System",
+    description="Backend API for MCQ Exam System",
     version="1.0.0"
 )
 
