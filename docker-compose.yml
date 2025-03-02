@@ -15,6 +15,7 @@ services:
       - POSTGRES_PASSWORD=infofitsoftware
       - POSTGRES_DB=postgres
       - EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+      - CORS_ORIGINS=http://13.233.157.162:3000,http://localhost:3000
     depends_on:
       - db
 

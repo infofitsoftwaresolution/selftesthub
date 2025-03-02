@@ -10,13 +10,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS - Move this before any routes
-origins = [
-    "http://localhost:3000",
-    f"http://{os.getenv('EC2_PUBLIC_IP')}:3000",
-    f"http://{os.getenv('EC2_PUBLIC_IP')}:8000",
-    "http://13.233.157.162:3000",
-]
+# Get origins from environment variable or use default
+origins = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://13.233.157.162:3000"
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,14 +25,14 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-# Ensure CORS is correctly configured
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["http://localhost:3000"],  # Explicitly allow localhost:3000
-#     allow_credentials=True,
-#     allow_methods=["*"],  # Allow all HTTP methods
-#     allow_headers=["*"],  # Allow all headers
-# )
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://13.233.157.162:3000"],  # Your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Import and include routers
 from app.api.v1.api import api_router
