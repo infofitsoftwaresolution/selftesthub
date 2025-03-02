@@ -43,9 +43,9 @@ class QuizAttemptWithDetails(BaseModel):
     user: UserBase
     quiz: QuizBase
     started_at: datetime
-    completed_at: datetime
-    score: int
-    answers: Dict[str, int]
+    completed_at: Optional[datetime]
+    score: Optional[float]
+    answers: Optional[Dict[str, int]]
 
     class Config:
-        from_attributes = True 
+        orm_mode = True 

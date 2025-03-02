@@ -7,8 +7,10 @@ from typing import List
 from statistics import mean
 from app.crud.quiz_attempt import get_all_quiz_attempts
 from app.schemas.quiz_attempt import QuizAttemptWithDetails
+import logging
 
 router = APIRouter()
+logger = logging.getLogger('quiz_api')
 
 @router.get("/student-reports")
 async def get_student_reports(
@@ -65,5 +67,14 @@ async def get_quiz_attempts(
     Get all quiz attempts with user and quiz details.
     Only accessible by admin users.
     """
-    attempts = get_all_quiz_attempts(db)
-    return attempts 
+    try:
+        logger.info(f"Fetching quiz attempts for admin user {current_user.id}")
+        attempts = get_all_quiz_attempts(db)
+        logger.info(f"Successfully fetched {len(attempts)} quiz attempts")
+        return attempts
+    except Exception as e:
+        logger.error(f"Error fetching quiz attempts: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error while fetching quiz attempts: {str(e)}"
+        ) 

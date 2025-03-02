@@ -57,22 +57,30 @@ const QuizReports: React.FC = () => {
     }
   };
 
+  
+
   const fetchAttempts = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/admin/quiz-attempts`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Accept': 'application/json',
-        }
+        },
+        credentials: 'include'
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch quiz attempts');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.detail || 
+          `Failed to fetch quiz attempts: ${response.status} ${response.statusText}`
+        );
       }
 
       const data = await response.json();
       setAttempts(data);
     } catch (error) {
+      console.error('Error fetching attempts:', error);
       setError(error instanceof Error ? error.message : 'Failed to load reports');
     } finally {
       setLoading(false);
