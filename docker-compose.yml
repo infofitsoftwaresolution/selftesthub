@@ -18,6 +18,11 @@ services:
       - CORS_ORIGINS=http://13.233.157.162:3000,http://localhost:3000
     depends_on:
       - db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     build: ./frontend
@@ -29,6 +34,11 @@ services:
       - /app/node_modules
     ports:
       - "3000:3000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
     image: postgres:13
@@ -40,6 +50,11 @@ services:
       - POSTGRES_DB=postgres
     ports:
       - "5432:5432"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:

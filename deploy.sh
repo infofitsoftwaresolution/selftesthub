@@ -29,9 +29,11 @@ EOL
 echo "Setting permissions for entrypoint.sh..."
 chmod +x backend/entrypoint.sh
 
-# Add before rebuilding containers
+# Clean up Docker resources before deployment
 echo "Cleaning up Docker resources..."
-sudo docker system prune -a -f
+docker system prune -af
+docker volume prune -f
+docker image prune -af
 
 # Export EC2_PUBLIC_IP for docker-compose
 export EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
