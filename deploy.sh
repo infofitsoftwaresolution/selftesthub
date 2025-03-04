@@ -9,6 +9,13 @@ echo "Starting deployment process..."
 sudo chown -R ubuntu:ubuntu /home/ubuntu/infofitscore
 sudo chmod -R 755 /home/ubuntu/infofitscore
 
+# Verify domain DNS
+echo "Verifying domain DNS..."
+if ! host selftesthub.com; then
+    echo "Error: Domain selftesthub.com is not properly configured"
+    exit 1
+fi
+
 # Pull the latest changes
 cd /home/ubuntu/infofitscore
 git pull
@@ -24,7 +31,7 @@ sudo chmod -R 755 .
 if [ ! -f "nginx/ssl/live/selftesthub.com/fullchain.pem" ]; then
     echo "Setting up SSL certificates..."
     chmod +x setup-ssl.sh
-    ./setup-ssl.sh
+    sudo ./setup-ssl.sh
 fi
 
 # Update environment variables

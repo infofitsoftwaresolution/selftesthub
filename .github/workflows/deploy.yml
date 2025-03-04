@@ -9,13 +9,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-        token: ${{ secrets.GH_PAT }}
-        repository: infofitsoftware/infofitscore
-        ref: main
-
     - name: Get GitHub Actions IP
       id: ip
       uses: haythem/public-ip@v1.2
@@ -40,11 +33,10 @@ jobs:
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           # Install Docker if not installed
           if ! command -v docker &> /dev/null; then
-            echo "Installing Docker..."
             sudo apt-get update
             sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
             curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
@@ -55,7 +47,6 @@ jobs:
 
           # Install Docker Compose if not installed
           if ! command -v docker-compose &> /dev/null; then
-            echo "Installing Docker Compose..."
             sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
           fi
@@ -69,26 +60,30 @@ jobs:
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          # Remove existing directory if it exists
+          # Prepare directory
           sudo rm -rf /home/ubuntu/infofitscore
-          
-          # Clone the repository directly
-          git clone https://${{ secrets.GH_PAT }}@github.com/infofitsoftware/infofitscore.git /home/ubuntu/infofitscore
-          
-          # Change to repository directory
-          cd /home/ubuntu/infofitscore
-          
-          # Export environment variables
+          mkdir -p /home/ubuntu/infofitscore
+          cd /home/ubuntu
+
+          # Clone with authentication
+          git clone https://${{ secrets.GH_PAT }}@github.com/infofitsoftware/infofitscore.git
+          cd infofitscore
+
+          # Set permissions
+          sudo chown -R ubuntu:ubuntu .
+          sudo chmod -R 755 .
+
+          # Make scripts executable
+          chmod +x deploy.sh setup-ssl.sh
+
+          # Set environment variables
           export SECRET_KEY="${{ secrets.SECRET_KEY }}"
-          export EC2_PUBLIC_IP="${{ secrets.EC2_PUBLIC_IP }}"
-          
-          # Make deploy.sh executable
-          chmod +x deploy.sh
-          
-          # Run deployment script with sudo
-          sudo -E bash deploy.sh
+          export DOMAIN_NAME="selftesthub.com"
+
+          # Run deployment
+          ./deploy.sh
 
     - name: Remove GitHub Actions IP from security group
       if: always()
