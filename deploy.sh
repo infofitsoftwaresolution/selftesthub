@@ -5,6 +5,19 @@ set -e
 
 echo "Starting deployment process..."
 
+# Check disk space
+echo "Checking disk space..."
+DISK_SPACE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
+if [ "$DISK_SPACE" -gt 85 ]; then
+    echo "Warning: Disk space is at ${DISK_SPACE}%. Cleaning up..."
+    docker system prune -af
+    docker volume prune -f
+    sudo find /var/lib/docker/containers/ -type f -name "*.log" -delete
+    sudo journalctl --vacuum-time=1d
+    sudo apt-get clean
+    sudo apt-get autoremove -y
+fi
+
 # Ensure we're in the right directory
 cd /home/ubuntu/infofitscore
 
@@ -76,10 +89,19 @@ NODE_ENV=production
 VITE_API_URL=https://selftesthub.com/api
 EOL
 
-# Clean up Docker resources (but keep volumes)
+# Add at the beginning of the script, after cd into directory
 echo "Cleaning up Docker resources..."
-docker system prune -f
-docker image prune -f
+docker-compose down || true
+docker system prune -af || true
+docker volume prune -f || true
+
+# Clean up logs
+sudo find /var/lib/docker/containers/ -type f -name "*.log" -delete || true
+sudo journalctl --vacuum-time=1d || true
+
+# Clean apt cache
+sudo apt-get clean || true
+sudo apt-get autoremove -y || true
 
 # Update Nginx configuration
 echo "Updating Nginx configuration..."
