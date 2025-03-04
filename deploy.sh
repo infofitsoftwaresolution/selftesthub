@@ -33,8 +33,10 @@ if [ ! -f "nginx/ssl/live/selftesthub.com/fullchain.pem" ]; then
     sudo ./setup-ssl.sh
 fi
 
-# Pull the latest changes
-git pull
+# Update code from repository
+echo "Updating code from repository..."
+git fetch origin main
+git reset --hard origin/main
 
 # Update environment variables
 echo "Updating environment variables..."

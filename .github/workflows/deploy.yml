@@ -72,8 +72,8 @@ jobs:
           mkdir infofitscore
           cd infofitscore
           
-          # Initialize git repo and set permissions
-          git init
+          # Initialize git repo with main branch
+          git init -b main
           sudo chown -R ubuntu:ubuntu .
           sudo chmod -R 755 .
           
@@ -87,6 +87,9 @@ jobs:
           
           # Reset to match remote
           git reset --hard origin/main
+          
+          # Set upstream tracking
+          git branch --set-upstream-to=origin/main main
           
           # Ensure all files have correct permissions
           sudo chown -R ubuntu:ubuntu .

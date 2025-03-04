@@ -16,12 +16,14 @@ apt-get install -y certbot
 # Stop nginx if running
 docker-compose down || true
 
-# Get SSL certificate
+# Get SSL certificate with force-renewal
 certbot certonly --standalone \
     --email admin@selftesthub.com \
     --agree-tos \
     --no-eff-email \
-    -d selftesthub.com -d www.selftesthub.com
+    --force-renewal \
+    -d selftesthub.com -d www.selftesthub.com \
+    --non-interactive
 
 # Create SSL directory
 mkdir -p nginx/ssl/live/selftesthub.com
@@ -35,8 +37,8 @@ chown -R ubuntu:ubuntu nginx/ssl
 chmod -R 755 nginx/ssl
 chmod 644 nginx/ssl/live/selftesthub.com/*.pem
 
-# Setup auto-renewal
-echo "0 0 1 * * certbot renew --quiet && cd /home/ubuntu/infofitscore && docker-compose restart nginx" | tee -a /var/spool/cron/crontabs/root
+# Setup auto-renewal (using absolute paths)
+echo "0 0 1 * * /usr/bin/certbot renew --quiet && cd /home/ubuntu/infofitscore && /usr/local/bin/docker-compose restart nginx" | tee -a /var/spool/cron/crontabs/root
 
 # Set proper ownership for the entire project directory
 chown -R ubuntu:ubuntu .
