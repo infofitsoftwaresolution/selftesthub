@@ -5,12 +5,20 @@ set -e
 
 echo "Starting deployment process..."
 
+# Ensure correct directory ownership and permissions
+sudo chown -R ubuntu:ubuntu /home/ubuntu/infofitscore
+sudo chmod -R 755 /home/ubuntu/infofitscore
+
 # Pull the latest changes
 cd /home/ubuntu/infofitscore
 git pull
 
 # Create necessary directories if they don't exist
 mkdir -p nginx/conf.d nginx/ssl
+
+# Ensure correct permissions for all files
+sudo chown -R ubuntu:ubuntu .
+sudo chmod -R 755 .
 
 # Run SSL setup if certificates don't exist
 if [ ! -f "nginx/ssl/live/selftesthub.com/fullchain.pem" ]; then
