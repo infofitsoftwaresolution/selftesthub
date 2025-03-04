@@ -8,6 +8,10 @@ echo "Starting deployment process..."
 # Ensure we're in the right directory
 cd /home/ubuntu/infofitscore
 
+# Fix Docker permissions
+sudo chown -R ubuntu:ubuntu /home/ubuntu/.docker
+sudo chmod -R 755 /home/ubuntu/.docker
+
 # Ensure correct directory ownership and permissions
 sudo chown -R ubuntu:ubuntu .
 sudo find . -type d -exec chmod 755 {} \;
@@ -166,8 +170,30 @@ server {
 }
 EOL
 
-    # Reload Nginx configuration
-    docker exec infofitscore_nginx_1 nginx -s reload
+    # Reload Nginx configuration using docker-compose
+    echo "Reloading Nginx configuration..."
+    docker-compose exec nginx nginx -s reload || {
+        echo "Failed to reload Nginx directly, trying to restart container..."
+        docker-compose restart nginx
+    }
+fi
+
+# Rebuild and restart containers
+echo "Rebuilding and restarting containers..."
+docker-compose down
+docker-compose build --no-cache backend
+docker-compose up -d
+
+# Wait for services to be healthy
+echo "Waiting for services to be healthy..."
+sleep 15
+
+# Verify services are running
+echo "Verifying services..."
+if ! docker-compose ps | grep -q "Up"; then
+    echo "Error: Some services are not running"
+    docker-compose logs
+    exit 1
 fi
 
 echo "Deployment completed successfully!"
@@ -175,9 +201,4 @@ echo "Deployment completed successfully!"
 # Print the URLs
 echo "Application URLs:"
 echo "Frontend: https://selftesthub.com"
-echo "Backend API: https://selftesthub.com/api"
-
-# Rebuild the containers to apply permission changes
-echo "Rebuilding containers..."
-docker-compose build --no-cache backend
-docker-compose up -d 
+echo "Backend API: https://selftesthub.com/api" 

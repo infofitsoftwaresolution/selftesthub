@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   nginx:
+    container_name: infofitscore_nginx
     image: nginx:alpine
     user: "${UID:-1000}:${GID:-1000}"
     ports:
@@ -18,6 +19,7 @@ services:
       - app_network
 
   backend:
+    container_name: infofitscore_backend
     build: ./backend
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     volumes:
@@ -39,6 +41,7 @@ services:
       - app_network
 
   frontend:
+    container_name: infofitscore_frontend
     build: ./frontend
     environment:
       - NODE_ENV=production
@@ -53,6 +56,7 @@ services:
       - app_network
 
   db:
+    container_name: infofitscore_db
     image: postgres:13
     volumes:
       - postgres_data:/var/lib/postgresql/data
