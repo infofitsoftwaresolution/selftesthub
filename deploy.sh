@@ -5,9 +5,17 @@ set -e
 
 echo "Starting deployment process..."
 
+# Ensure we're in the right directory
+cd /home/ubuntu/infofitscore
+
 # Ensure correct directory ownership and permissions
-sudo chown -R ubuntu:ubuntu /home/ubuntu/infofitscore
-sudo chmod -R 755 /home/ubuntu/infofitscore
+sudo chown -R ubuntu:ubuntu .
+sudo find . -type d -exec chmod 755 {} \;
+sudo find . -type f -exec chmod 644 {} \;
+
+# Make scripts executable
+chmod +x deploy.sh setup-ssl.sh
+chmod +x backend/entrypoint.sh || true
 
 # Verify domain DNS
 echo "Verifying domain DNS..."
@@ -16,23 +24,17 @@ if ! host selftesthub.com; then
     exit 1
 fi
 
-# Pull the latest changes
-cd /home/ubuntu/infofitscore
-git pull
-
 # Create necessary directories if they don't exist
 mkdir -p nginx/conf.d nginx/ssl
-
-# Ensure correct permissions for all files
-sudo chown -R ubuntu:ubuntu .
-sudo chmod -R 755 .
 
 # Run SSL setup if certificates don't exist
 if [ ! -f "nginx/ssl/live/selftesthub.com/fullchain.pem" ]; then
     echo "Setting up SSL certificates..."
-    chmod +x setup-ssl.sh
     sudo ./setup-ssl.sh
 fi
+
+# Pull the latest changes
+git pull
 
 # Update environment variables
 echo "Updating environment variables..."
@@ -49,9 +51,6 @@ cat > frontend/.env << EOL
 NODE_ENV=production
 VITE_API_URL=https://selftesthub.com/api
 EOL
-
-# Set permissions
-chmod +x backend/entrypoint.sh
 
 # Clean up Docker resources (but keep volumes)
 echo "Cleaning up Docker resources..."

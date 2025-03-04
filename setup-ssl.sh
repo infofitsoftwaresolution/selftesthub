@@ -6,12 +6,15 @@ if [ "$(id -u)" != "0" ]; then
    exit 1
 fi
 
+# Ensure we're in the right directory
+cd /home/ubuntu/infofitscore
+
 # Install certbot
 apt-get update
 apt-get install -y certbot
 
 # Stop nginx if running
-docker-compose down
+docker-compose down || true
 
 # Get SSL certificate
 certbot certonly --standalone \
@@ -30,12 +33,14 @@ cp /etc/letsencrypt/live/selftesthub.com/privkey.pem nginx/ssl/live/selftesthub.
 # Set proper permissions
 chown -R ubuntu:ubuntu nginx/ssl
 chmod -R 755 nginx/ssl
-
-# Make certificates readable
 chmod 644 nginx/ssl/live/selftesthub.com/*.pem
 
 # Setup auto-renewal
-echo "0 0 1 * * certbot renew --quiet && docker-compose restart nginx" | tee -a /var/spool/cron/crontabs/root
+echo "0 0 1 * * certbot renew --quiet && cd /home/ubuntu/infofitscore && docker-compose restart nginx" | tee -a /var/spool/cron/crontabs/root
 
 # Set proper ownership for the entire project directory
-chown -R ubuntu:ubuntu /home/ubuntu/infofitscore 
+chown -R ubuntu:ubuntu .
+find . -type d -exec chmod 755 {} \;
+find . -type f -exec chmod 644 {} \;
+chmod +x deploy.sh setup-ssl.sh
+chmod +x backend/entrypoint.sh || true 

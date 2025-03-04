@@ -62,26 +62,45 @@ jobs:
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # Prepare directory
-          sudo rm -rf /home/ubuntu/infofitscore
-          mkdir -p /home/ubuntu/infofitscore
+          # Stop any running services
+          cd /home/ubuntu/infofitscore || true
+          docker-compose down || true
           cd /home/ubuntu
-
-          # Clone with authentication
-          git clone https://${{ secrets.GH_PAT }}@github.com/infofitsoftware/infofitscore.git
+          
+          # Clean up and prepare directory with correct permissions
+          sudo rm -rf infofitscore
+          mkdir infofitscore
           cd infofitscore
-
-          # Set permissions
+          
+          # Initialize git repo and set permissions
+          git init
           sudo chown -R ubuntu:ubuntu .
           sudo chmod -R 755 .
-
+          
+          # Configure git
+          git config --local user.email "deploy@example.com"
+          git config --local user.name "Deploy Bot"
+          
+          # Add remote and fetch code
+          git remote add origin https://${{ secrets.GH_PAT }}@github.com/infofitsoftware/infofitscore.git
+          git fetch origin main
+          
+          # Reset to match remote
+          git reset --hard origin/main
+          
+          # Ensure all files have correct permissions
+          sudo chown -R ubuntu:ubuntu .
+          sudo find . -type d -exec chmod 755 {} \;
+          sudo find . -type f -exec chmod 644 {} \;
+          
           # Make scripts executable
           chmod +x deploy.sh setup-ssl.sh
-
+          sudo chmod +x backend/entrypoint.sh || true
+          
           # Set environment variables
           export SECRET_KEY="${{ secrets.SECRET_KEY }}"
           export DOMAIN_NAME="selftesthub.com"
-
+          
           # Run deployment
           ./deploy.sh
 
