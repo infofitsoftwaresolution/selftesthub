@@ -1,7 +1,12 @@
-#!/bin/sh
+#!/bin/bash
+set -e
 
-# Wait for a few seconds to ensure DB is ready
-sleep 5
+# Wait for database to be ready
+echo "Waiting for database..."
+while ! nc -z db 5432; do
+  sleep 0.1
+done
+echo "Database is ready!"
 
 # Run migrations
 alembic upgrade head

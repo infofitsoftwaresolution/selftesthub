@@ -91,20 +91,25 @@ jobs:
           # Set upstream tracking
           git branch --set-upstream-to=origin/main main
           
-          # Ensure all files have correct permissions
+          # Set proper permissions
+          echo "Setting proper permissions..."
           sudo chown -R ubuntu:ubuntu .
           sudo find . -type d -exec chmod 755 {} \;
           sudo find . -type f -exec chmod 644 {} \;
           
-          # Make scripts executable
-          chmod +x deploy.sh setup-ssl.sh
-          sudo chmod +x backend/entrypoint.sh || true
+          # Make all shell scripts executable
+          find . -type f -name "*.sh" -exec chmod +x {} \;
+          
+          # Specifically ensure entrypoint.sh is executable
+          chmod +x backend/entrypoint.sh
           
           # Set environment variables
           export SECRET_KEY="${{ secrets.SECRET_KEY }}"
           export DOMAIN_NAME="selftesthub.com"
           
-          # Run deployment
+          # Run deployment with rebuild
+          docker-compose down
+          docker-compose build --no-cache backend
           ./deploy.sh
 
     - name: Remove GitHub Actions IP from security group

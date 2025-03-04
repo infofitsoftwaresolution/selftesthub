@@ -38,6 +38,18 @@ echo "Updating code from repository..."
 git fetch origin main
 git reset --hard origin/main
 
+# Add this after git reset --hard origin/main
+echo "Setting proper permissions..."
+sudo chown -R ubuntu:ubuntu .
+sudo find . -type d -exec chmod 755 {} \;
+sudo find . -type f -exec chmod 644 {} \;
+
+# Make all shell scripts executable
+find . -type f -name "*.sh" -exec chmod +x {} \;
+
+# Specifically ensure entrypoint.sh is executable
+chmod +x backend/entrypoint.sh
+
 # Update environment variables
 echo "Updating environment variables..."
 cat > backend/.env << EOL
@@ -163,4 +175,9 @@ echo "Deployment completed successfully!"
 # Print the URLs
 echo "Application URLs:"
 echo "Frontend: https://selftesthub.com"
-echo "Backend API: https://selftesthub.com/api" 
+echo "Backend API: https://selftesthub.com/api"
+
+# Rebuild the containers to apply permission changes
+echo "Rebuilding containers..."
+docker-compose build --no-cache backend
+docker-compose up -d 
