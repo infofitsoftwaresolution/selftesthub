@@ -30,6 +30,12 @@ fi
 
 # Create necessary directories if they don't exist
 mkdir -p nginx/conf.d nginx/ssl
+chmod -R 755 nginx
+
+# Add before docker-compose up
+echo "Creating Nginx temp directories..."
+mkdir -p /tmp/nginx/{client_temp,proxy_temp,fastcgi_temp,uwsgi_temp,scgi_temp}
+chmod -R 755 /tmp/nginx
 
 # Run SSL setup if certificates don't exist
 if [ ! -f "nginx/ssl/live/selftesthub.com/fullchain.pem" ]; then

@@ -3,8 +3,9 @@ version: '3.8'
 services:
   nginx:
     container_name: infofitscore_nginx
-    image: nginx:alpine
-    user: "${UID:-1000}:${GID:-1000}"
+    build: 
+      context: ./nginx
+      dockerfile: Dockerfile
     ports:
       - "80:80"
       - "443:443"
@@ -76,4 +77,6 @@ networks:
 
 volumes:
   postgres_data:
-  backend_logs: 
+  backend_logs:
+  nginx_cache:
+  nginx_run: 
