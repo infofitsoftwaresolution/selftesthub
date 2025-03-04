@@ -9,6 +9,9 @@ echo "Starting deployment process..."
 cd /home/ubuntu/infofitscore
 git pull
 
+# Create necessary directories
+mkdir -p nginx/conf.d nginx/ssl nginx/certbot/conf nginx/certbot/www
+
 # Update environment variables
 echo "Updating environment variables..."
 cat > backend/.env << EOL
@@ -16,42 +19,41 @@ DATABASE_URL=postgresql://postgres:infofitsoftware@infofitscore.c7yic444gxi0.ap-
 SECRET_KEY=${SECRET_KEY}
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+DOMAIN_NAME=selftesthub.com
 EOL
 
 # Set frontend environment
 cat > frontend/.env << EOL
 NODE_ENV=production
-VITE_API_URL=http://${EC2_PUBLIC_IP}:8000
+VITE_API_URL=https://selftesthub.com/api
 EOL
 
-# Set permissions for entrypoint.sh
-echo "Setting permissions for entrypoint.sh..."
+# Set permissions
 chmod +x backend/entrypoint.sh
 
-# Clean up Docker resources before deployment
+# Clean up Docker resources
 echo "Cleaning up Docker resources..."
 docker system prune -af
 docker volume prune -f
 docker image prune -af
 
-# Export EC2_PUBLIC_IP for docker-compose
-export EC2_PUBLIC_IP=${EC2_PUBLIC_IP}
+# Initial SSL certificate setup (only if not exists)
+if [ ! -d "nginx/certbot/conf/live/selftesthub.com" ]; then
+    echo "Setting up SSL certificate..."
+    docker-compose run --rm certbot certonly --webroot --webroot-path /var/www/certbot \
+        --email admin@selftesthub.com --agree-tos --no-eff-email \
+        -d selftesthub.com -d www.selftesthub.com
+fi
 
 # Rebuild and restart containers
 echo "Rebuilding and restarting containers..."
-sudo -E docker-compose down
-sudo -E docker-compose build --no-cache
-
-# Comment out or remove migrations since tables are already created
-# echo "Running database migrations..."
-# sudo -E docker-compose run --rm backend alembic upgrade head
-
-sudo -E docker-compose up -d
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
 
 echo "Deployment completed successfully!"
 
 # Print the URLs
 echo "Application URLs:"
-echo "Frontend: http://${EC2_PUBLIC_IP}:3000"
-echo "Backend API: http://${EC2_PUBLIC_IP}:8000/api/v1" 
+echo "Frontend: https://selftesthub.com"
+echo "Backend API: https://selftesthub.com/api" 
