@@ -78,8 +78,8 @@ jobs:
           sudo chmod -R 755 .
           
           # Configure git
-          git config --local user.email "deploy@example.com"
-          git config --local user.name "Deploy Bot"
+          git config --local user.email "infofitsoftware@gmail.com"
+          git config --local user.name "infofitsoftware"
           
           # Add remote and fetch code
           git remote add origin https://${{ secrets.GH_PAT }}@github.com/infofitsoftware/infofitscore.git
