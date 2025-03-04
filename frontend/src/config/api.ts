@@ -1,13 +1,10 @@
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? `https://${window.location.hostname}:8000/api/v1`  // Production (EC2)
-  : 'http://localhost:8000/api/v1';                   // Development
+// Replace any hardcoded URLs with environment variable
+const API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com/api';
 
-// Add withCredentials to fetch options
-export const fetchOptions = {
-  credentials: 'include' as const,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+export const API_ENDPOINTS = {
+    // Remove any port numbers from these URLs
+    LOGIN: `${API_URL}/v1/auth/login`,
+    // ... other endpoints
 };
 
-export { API_BASE_URL }; 
+export default API_ENDPOINTS; 
