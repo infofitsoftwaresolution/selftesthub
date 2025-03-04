@@ -33,7 +33,7 @@ jobs:
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           # Install Docker if not installed
           if ! command -v docker &> /dev/null; then
@@ -60,7 +60,7 @@ jobs:
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           # Prepare directory
           sudo rm -rf /home/ubuntu/infofitscore
