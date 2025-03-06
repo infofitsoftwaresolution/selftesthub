@@ -7,24 +7,26 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install --legacy-peer-deps
+RUN npm install
 
 # Copy source code
 COPY . .
 
-# Build with type checking disabled temporarily
-RUN SKIP_TYPE_CHECK=true npm run build
+# Build the app
+RUN npm run build
 
 # Production stage
 FROM node:18-alpine
 
 WORKDIR /app
 
+# Install serve to run the built app
+RUN npm install -g serve
+
 # Copy built assets from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src ./src
 
 EXPOSE 3000
-CMD ["npm", "run", "dev"] 
+
+# Serve the app
+CMD ["serve", "-s", "dist", "-l", "3000"] 
