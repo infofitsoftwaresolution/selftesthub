@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -12,12 +13,10 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+      const response = await fetch(API_ENDPOINTS.LOGIN, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        ...fetchOptions,
+        body: JSON.stringify(formData)
       });
 
       const data = await response.json();
