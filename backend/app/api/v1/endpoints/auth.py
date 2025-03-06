@@ -4,7 +4,7 @@ from typing import Any
 
 from app.api import deps
 from app.core.security import create_access_token
-from app.schemas.user import UserCreate, UserLogin, Token
+from app.schemas.user import UserCreate, UserLogin, Token, User
 from app.crud.user import create_user, authenticate_user
 
 router = APIRouter()
@@ -45,4 +45,13 @@ def login(
     return {
         "access_token": access_token,
         "token_type": "bearer"
-    } 
+    }
+
+@router.get("/me", response_model=User)
+def get_current_user(
+    current_user: User = Depends(deps.get_current_user)
+) -> User:
+    """
+    Get current user.
+    """
+    return current_user 

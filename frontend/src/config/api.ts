@@ -6,6 +6,7 @@ export const fetchOptions = {
   credentials: 'include' as const,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 };
 
@@ -46,5 +47,5 @@ export const API_ENDPOINTS = {
   UPDATE_PROFILE: `${API_URL}/v1/profile`,
   CHANGE_PASSWORD: `${API_URL}/v1/profile/password`,
 };
-
+87
 export default API_ENDPOINTS; 

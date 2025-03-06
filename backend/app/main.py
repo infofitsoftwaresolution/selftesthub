@@ -10,16 +10,14 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Get origins from environment variable or use default
-origins = os.getenv(
-    "CORS_ORIGINS",
-    "http://localhost:3000,http://13.233.157.162:3000"
-).split(",")
-
-# Add CORS middleware (remove the duplicate one)
+# Update CORS settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://selftesthub.com"],
+    allow_origins=[
+        "https://selftesthub.com",
+        "http://localhost:3000",
+        "http://13.233.157.162:3000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,9 +41,10 @@ logger = logging.getLogger('quiz_api')
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    print(f"Received request: {request.method} {request.url}")
-    logger.info(f"Request: {request.method} {request.url}")
+    print(f"Received request: {request.method} {request.url.path}")
+    print(f"Headers: {request.headers}")
     response = await call_next(request)
+    print(f"Response status: {response.status_code}")
     return response
 
 @app.get("/")
