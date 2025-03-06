@@ -20,12 +20,10 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy built assets from builder
+# Copy package files and built assets
+COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./package.json
-
-# Install production dependencies only
-RUN npm install --only=production
+COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3000
 

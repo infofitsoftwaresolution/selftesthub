@@ -43,13 +43,18 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=https://selftesthub.com
+      - VITE_API_URL=https://selftesthub.com/api
     volumes:
       - ./frontend:/app
     expose:
       - 3000
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   db:
     container_name: infofitscore_db
