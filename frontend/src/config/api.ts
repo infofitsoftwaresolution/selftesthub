@@ -9,11 +9,11 @@ export const fetchOptions = {
   },
 };
 
-// API Endpoints - Update paths to match backend
+// API Endpoints
 export const API_ENDPOINTS = {
-  // Auth endpoints - Remove extra 'api' from paths
-  LOGIN: `${API_URL}/v1/auth/login`,           // Was causing 404
-  REGISTER: `${API_URL}/v1/auth/register`,     // Was causing 404
+  // Auth endpoints
+  LOGIN: `${API_URL}/v1/auth/login`,
+  REGISTER: `${API_URL}/v1/auth/register`,
   LOGOUT: `${API_URL}/v1/auth/logout`,
   ME: `${API_URL}/v1/auth/me`,
 

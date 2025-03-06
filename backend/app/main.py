@@ -27,7 +27,7 @@ app.add_middleware(
 
 # Import and include routers
 from app.api.v1.api import api_router
-app.include_router(api_router, prefix="")  # Remove /api prefix since nginx handles it
+app.include_router(api_router, prefix="/v1")  # Change this to /v1 only
 
 # Setup logging
 log_file = os.path.join(os.path.dirname(__file__), 'logs', 'quiz.log')
@@ -43,6 +43,7 @@ logger = logging.getLogger('quiz_api')
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
+    print(f"Received request: {request.method} {request.url}")
     logger.info(f"Request: {request.method} {request.url}")
     response = await call_next(request)
     return response
