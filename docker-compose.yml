@@ -38,7 +38,9 @@ services:
 
   frontend:
     container_name: infofitscore_frontend
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
       - VITE_API_URL=https://selftesthub.com

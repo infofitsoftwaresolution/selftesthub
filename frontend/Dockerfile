@@ -6,7 +6,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies including dev dependencies
 RUN npm install
 
 # Copy source code
@@ -20,13 +20,14 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install serve to run the built app
-RUN npm install -g serve
-
 # Copy built assets from builder
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
+
+# Install production dependencies only
+RUN npm install --only=production
 
 EXPOSE 3000
 
-# Serve the app
-CMD ["serve", "-s", "dist", "-l", "3000"] 
+# Start the app
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"] 
