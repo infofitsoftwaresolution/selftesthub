@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { API_BASE_URL } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 
 interface RegisterModalProps {
@@ -24,16 +24,14 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      const response = await fetch(API_ENDPOINTS.REGISTER, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        ...fetchOptions,
         body: JSON.stringify({
           full_name: formData.fullName,
           email: formData.email,
           password: formData.password,
-        }),
+        })
       });
 
       const data = await response.json();

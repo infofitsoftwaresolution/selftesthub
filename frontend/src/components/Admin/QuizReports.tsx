@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
 interface User {
@@ -43,9 +43,11 @@ const QuizReports: React.FC = () => {
 
   const fetchQuizzes = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/quizzes`, {
+      const response = await fetch(API_ENDPOINTS.QUIZ_REPORTS, {
+        ...fetchOptions,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       if (response.ok) {
@@ -61,12 +63,12 @@ const QuizReports: React.FC = () => {
 
   const fetchAttempts = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/quiz-attempts`, {
+      const response = await fetch(API_ENDPOINTS.QUIZ_REPORTS, {
+        ...fetchOptions,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json',
-        },
-        credentials: 'include'
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
 
       if (!response.ok) {

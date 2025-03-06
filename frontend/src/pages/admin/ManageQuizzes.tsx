@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
-import { API_BASE_URL } from '../../config/api';
+import { API_ENDPOINTS } from '../../config/api';
 import CreateQuizModal from '../../components/Admin/CreateQuizModal';
 import EditQuizModal from '../../components/Admin/EditQuizModal';
 import { Quiz } from '../../types/quiz';
@@ -14,7 +14,7 @@ const ManageQuizzes: React.FC = () => {
 
   const fetchQuizzes = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/quizzes/`, {
+      const response = await fetch(API_ENDPOINTS.QUIZZES, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         }
@@ -45,7 +45,7 @@ const ManageQuizzes: React.FC = () => {
 
   const handleToggleActive = async (quizId: number, currentStatus: boolean) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/quizzes/${quizId}/`, {
+      const response = await fetch(API_ENDPOINTS.UPDATE_QUIZ(quizId.toString()), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ const ManageQuizzes: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this quiz?')) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/quizzes/${quizId}/`, {
+      const response = await fetch(API_ENDPOINTS.DELETE_QUIZ(quizId.toString()), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

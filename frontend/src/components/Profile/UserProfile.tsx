@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 interface UserData {
   id: number;
@@ -28,10 +28,12 @@ const UserProfile: React.FC = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/users/me`, {
+      const response = await fetch(API_ENDPOINTS.ME, {
+        ...fetchOptions,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
       
       if (response.ok) {
@@ -52,17 +54,14 @@ const UserProfile: React.FC = () => {
     setSuccess('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/users/me`, {
+      const response = await fetch(API_ENDPOINTS.UPDATE_PROFILE, {
         method: 'PUT',
+        ...fetchOptions,
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({
-          full_name: formData.full_name,
-          current_password: formData.current_password,
-          new_password: formData.new_password,
-        }),
+        body: JSON.stringify(formData)
       });
 
       if (response.ok) {

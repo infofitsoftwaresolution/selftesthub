@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { FaHome, FaBook, FaTrophy, FaUser, FaChartBar } from 'react-icons/fa';
-import { API_BASE_URL } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 interface SidebarItemProps {
   to: string;
@@ -29,10 +29,12 @@ const DashboardLayout: React.FC = () => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/users/me`, {
+        const response = await fetch(API_ENDPOINTS.ME, {
+          ...fetchOptions,
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
+            ...fetchOptions.headers,
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
         });
         
         if (response.ok) {

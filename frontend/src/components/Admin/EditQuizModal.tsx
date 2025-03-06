@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { API_BASE_URL } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import { Quiz, QuizUpdate } from '../../types/quiz';
 
 interface EditQuizModalProps {
@@ -26,13 +26,14 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, isOpen, onClose, on
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/quizzes/${quiz.id}`, {
+      const response = await fetch(API_ENDPOINTS.UPDATE_QUIZ(quiz.id.toString()), {
         method: 'PATCH',
+        ...fetchOptions,
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       });
 
       if (response.ok) {

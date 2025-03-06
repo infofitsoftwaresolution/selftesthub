@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 // import TimerDebug from './TimerDebug';
 import { Quiz, Question } from '../../types/quiz';
-import { API_BASE_URL } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 const QuizInterface: React.FC = () => {
   const { quizId } = useParams();
@@ -22,19 +22,17 @@ const QuizInterface: React.FC = () => {
       return;
     }
     
-    setIsSubmitting(true); // Set submitting state when starting submission
+    setIsSubmitting(true);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/quiz-attempts/${attemptId}/submit`, {
+      const response = await fetch(API_ENDPOINTS.SUBMIT_QUIZ(attemptId.toString()), {
         method: 'POST',
+        ...fetchOptions,
         headers: {
-          'Content-Type': 'application/json',
+          ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ 
-          answers,
-          is_completed: true 
-        })
+        body: JSON.stringify({ answers, is_completed: true })
       });
 
       if (response.ok) {
@@ -47,7 +45,7 @@ const QuizInterface: React.FC = () => {
       console.error('Failed to submit quiz:', err);
       alert('Failed to submit quiz. Please try again.');
     } finally {
-      setIsSubmitting(false); // Reset submitting state regardless of outcome
+      setIsSubmitting(false);
     }
   }, [attemptId, answers, navigate]);
 
@@ -56,10 +54,12 @@ const QuizInterface: React.FC = () => {
     const fetchQuiz = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/quizzes/${quizId}`, {
+        const response = await fetch(API_ENDPOINTS.QUIZ(quizId as string), {
+          ...fetchOptions,
           headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+            ...fetchOptions.headers,
+            'Authorization': `Bearer ${token}`
+          }
         });
         if (response.ok) {
           const data = await response.json();

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaClock, FaQuestionCircle, FaPlay } from 'react-icons/fa';
-import { API_BASE_URL } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import { Quiz } from '../../types/quiz';
 
 const AvailableQuizzes: React.FC = () => {
@@ -16,10 +16,11 @@ const AvailableQuizzes: React.FC = () => {
 
   const fetchQuizzes = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/quizzes/active`, {
+      const response = await fetch(`${API_ENDPOINTS.QUIZZES}/active`, {
+        ...fetchOptions,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json',
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
@@ -38,13 +39,13 @@ const AvailableQuizzes: React.FC = () => {
 
   const handleStartQuiz = async (quizId: number) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/quiz-attempts/`, {
+      const response = await fetch(API_ENDPOINTS.START_QUIZ(quizId.toString()), {
         method: 'POST',
+        ...fetchOptions,
         headers: {
-          'Content-Type': 'application/json',
+          ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ quiz_id: quizId })
+        }
       });
 
       if (response.ok) {

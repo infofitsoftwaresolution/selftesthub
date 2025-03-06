@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaDownload } from 'react-icons/fa';
-import { API_BASE_URL } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 interface User {
   id: number;
@@ -39,10 +39,11 @@ const StudentReports: React.FC = () => {
 
   const fetchReports = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/student-reports`, {
+      const response = await fetch(API_ENDPOINTS.STUDENT_REPORTS, {
+        ...fetchOptions,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json',
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 

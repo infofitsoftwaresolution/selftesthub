@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
-import { API_BASE_URL } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 interface Question {
   id: number;
@@ -68,17 +68,18 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
       }));
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/quizzes`, {
+      const response = await fetch(API_ENDPOINTS.CREATE_QUIZ, {
         method: 'POST',
+        ...fetchOptions,
         headers: {
-          'Content-Type': 'application/json',
+          ...fetchOptions.headers,
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           title: quizData.title,
           type: quizData.type,
           duration: quizData.duration,
-          questions: formattedQuestions  // Use the formatted questions
+          questions: formattedQuestions
         })
       });
 

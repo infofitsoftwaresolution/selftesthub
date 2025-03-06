@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaCheck, FaTimes, FaClock } from 'react-icons/fa';
-import { API_BASE_URL } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 
 interface Question {
@@ -38,10 +38,11 @@ const MyResults: React.FC = () => {
 
   const fetchAttempts = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/quiz-attempts/my-attempts`, {
+      const response = await fetch(API_ENDPOINTS.USER_RESULTS, {
+        ...fetchOptions,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json',
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
@@ -55,10 +56,11 @@ const MyResults: React.FC = () => {
       const attemptsWithQuizzes = await Promise.all(
         data.map(async (attempt: QuizAttempt) => {
           try {
-            const quizResponse = await fetch(`${API_BASE_URL}/quizzes/${attempt.quiz_id}`, {
+            const quizResponse = await fetch(API_ENDPOINTS.QUIZ(attempt.quiz_id.toString()), {
+              ...fetchOptions,
               headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Accept': 'application/json',
+                ...fetchOptions.headers,
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
               }
             });
             if (quizResponse.ok) {
