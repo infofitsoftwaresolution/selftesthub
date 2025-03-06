@@ -18,14 +18,17 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
-class UserInDB(UserBase):
+class User(UserBase):
     id: int
-    is_active: bool
-    is_superuser: bool
+    is_active: bool = True
+    is_superuser: bool = False
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
+
+class UserInDB(User):
+    hashed_password: str
 
 class Token(BaseModel):
     access_token: str
