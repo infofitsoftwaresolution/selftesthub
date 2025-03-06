@@ -1,24 +1,29 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
+from app.api.v1.api import api_router
+from app.core.config import settings
 
-app = FastAPI()
+app = FastAPI(
+    title="Quiz API",
+    openapi_url="/api/v1/openapi.json",
+    docs_url="/api/v1/docs",
+    redoc_url="/api/v1/redoc",
+)
 
-# CORS settings
+# Set all CORS enabled origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://selftesthub.com"],
+    allow_origins=[str(origin) for origin in settings.CORS_ORIGINS],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Import and include routers with correct prefix
-from app.api.v1.api import api_router
+# Include API router with prefix
 app.include_router(api_router, prefix="/api/v1")
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
+async def log_requests(request, call_next):
     print(f"Incoming request: {request.method} {request.url.path}")
     response = await call_next(request)
     print(f"Response status: {response.status_code}")
