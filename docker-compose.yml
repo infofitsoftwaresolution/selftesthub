@@ -44,8 +44,6 @@ services:
     environment:
       - NODE_ENV=production
       - VITE_API_URL=https://selftesthub.com/api
-    volumes:
-      - ./frontend:/app
     expose:
       - 3000
     networks:
