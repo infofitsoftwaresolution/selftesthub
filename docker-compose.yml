@@ -22,12 +22,25 @@ services:
   backend:
     container_name: infofitscore_backend
     build: ./backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./backend:/app
+      - backend_logs:/app/logs
+    expose:
+      - "8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/infofitscore
+      - POSTGRES_SERVER=infofitscore.c7yic444gxi0.ap-south-1.rds.amazonaws.com
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=infofitsoftware
+      - POSTGRES_DB=postgres
+      - DOMAIN_NAME=selftesthub.com
+      - CORS_ORIGINS=https://selftesthub.com
+      - BASE_URL=https://selftesthub.com
     depends_on:
       - db
+    restart: always
     networks:
-      - app-network
+      - app_network
 
   frontend:
     container_name: infofitscore_frontend
