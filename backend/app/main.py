@@ -27,7 +27,7 @@ app.add_middleware(
 
 # Import and include routers
 from app.api.v1.api import api_router
-app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router, prefix="")  # Remove /api prefix since nginx handles it
 
 # Setup logging
 log_file = os.path.join(os.path.dirname(__file__), 'logs', 'quiz.log')
