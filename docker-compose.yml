@@ -22,8 +22,8 @@ services:
     container_name: infofitscore_backend
     build: ./backend
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-    expose:
-      - "8000"
+    volumes:
+      - ./backend:/app
     environment:
       - POSTGRES_SERVER=infofitscore.c7yic444gxi0.ap-south-1.rds.amazonaws.com
       - POSTGRES_USER=postgres
@@ -40,8 +40,8 @@ services:
     environment:
       - NODE_ENV=production
       - VITE_API_URL=https://selftesthub.com
-    expose:
-      - "3000"
+    volumes:
+      - ./frontend:/app
     networks:
       - app_network
 
@@ -54,9 +54,6 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=infofitsoftware
       - POSTGRES_DB=postgres
-    expose:
-      - "5432"
-    restart: always
     networks:
       - app_network
 
