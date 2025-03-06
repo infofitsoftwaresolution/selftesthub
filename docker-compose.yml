@@ -24,6 +24,8 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     volumes:
       - ./backend:/app
+    expose:
+      - 8000
     environment:
       - POSTGRES_SERVER=infofitscore.c7yic444gxi0.ap-south-1.rds.amazonaws.com
       - POSTGRES_USER=postgres
@@ -42,6 +44,8 @@ services:
       - VITE_API_URL=https://selftesthub.com
     volumes:
       - ./frontend:/app
+    expose:
+      - 3000
     networks:
       - app_network
 

@@ -13,7 +13,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Import and include routers
+# Import and include routers with correct prefix
 from app.api.v1.api import api_router
 app.include_router(api_router, prefix="/api/v1")
 
