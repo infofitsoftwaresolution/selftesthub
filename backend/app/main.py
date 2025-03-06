@@ -1,7 +1,5 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
-import logging
 import os
 
 app = FastAPI(
@@ -10,14 +8,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Update CORS settings
+# Simplify CORS settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://selftesthub.com",
-        "http://localhost:3000",
-        "http://13.233.157.162:3000"
-    ],
+    allow_origins=["*"],  # Allow all origins temporarily for testing
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,24 +19,11 @@ app.add_middleware(
 
 # Import and include routers
 from app.api.v1.api import api_router
-app.include_router(api_router, prefix="/v1")  # Change this to /v1 only
-
-# Setup logging
-log_file = os.path.join(os.path.dirname(__file__), 'logs', 'quiz.log')
-os.makedirs(os.path.dirname(log_file), exist_ok=True)
-
-logging.basicConfig(
-    filename=log_file,
-    level=logging.INFO,
-    format='%(asctime)s - %(message)s'
-)
-
-logger = logging.getLogger('quiz_api')
+app.include_router(api_router, prefix="/api/v1")  # Revert to original prefix
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    print(f"Received request: {request.method} {request.url.path}")
-    print(f"Headers: {request.headers}")
+    print(f"Request path: {request.url.path}")
     response = await call_next(request)
     print(f"Response status: {response.status_code}")
     return response

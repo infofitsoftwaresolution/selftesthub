@@ -1,20 +1,19 @@
 // Base API URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com';
 
 // Common fetch options
 export const fetchOptions = {
   credentials: 'include' as const,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
   },
 };
 
 // API Endpoints
 export const API_ENDPOINTS = {
   // Auth endpoints
-  LOGIN: `${API_URL}/v1/auth/login`,
-  REGISTER: `${API_URL}/v1/auth/register`,
+  LOGIN: `${API_URL}/api/v1/auth/login`,
+  REGISTER: `${API_URL}/api/v1/auth/register`,
   LOGOUT: `${API_URL}/v1/auth/logout`,
   ME: `${API_URL}/v1/auth/me`,
 
@@ -47,5 +46,5 @@ export const API_ENDPOINTS = {
   UPDATE_PROFILE: `${API_URL}/v1/profile`,
   CHANGE_PASSWORD: `${API_URL}/v1/profile/password`,
 };
-87
+
 export default API_ENDPOINTS; 
