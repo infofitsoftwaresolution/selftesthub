@@ -43,7 +43,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=https://selftesthub.com/api
+      - VITE_API_URL=https://selftesthub.com/api/v1
     expose:
       - 3000
     networks:
