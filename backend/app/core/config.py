@@ -12,7 +12,11 @@ class Settings(BaseSettings):
     # Update ALLOWED_ORIGINS to include all necessary URLs
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
-        f"http://{os.getenv('EC2_PUBLIC_IP')}:3000"
+        "https://localhost:3000",
+        "http://selftesthub.com",
+        "https://selftesthub.com",
+        "http://www.selftesthub.com",
+        "https://www.selftesthub.com"
     ]
     
     # Database settings
