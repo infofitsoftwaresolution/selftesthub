@@ -126,9 +126,42 @@ server {
     }
 
     # Backend API
-    location /api {
-        rewrite ^/api/(.*) /$1 break;
-        proxy_pass http://backend:8000;
+    location /api/ {
+        proxy_pass http://backend:8000/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+
+# HTTPS
+server {
+    listen 443 ssl;
+    server_name selftesthub.com www.selftesthub.com;
+
+    ssl_certificate /etc/nginx/ssl/live/selftesthub.com/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/live/selftesthub.com/privkey.pem;
+
+    # SSL configurations
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+
+    # Frontend
+    location / {
+        proxy_pass http://frontend:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Backend API
+    location /api/ {
+        proxy_pass http://backend:8000/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -186,9 +219,8 @@ server {
     }
 
     # Backend API
-    location /api {
-        rewrite ^/api/(.*) /$1 break;
-        proxy_pass http://backend:8000;
+    location /api/ {
+        proxy_pass http://backend:8000/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
