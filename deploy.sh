@@ -81,6 +81,7 @@ SECRET_KEY=${SECRET_KEY}
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 DOMAIN_NAME=selftesthub.com
+CORS_ORIGINS=http://localhost:3000,https://localhost:3000,http://selftesthub.com,https://selftesthub.com,http://www.selftesthub.com,https://www.selftesthub.com
 EOL
 
 # Set frontend environment

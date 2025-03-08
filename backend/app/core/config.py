@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List, Optional
+from typing import List
 import os
 
 class Settings(BaseSettings):
@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     
-    # Update ALLOWED_ORIGINS to include all necessary URLs
-    ALLOWED_ORIGINS: List[str] = [
+    # CORS Settings
+    CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "https://localhost:3000",
         "http://selftesthub.com",
@@ -29,7 +29,9 @@ class Settings(BaseSettings):
     def DATABASE_URL(self) -> str:
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
 
-    class Config:
-        case_sensitive = True
+    model_config = {
+        "case_sensitive": True,
+        "env_file": ".env"
+    }
 
 settings = Settings() 
