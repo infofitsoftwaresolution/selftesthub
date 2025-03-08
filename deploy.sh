@@ -90,7 +90,7 @@ VITE_API_URL=https://selftesthub.com
 EOL
 
 # Add at the beginning of the script, after cd into directory
-echo "Cleaning up Docker resources..."
+echo "Cleaning up Docker resources.."
 docker-compose down || true
 docker system prune -af || true
 docker volume prune -f || true
