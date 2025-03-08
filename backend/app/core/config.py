@@ -10,14 +10,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     
     # CORS Settings
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "https://localhost:3000",
-        "http://selftesthub.com",
-        "https://selftesthub.com",
-        "http://www.selftesthub.com",
-        "https://www.selftesthub.com"
-    ]
+    CORS_ORIGINS_RAW: str = "http://localhost:3000,https://localhost:3000,http://selftesthub.com,https://selftesthub.com,http://www.selftesthub.com,https://www.selftesthub.com"
+
+    @property
+    def CORS_ORIGINS(self) -> List[str]:
+        return [origin.strip() for origin in self.CORS_ORIGINS_RAW.split(",") if origin.strip()]
     
     # Database settings
     POSTGRES_SERVER: str = "infofitscore.c7yic444gxi0.ap-south-1.rds.amazonaws.com"
