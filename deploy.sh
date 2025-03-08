@@ -86,7 +86,7 @@ EOL
 # Set frontend environment
 cat > frontend/.env << EOL
 NODE_ENV=production
-VITE_API_URL=https://selftesthub.com/api
+VITE_API_URL=https://selftesthub.com
 EOL
 
 # Add at the beginning of the script, after cd into directory
