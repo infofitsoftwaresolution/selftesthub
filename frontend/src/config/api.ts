@@ -40,8 +40,8 @@ export const API_ENDPOINTS = {
   // Admin endpoints
   ADMIN_REPORTS: `${API_URL}/api/v1/admin/reports`,
   STUDENT_REPORTS: `${API_URL}/api/v1/admin/student-reports`,
-  QUIZ_REPORTS: `${API_URL}/api/v1/admin/quiz-reports`,
-
+  //QUIZ_REPORTS: `${API_URL}/api/v1/admin/quiz-reports quiz-attempts`,
+  QUIZ_REPORTS: `${API_URL}/api/v1/admin/quiz-attempts`,
   // Profile endpoints
   UPDATE_PROFILE: `${API_URL}/api/v1/profile`,
   CHANGE_PASSWORD: `${API_URL}/api/v1/profile/password`,
