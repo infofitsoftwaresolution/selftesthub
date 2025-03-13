@@ -55,7 +55,7 @@ const QuizReports: React.FC = () => {
 
   const fetchQuizzes = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.QUIZZES, {
+      const response = await fetch(API_ENDPOINTS.QUIZ_REPORTS, {
         ...fetchOptions,
         headers: {
           ...fetchOptions.headers,
