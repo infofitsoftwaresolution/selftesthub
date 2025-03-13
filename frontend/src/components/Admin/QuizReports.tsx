@@ -24,6 +24,14 @@ interface QuizAttempt {
   answers: Record<string, number>;
 }
 
+interface QuizStats {
+  averageScore: number;
+  highestScore: number;
+  lowestScore: number;
+  totalAttempts: number;
+  averageTimeTaken: number;
+}
+
 type SortField = 'score' | 'time_taken' | 'completed_at';
 type SortOrder = 'asc' | 'desc';
 
@@ -34,12 +42,16 @@ const QuizReports: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>('completed_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [selectedQuiz, setSelectedQuiz] = useState<number | 'all'>('all');
-  const [quizzes, setQuizzes] = useState<Array<{ id: number; title: string }>>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [quizStats, setQuizStats] = useState<QuizStats | null>(null);
 
   useEffect(() => {
     fetchQuizzes();
-    fetchAttempts();
   }, []);
+
+  useEffect(() => {
+    fetchAttempts();
+  }, [selectedQuiz]);
 
   const fetchQuizzes = async () => {
     try {
@@ -56,14 +68,18 @@ const QuizReports: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to fetch quizzes:', error);
+      setError('Failed to load quizzes');
     }
   };
 
-  
-
   const fetchAttempts = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.QUIZ_REPORTS, {
+      setLoading(true);
+      const endpoint = selectedQuiz === 'all' 
+        ? API_ENDPOINTS.QUIZ_REPORTS
+        : `${API_ENDPOINTS.QUIZ_REPORTS}?quiz_id=${selectedQuiz}`;
+
+      const response = await fetch(endpoint, {
         ...fetchOptions,
         headers: {
           ...fetchOptions.headers,
@@ -81,12 +97,46 @@ const QuizReports: React.FC = () => {
 
       const data = await response.json();
       setAttempts(data);
+      
+      if (selectedQuiz !== 'all') {
+        calculateQuizStats(data);
+      } else {
+        setQuizStats(null);
+      }
     } catch (error) {
       console.error('Error fetching attempts:', error);
       setError(error instanceof Error ? error.message : 'Failed to load reports');
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateQuizStats = (attemptData: QuizAttempt[]) => {
+    if (attemptData.length === 0) {
+      setQuizStats({
+        averageScore: 0,
+        highestScore: 0,
+        lowestScore: 0,
+        totalAttempts: 0,
+        averageTimeTaken: 0
+      });
+      return;
+    }
+
+    const scores = attemptData.map(a => a.score);
+    const timeTaken = attemptData.map(a => 
+      getTimeTaken(a.started_at, a.completed_at)
+    );
+
+    const stats: QuizStats = {
+      averageScore: scores.reduce((a, b) => a + b, 0) / scores.length,
+      highestScore: Math.max(...scores),
+      lowestScore: Math.min(...scores),
+      totalAttempts: attemptData.length,
+      averageTimeTaken: timeTaken.reduce((a, b) => a + b, 0) / timeTaken.length
+    };
+
+    setQuizStats(stats);
   };
 
   const getTimeTaken = (start: string, end: string) => {
@@ -131,9 +181,7 @@ const QuizReports: React.FC = () => {
       default:
         return 0;
     }
-  }).filter(attempt => 
-    selectedQuiz === 'all' || attempt.quiz.id === selectedQuiz
-  );
+  });
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
@@ -154,6 +202,37 @@ const QuizReports: React.FC = () => {
             ))}
           </select>
         </div>
+
+        {quizStats && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-2">Performance Overview</h3>
+              <div className="space-y-2">
+                <p>Average Score: {quizStats.averageScore.toFixed(1)}%</p>
+                <p>Highest Score: {quizStats.highestScore}%</p>
+                <p>Lowest Score: {quizStats.lowestScore}%</p>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-2">Participation</h3>
+              <div className="space-y-2">
+                <p>Total Attempts: {quizStats.totalAttempts}</p>
+                <p>Average Time: {quizStats.averageTimeTaken.toFixed(1)} minutes</p>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-2">Score Distribution</h3>
+              <div className="space-y-2">
+                <p>Pass Rate: {
+                  ((sortedAttempts.filter(a => a.score >= 70).length / sortedAttempts.length) * 100).toFixed(1)
+                }%</p>
+                <p>Fail Rate: {
+                  ((sortedAttempts.filter(a => a.score < 70).length / sortedAttempts.length) * 100).toFixed(1)
+                }%</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto">
