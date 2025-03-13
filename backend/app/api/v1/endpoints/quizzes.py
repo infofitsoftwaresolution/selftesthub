@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Dict
 from datetime import datetime
 from app.api import deps
 from app.crud import quiz as quiz_crud
@@ -10,6 +10,7 @@ from app.schemas.quiz import (
     QuizUpdate,
     QuizResponse
 )
+from pydantic import BaseModel
 from app.models.quiz import Quiz as QuizModel
 from app.models.user import User
 from app.models.quiz_attempt import QuizAttempt
@@ -18,6 +19,10 @@ import logging
 router = APIRouter()
 
 logger = logging.getLogger(__name__)
+
+# Add this class for request validation
+class QuizSubmission(BaseModel):
+    answers: Dict[str, int]
 
 @router.get("/test-auth")
 def test_auth(current_user: User = Depends(deps.get_current_user)):
@@ -281,54 +286,54 @@ async def start_quiz(
 @router.post("/{quiz_id}/submit")
 async def submit_quiz(
     quiz_id: int,
+    submission: QuizSubmission,
     attempt_id: int,
-    answers: dict,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
     """Submit a quiz attempt"""
-    # Get the quiz attempt
-    attempt = (
-        db.query(QuizAttempt)
-        .filter(
-            QuizAttempt.id == attempt_id,
-            QuizAttempt.quiz_id == quiz_id,
-            QuizAttempt.user_id == current_user.id,
-            QuizAttempt.is_completed.is_(False)
-        )
-        .first()
-    )
-
-    if not attempt:
-        raise HTTPException(
-            status_code=404,
-            detail="Quiz attempt not found or already completed"
-        )
-
-    # Get the quiz
-    quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
-    if not quiz:
-        raise HTTPException(status_code=404, detail="Quiz not found")
-
-    # Calculate score
-    total_questions = len(quiz.questions)
-    correct_answers = 0
-
-    for q_idx, answer in answers.items():
-        question_idx = int(q_idx)
-        if question_idx < total_questions:
-            if answer == quiz.questions[question_idx]["correctAnswer"]:
-                correct_answers += 1
-
-    score = (correct_answers / total_questions * 100) if total_questions > 0 else 0
-
-    # Update attempt
-    attempt.answers = answers
-    attempt.score = score
-    attempt.completed_at = datetime.utcnow()
-    attempt.is_completed = True
-
     try:
+        # Get the quiz attempt
+        attempt = (
+            db.query(QuizAttempt)
+            .filter(
+                QuizAttempt.id == attempt_id,
+                QuizAttempt.quiz_id == quiz_id,
+                QuizAttempt.user_id == current_user.id,
+                QuizAttempt.is_completed.is_(False)
+            )
+            .first()
+        )
+
+        if not attempt:
+            raise HTTPException(
+                status_code=404,
+                detail="Quiz attempt not found or already completed"
+            )
+
+        # Get the quiz
+        quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
+        if not quiz:
+            raise HTTPException(status_code=404, detail="Quiz not found")
+
+        # Calculate score
+        total_questions = len(quiz.questions)
+        correct_answers = 0
+
+        for q_idx, answer in submission.answers.items():
+            question_idx = int(q_idx)
+            if question_idx < total_questions:
+                if answer == quiz.questions[question_idx]["correctAnswer"]:
+                    correct_answers += 1
+
+        score = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+
+        # Update attempt
+        attempt.answers = submission.answers
+        attempt.score = score
+        attempt.completed_at = datetime.utcnow()
+        attempt.is_completed = True
+
         db.commit()
         db.refresh(attempt)
 
@@ -342,6 +347,7 @@ async def submit_quiz(
         }
     except Exception as e:
         db.rollback()
+        print(f"Error submitting quiz: {str(e)}")  # Add debug logging
         raise HTTPException(
             status_code=500,
             detail=f"Error submitting quiz: {str(e)}"

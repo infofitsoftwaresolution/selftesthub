@@ -60,6 +60,12 @@ const QuizInterface: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Convert answers object keys to strings
+      const formattedAnswers = Object.entries(answers).reduce((acc, [key, value]) => {
+        acc[key.toString()] = value;
+        return acc;
+      }, {} as Record<string, number>);
+
       const response = await fetch(API_ENDPOINTS.SUBMIT_QUIZ(quizId as string, attemptId.toString()), {
         method: 'POST',
         ...fetchOptions,
@@ -67,15 +73,16 @@ const QuizInterface: React.FC = () => {
           ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ answers })
+        body: JSON.stringify({ answers: formattedAnswers })
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        navigate('/quiz-result', { state: { result } });
-      } else {
-        throw new Error('Failed to submit quiz');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to submit quiz');
       }
+
+      const result = await response.json();
+      navigate('/quiz-result', { state: { result } });
     } catch (err) {
       console.error('Failed to submit quiz:', err);
       alert('Failed to submit quiz. Please try again.');
