@@ -24,7 +24,7 @@ export const API_ENDPOINTS = {
   UPDATE_QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}`,
   DELETE_QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}`,
   START_QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}/start`,
-  SUBMIT_QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}/submit`,
+  SUBMIT_QUIZ: (quizId: string, attemptId: string) => `${API_URL}/api/v1/quizzes/${quizId}/submit?attempt_id=${attemptId}`,
 
   // Results endpoints
   RESULTS: `${API_URL}/api/v1/results`,

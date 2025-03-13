@@ -276,4 +276,73 @@ async def start_quiz(
         "attemptId": new_attempt.id,
         "message": "New attempt created",
         "startedAt": new_attempt.started_at
-    } 
+    }
+
+@router.post("/{quiz_id}/submit")
+async def submit_quiz(
+    quiz_id: int,
+    attempt_id: int,
+    answers: dict,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    """Submit a quiz attempt"""
+    # Get the quiz attempt
+    attempt = (
+        db.query(QuizAttempt)
+        .filter(
+            QuizAttempt.id == attempt_id,
+            QuizAttempt.quiz_id == quiz_id,
+            QuizAttempt.user_id == current_user.id,
+            QuizAttempt.is_completed.is_(False)
+        )
+        .first()
+    )
+
+    if not attempt:
+        raise HTTPException(
+            status_code=404,
+            detail="Quiz attempt not found or already completed"
+        )
+
+    # Get the quiz
+    quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    # Calculate score
+    total_questions = len(quiz.questions)
+    correct_answers = 0
+
+    for q_idx, answer in answers.items():
+        question_idx = int(q_idx)
+        if question_idx < total_questions:
+            if answer == quiz.questions[question_idx]["correctAnswer"]:
+                correct_answers += 1
+
+    score = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+
+    # Update attempt
+    attempt.answers = answers
+    attempt.score = score
+    attempt.completed_at = datetime.utcnow()
+    attempt.is_completed = True
+
+    try:
+        db.commit()
+        db.refresh(attempt)
+
+        return {
+            "message": "Quiz submitted successfully",
+            "score": score,
+            "total_questions": total_questions,
+            "correct_answers": correct_answers,
+            "completed_at": attempt.completed_at,
+            "answers": attempt.answers
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error submitting quiz: {str(e)}"
+        ) 

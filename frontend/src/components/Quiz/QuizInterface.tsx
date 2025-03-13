@@ -8,16 +8,51 @@ const QuizInterface: React.FC = () => {
   const { quizId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const attemptId = location.state?.attemptId;
   
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attemptId, setAttemptId] = useState<number | null>(null);
+
+  // Start quiz and get attempt ID
+  useEffect(() => {
+    const startQuiz = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.START_QUIZ(quizId as string), {
+          method: 'POST',
+          ...fetchOptions,
+          headers: {
+            ...fetchOptions.headers,
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setAttemptId(data.attemptId);
+        } else {
+          throw new Error('Failed to start quiz');
+        }
+      } catch (error) {
+        console.error('Error starting quiz:', error);
+        navigate('/available-quizzes');
+      }
+    };
+
+    if (quizId && !attemptId) {
+      startQuiz();
+    }
+  }, [quizId, navigate]);
 
   // Add submit handler
   const handleSubmit = useCallback(async () => {
+    if (!attemptId) {
+      alert('No active quiz attempt found');
+      return;
+    }
+
     if (!window.confirm('Are you sure you want to submit the quiz?')) {
       return;
     }
@@ -25,14 +60,14 @@ const QuizInterface: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(API_ENDPOINTS.SUBMIT_QUIZ(attemptId.toString()), {
+      const response = await fetch(API_ENDPOINTS.SUBMIT_QUIZ(quizId as string, attemptId.toString()), {
         method: 'POST',
         ...fetchOptions,
         headers: {
           ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ answers, is_completed: true })
+        body: JSON.stringify({ answers })
       });
 
       if (response.ok) {
@@ -47,7 +82,7 @@ const QuizInterface: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [attemptId, answers, navigate]);
+  }, [attemptId, quizId, answers, navigate]);
 
   // Fetch quiz data
   useEffect(() => {
