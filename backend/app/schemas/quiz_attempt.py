@@ -1,23 +1,28 @@
 from pydantic import BaseModel
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from datetime import datetime
+from .quiz import Quiz
 
-class QuizAttemptCreate(BaseModel):
-    quiz_id: int
-
-class QuizAttemptUpdate(BaseModel):
-    answers: Dict[str, int]
-    is_completed: bool = True
-
-class QuizAttempt(BaseModel):
-    id: int
+class QuizAttemptBase(BaseModel):
     quiz_id: int
     user_id: int
     started_at: datetime
     completed_at: Optional[datetime] = None
-    answers: Dict[str, int] = {}
-    score: Optional[int] = None
     is_completed: bool = False
+    answers: Dict[str, int] = {}
+    score: float = 0.0
+
+class QuizAttemptCreate(QuizAttemptBase):
+    pass
+
+class QuizAttempt(QuizAttemptBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+class QuizAttemptWithDetails(QuizAttempt):
+    quiz: Optional[Quiz] = None
 
     class Config:
         from_attributes = True
@@ -36,16 +41,4 @@ class QuizBase(BaseModel):
     duration: int
 
     class Config:
-        from_attributes = True
-
-class QuizAttemptWithDetails(BaseModel):
-    id: int
-    user: UserBase
-    quiz: QuizBase
-    started_at: datetime
-    completed_at: Optional[datetime]
-    score: Optional[float]
-    answers: Optional[Dict[str, int]]
-
-    class Config:
-        orm_mode = True 
+        from_attributes = True 
