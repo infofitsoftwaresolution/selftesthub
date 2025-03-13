@@ -60,16 +60,25 @@ async def get_student_reports(
 
 @router.get("/quiz-attempts", response_model=List[QuizAttemptWithDetails])
 async def get_quiz_attempts(
+    quiz_id: int = None,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_admin_user)
 ):
     """
     Get all quiz attempts with user and quiz details.
+    Optionally filter by quiz_id.
     Only accessible by admin users.
     """
     try:
         logger.info(f"Fetching quiz attempts for admin user {current_user.id}")
-        attempts = get_all_quiz_attempts(db)
+        query = db.query(QuizAttempt).filter(QuizAttempt.is_completed.is_(True))
+        
+        # Apply quiz filter if quiz_id is provided
+        if quiz_id is not None:
+            logger.info(f"Filtering attempts for quiz_id: {quiz_id}")
+            query = query.filter(QuizAttempt.quiz_id == quiz_id)
+        
+        attempts = query.all()
         logger.info(f"Successfully fetched {len(attempts)} quiz attempts")
         return attempts
     except Exception as e:
