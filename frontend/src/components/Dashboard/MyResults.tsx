@@ -56,7 +56,7 @@ const MyResults: React.FC = () => {
       const attemptsWithQuizzes = await Promise.all(
         data.map(async (attempt: QuizAttempt) => {
           try {
-            const quizResponse = await fetch(API_ENDPOINTS.QUIZ(attempt.quiz_id.toString()), {
+            const quizResponse = await fetch(API_ENDPOINTS.QUIZ_RESULTS(attempt.quiz_id.toString()), {
               ...fetchOptions,
               headers: {
                 ...fetchOptions.headers,

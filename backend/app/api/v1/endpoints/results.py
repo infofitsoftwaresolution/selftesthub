@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from typing import List
 from app.api import deps
 from app.models.user import User
@@ -16,7 +16,6 @@ async def get_user_results(
     """Get all quiz results for the current user"""
     attempts = (
         db.query(QuizAttempt)
-        .options(joinedload(QuizAttempt.quiz))  # Eager load the quiz relationship
         .filter(
             QuizAttempt.user_id == current_user.id,
             QuizAttempt.is_completed.is_(True)
@@ -35,7 +34,6 @@ async def get_quiz_results(
     """Get all results for a specific quiz"""
     attempts = (
         db.query(QuizAttempt)
-        .options(joinedload(QuizAttempt.quiz))  # Eager load the quiz relationship
         .filter(
             QuizAttempt.quiz_id == quiz_id,
             QuizAttempt.is_completed.is_(True)
