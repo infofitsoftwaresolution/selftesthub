@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime
 from app.api import deps
 from app.crud import quiz as quiz_crud
 from app.schemas.quiz import (
@@ -221,4 +222,58 @@ async def delete_quiz(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error deleting quiz: {str(e)}"
-        ) 
+        )
+
+@router.post("/{quiz_id}/start")
+async def start_quiz(
+    quiz_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    """Start a new quiz attempt"""
+    # Check if quiz exists
+    quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    # Check if quiz is active
+    if not quiz.is_active:
+        raise HTTPException(status_code=400, detail="Quiz is not active")
+
+    # Check if user has any ongoing attempts
+    ongoing_attempt = (
+        db.query(QuizAttempt)
+        .filter(
+            QuizAttempt.quiz_id == quiz_id,
+            QuizAttempt.user_id == current_user.id,
+            QuizAttempt.is_completed.is_(False)
+        )
+        .first()
+    )
+
+    if ongoing_attempt:
+        return {
+            "attemptId": ongoing_attempt.id,
+            "message": "Resuming existing attempt",
+            "startedAt": ongoing_attempt.started_at
+        }
+
+    # Create new attempt
+    new_attempt = QuizAttempt(
+        quiz_id=quiz_id,
+        user_id=current_user.id,
+        started_at=datetime.utcnow(),
+        is_completed=False,
+        answers={},
+        score=0
+    )
+
+    db.add(new_attempt)
+    db.commit()
+    db.refresh(new_attempt)
+
+    return {
+        "attemptId": new_attempt.id,
+        "message": "New attempt created",
+        "startedAt": new_attempt.started_at
+    } 
