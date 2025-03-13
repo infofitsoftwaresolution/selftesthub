@@ -20,7 +20,9 @@ services:
 
   backend:
     container_name: infofitscore_backend
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app
@@ -32,18 +34,19 @@ services:
       - POSTGRES_PASSWORD=infofitsoftware
       - POSTGRES_DB=postgres
       - DOMAIN_NAME=selftesthub.com
-      - CORS_ORIGINS_RAW=http://localhost:3000,https://localhost:3000,http://selftesthub.com,https://selftesthub.com,http://www.selftesthub.com,https://www.selftesthub.com
+      - CORS_ORIGINS=["http://localhost:3000"]
     networks:
       - app_network
 
   frontend:
     container_name: infofitscore_frontend
-    build: 
+    build:
       context: ./frontend
       dockerfile: Dockerfile
+    ports:
+      - "3000:80"
     environment:
-      - NODE_ENV=production
-      - VITE_API_URL=https://selftesthub.com
+      - VITE_API_URL=http://localhost:8000
     expose:
       - 3000
     networks:
@@ -53,6 +56,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    depends_on:
+      - backend
 
   db:
     container_name: infofitscore_db
