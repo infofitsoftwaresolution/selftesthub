@@ -3,7 +3,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com';
 
 // Ensure HTTPS without modifying the URL structure
 const getSecureUrl = (url: string) => {
-  return url.replace('http://', 'https://');
+  const secureUrl = url.replace('http://', 'https://');
+  // Remove trailing slash if it exists
+  return secureUrl.endsWith('/') ? secureUrl.slice(0, -1) : secureUrl;
 };
 
 // Common fetch options
@@ -11,8 +13,10 @@ export const fetchOptions = {
   credentials: 'include' as const,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
   },
+  mode: 'cors' as RequestMode
 };
 
 // API Endpoints

@@ -19,15 +19,18 @@ const ManageQuizzes: React.FC = () => {
         headers: {
           ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        }
+          'Accept': 'application/json'
+        },
+        redirect: 'follow',
+        mode: 'cors'
       });
       
       if (response.ok) {
         const data = await response.json();
         setQuizzes(data);
       } else {
-        const data = await response.json();
-        setError(data.detail || 'Failed to fetch quizzes');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.detail || `Failed to fetch quizzes: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error fetching quizzes:', error);
