@@ -1,5 +1,8 @@
 // Base API URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL?.replace('http://', 'https://') || 'https://selftesthub.com';
+const API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com';
+
+// Ensure HTTPS
+const getSecureUrl = (url: string) => url.replace('http://', 'https://');
 
 // Common fetch options
 export const fetchOptions = {
@@ -12,24 +15,25 @@ export const fetchOptions = {
 // API Endpoints
 export const API_ENDPOINTS = {
   // Auth endpoints
-  LOGIN: `${API_URL}/api/v1/auth/login`,
-  REGISTER: `${API_URL}/api/v1/auth/register`,
-  LOGOUT: `${API_URL}/api/v1/auth/logout`,
-  ME: `${API_URL}/api/v1/auth/me`,
+  LOGIN: getSecureUrl(`${API_URL}/api/v1/auth/login`),
+  REGISTER: getSecureUrl(`${API_URL}/api/v1/auth/register`),
+  LOGOUT: getSecureUrl(`${API_URL}/api/v1/auth/logout`),
+  ME: getSecureUrl(`${API_URL}/api/v1/auth/me`),
 
   // Quiz endpoints
-  QUIZZES: `${API_URL}/api/v1/quizzes`,
-  QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}`,
-  CREATE_QUIZ: `${API_URL}/api/v1/quizzes/create_quiz`,
-  UPDATE_QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}`,
-  DELETE_QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}`,
-  START_QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}/start`,
-  SUBMIT_QUIZ: (quizId: string, attemptId: string) => `${API_URL}/api/v1/quizzes/${quizId}/submit?attempt_id=${attemptId}`,
+  QUIZZES: getSecureUrl(`${API_URL}/api/v1/quizzes`),
+  QUIZ: (id: string) => getSecureUrl(`${API_URL}/api/v1/quizzes/${id}`),
+  CREATE_QUIZ: getSecureUrl(`${API_URL}/api/v1/quizzes`),
+  UPDATE_QUIZ: (id: string) => getSecureUrl(`${API_URL}/api/v1/quizzes/${id}`),
+  DELETE_QUIZ: (id: string) => getSecureUrl(`${API_URL}/api/v1/quizzes/${id}`),
+  START_QUIZ: (id: string) => getSecureUrl(`${API_URL}/api/v1/quizzes/${id}/start`),
+  SUBMIT_QUIZ: (quizId: string, attemptId: string) => 
+    getSecureUrl(`${API_URL}/api/v1/quizzes/${quizId}/submit?attempt_id=${attemptId}`),
 
   // Results endpoints
-  RESULTS: `${API_URL}/api/v1/results`,
-  USER_RESULTS: `${API_URL}/api/v1/results/user`,
-  QUIZ_RESULTS: (quizId: string) => `${API_URL}/api/v1/results/quiz/${quizId}`,
+  RESULTS: getSecureUrl(`${API_URL}/api/v1/results`),
+  USER_RESULTS: getSecureUrl(`${API_URL}/api/v1/results/user`),
+  QUIZ_RESULTS: (quizId: string) => getSecureUrl(`${API_URL}/api/v1/results/quiz/${quizId}`),
 
   // User endpoints
   USERS: `${API_URL}/api/v1/users`,
