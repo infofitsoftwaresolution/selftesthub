@@ -1,5 +1,5 @@
 // Base API URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com';
+const API_URL = import.meta.env.VITE_API_URL?.replace('http://', 'https://') || 'https://selftesthub.com';
 
 // Common fetch options
 export const fetchOptions = {
