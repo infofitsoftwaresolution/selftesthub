@@ -1,10 +1,9 @@
 // Base API URL from environment variable
 const API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com';
 
-// Ensure HTTPS and trailing slash consistency
+// Ensure HTTPS without modifying the URL structure
 const getSecureUrl = (url: string) => {
-  const secureUrl = url.replace('http://', 'https://');
-  return secureUrl.endsWith('/') ? secureUrl : `${secureUrl}/`;
+  return url.replace('http://', 'https://');
 };
 
 // Common fetch options
@@ -12,6 +11,7 @@ export const fetchOptions = {
   credentials: 'include' as const,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json'
   },
 };
 
