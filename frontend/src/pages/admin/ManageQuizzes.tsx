@@ -14,17 +14,13 @@ const ManageQuizzes: React.FC = () => {
 
   const fetchQuizzes = async () => {
     try {
-      const url = API_ENDPOINTS.QUIZZES.replace('http://', 'https://');
-      console.log('Fetching quizzes from:', url);
-      
-      const response = await fetch(url, {
+      const response = await fetch(API_ENDPOINTS.QUIZZES, {
         ...fetchOptions,
         headers: {
           ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
-      console.log('Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
         setQuizzes(data);
@@ -33,7 +29,7 @@ const ManageQuizzes: React.FC = () => {
         setError(data.detail || 'Failed to fetch quizzes');
       }
     } catch (error) {
-      console.error('Full error details:', error);
+      console.error('Error fetching quizzes:', error);
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
