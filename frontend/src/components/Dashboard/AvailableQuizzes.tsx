@@ -16,7 +16,7 @@ const AvailableQuizzes: React.FC = () => {
 
   const fetchQuizzes = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.QUIZZES}/active`, {
+      const response = await fetch(`${API_ENDPOINTS.ACTIVE_QUIZZES}/active`, {
         ...fetchOptions,
         headers: {
           ...fetchOptions.headers,

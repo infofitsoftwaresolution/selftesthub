@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
 
   // Quiz endpoints
   QUIZZES: `${API_URL}/api/v1/quizzes/`,
+  ACTIVE_QUIZZES: `${API_URL}/api/v1/quizzes`,
   QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}`,
   CREATE_QUIZ: `${API_URL}/api/v1/quizzes/`,
   UPDATE_QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}`,
