@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
-import { API_ENDPOINTS, fetchOptions } from '../../config/api';
+import { API_ENDPOINTS } from '../../config/api';
 import CreateQuizModal from '../../components/Admin/CreateQuizModal';
 import EditQuizModal from '../../components/Admin/EditQuizModal';
 import { Quiz } from '../../types/quiz';
@@ -15,22 +15,16 @@ const ManageQuizzes: React.FC = () => {
   const fetchQuizzes = async () => {
     try {
       const response = await fetch(API_ENDPOINTS.QUIZZES, {
-        ...fetchOptions,
         headers: {
-          ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json'
-        },
-        redirect: 'follow',
-        mode: 'cors'
+        }
       });
-      
       if (response.ok) {
         const data = await response.json();
         setQuizzes(data);
       } else {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.detail || `Failed to fetch quizzes: ${response.status} ${response.statusText}`);
+        const data = await response.json();
+        setError(data.detail || 'Failed to fetch quizzes');
       }
     } catch (error) {
       console.error('Error fetching quizzes:', error);
@@ -53,9 +47,8 @@ const ManageQuizzes: React.FC = () => {
     try {
       const response = await fetch(API_ENDPOINTS.UPDATE_QUIZ(quizId.toString()), {
         method: 'PATCH',
-        ...fetchOptions,
         headers: {
-          ...fetchOptions.headers,
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({ is_active: !currentStatus })
@@ -75,9 +68,7 @@ const ManageQuizzes: React.FC = () => {
     try {
       const response = await fetch(API_ENDPOINTS.DELETE_QUIZ(quizId.toString()), {
         method: 'DELETE',
-        ...fetchOptions,
         headers: {
-          ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });

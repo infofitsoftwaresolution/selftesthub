@@ -60,6 +60,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
         return;
       }
 
+      // Format the questions data properly
       const formattedQuestions = quizData.questions.map(q => ({
         text: q.text,
         options: q.options,
@@ -72,27 +73,26 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
         ...fetchOptions,
         headers: {
           ...fetchOptions.headers,
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           title: quizData.title,
           type: quizData.type,
           duration: quizData.duration,
           questions: formattedQuestions
-        }),
-        redirect: 'follow'
+        })
       });
 
       if (!response.ok) {
-        const data = await response.json().catch(() => null);
-        throw new Error(data?.detail || `HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        throw new Error(data.detail || 'Failed to create quiz');
       }
 
-      await response.json();
+      await response.json(); // Just consume the response
       onQuizCreated();
       onClose();
       
+      // Reset form
       setQuizData({
         title: '',
         type: 'mcq',
@@ -101,8 +101,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
       });
       setError('');
     } catch (err) {
-      console.error('Error creating quiz:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create quiz. Please check your connection and try again.');
+      setError(err instanceof Error ? err.message : 'Failed to create quiz');
     }
   };
 
