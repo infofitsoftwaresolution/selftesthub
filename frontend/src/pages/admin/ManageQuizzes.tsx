@@ -14,9 +14,10 @@ const ManageQuizzes: React.FC = () => {
 
   const fetchQuizzes = async () => {
     try {
-      console.log('Fetching quizzes from:', API_ENDPOINTS.QUIZZES);
+      const url = API_ENDPOINTS.QUIZZES.replace('http://', 'https://');
+      console.log('Fetching quizzes from:', url);
       
-      const response = await fetch(`${API_ENDPOINTS.QUIZZES}`, {
+      const response = await fetch(url, {
         ...fetchOptions,
         headers: {
           ...fetchOptions.headers,
