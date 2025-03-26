@@ -1,6 +1,6 @@
 // Base API URL from environment variable
 const API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com';
-
+const getSecureUrl = (url: string) => url.replace('http://', 'https://');
 // Common fetch options
 export const fetchOptions = {
   credentials: 'include' as const,
@@ -49,8 +49,8 @@ export const API_ENDPOINTS = {
   CHANGE_PASSWORD: `${API_URL}/api/v1/profile/password`,
 
   // Add these new endpoints
-  REGISTER_SEND_OTP: `${API_URL}/api/v1/auth/register/send-otp/`,
-  REGISTER_VERIFY_OTP: `${API_URL}/api/v1/auth/register/verify-otp/`,
+  REGISTER_SEND_OTP: getSecureUrl(`${API_URL}/api/v1/auth/register/send-otp/`),
+  REGISTER_VERIFY_OTP: getSecureUrl(`${API_URL}/api/v1/auth/register/verify-otp/`),
 };
 
 export default API_ENDPOINTS; 
