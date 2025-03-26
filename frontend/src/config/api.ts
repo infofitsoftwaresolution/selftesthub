@@ -49,8 +49,8 @@ export const API_ENDPOINTS = {
   CHANGE_PASSWORD: `${API_URL}/api/v1/profile/password`,
 
   // Add these new endpoints
-  REGISTER_SEND_OTP: `${API_URL}/api/v1/auth/register/send-otp`,
-  REGISTER_VERIFY_OTP: `${API_URL}/api/v1/auth/register/verify-otp`,
+  REGISTER_SEND_OTP: `${API_URL}/api/v1/auth/register/send-otp/`,
+  REGISTER_VERIFY_OTP: `${API_URL}/api/v1/auth/register/verify-otp/`,
 };
 
 export default API_ENDPOINTS; 
