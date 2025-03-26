@@ -32,6 +32,16 @@ def test_auth(current_user: User = Depends(deps.get_current_user)):
 def test_db(db: Session = Depends(deps.get_db)):
     return {"msg": "DB works"}
 
+@router.get("/")
+def read_quizzes(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(deps.get_db),
+    _: User = Depends(deps.get_current_user)
+) -> List[QuizSchema]:
+    """Retrieve quizzes"""
+    return quiz_crud.get_quizzes(db, skip=skip, limit=limit)
+
 @router.get("/active")
 async def get_active_quizzes(
     request: Request,
@@ -102,16 +112,6 @@ def create_quiz(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-
-@router.get("/", response_model=List[QuizSchema])
-def read_quizzes(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(deps.get_db),
-    _: User = Depends(deps.get_current_user)
-) -> List[QuizSchema]:
-    """Retrieve quizzes"""
-    return quiz_crud.get_quizzes(db, skip=skip, limit=limit)
 
 @router.get("/{quiz_id}", response_model=QuizSchema)
 def read_quiz(

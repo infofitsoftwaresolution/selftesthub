@@ -4,6 +4,7 @@ import { API_ENDPOINTS,fetchOptions } from '../../config/api';
 import CreateQuizModal from '../../components/Admin/CreateQuizModal';
 import EditQuizModal from '../../components/Admin/EditQuizModal';
 import { Quiz } from '../../types/quiz';
+console.log('Fetching quizzes from:here in the page');
 
 const ManageQuizzes: React.FC = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -14,13 +15,18 @@ const ManageQuizzes: React.FC = () => {
 
   const fetchQuizzes = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.QUIZZES, {
+      console.log('Fetching quizzes from:', API_ENDPOINTS.QUIZZES);
+      const url = API_ENDPOINTS.QUIZZES.replace('http://', 'https://');
+      console.log('Fetching quizzes from:', url);
+      
+      const response = await fetch(url, {
         ...fetchOptions,
         headers: {
           ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      console.log('Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
         setQuizzes(data);
@@ -29,14 +35,15 @@ const ManageQuizzes: React.FC = () => {
         setError(data.detail || 'Failed to fetch quizzes');
       }
     } catch (error) {
-      console.error('Error fetching quizzes:', error);
+      console.error('Full error details:', error);
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
+  console.log('Fetching quizzes from here:');
   useEffect(() => {
+    console.log('Fetching quizzes from:');
     fetchQuizzes();
   }, []);
 
