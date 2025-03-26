@@ -4,7 +4,7 @@ import { API_ENDPOINTS,fetchOptions } from '../../config/api';
 import CreateQuizModal from '../../components/Admin/CreateQuizModal';
 import EditQuizModal from '../../components/Admin/EditQuizModal';
 import { Quiz } from '../../types/quiz';
-
+console.log('Fetching quizzes from:here in the page');
 const ManageQuizzes: React.FC = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -14,6 +14,7 @@ const ManageQuizzes: React.FC = () => {
 
   const fetchQuizzes = async () => {
     try {
+      console.log('Fetching quizzes from here in the fetchquizzes',API_ENDPOINTS.QUIZZES);
       const response = await fetch(API_ENDPOINTS.QUIZZES, {
         ...fetchOptions,
         headers: {
@@ -35,8 +36,9 @@ const ManageQuizzes: React.FC = () => {
       setLoading(false);
     }
   };
-
+  console.log('Fetching quizzes from here in the fetchquizzes 1');
   useEffect(() => {
+    console.log('Fetching quizzes from here in the fetchquizzes');
     fetchQuizzes();
   }, []);
 
