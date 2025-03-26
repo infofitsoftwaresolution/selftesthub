@@ -8,7 +8,7 @@ from statistics import mean
 from app.crud.quiz_attempt import get_all_quiz_attempts
 from app.schemas.quiz_attempt import QuizAttemptWithDetails
 import logging
-from app.crud.quiz import get_all_quizzes
+from app.crud.quiz import get_quizzes
 
 router = APIRouter()
 logger = logging.getLogger('quiz_api')

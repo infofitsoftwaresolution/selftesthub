@@ -8,7 +8,7 @@ export const fetchOptions = {
     'Content-Type': 'application/json',
   },
 };
-
+console.log('API_URL:', API_URL);
 // API Endpoints
 export const API_ENDPOINTS = {
   // Auth endpoints
