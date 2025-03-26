@@ -15,8 +15,10 @@ const ManageQuizzes: React.FC = () => {
   const fetchQuizzes = async () => {
     try {
       const response = await fetch(API_ENDPOINTS.QUIZZES, {
+        ...fetchOptions,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       if (response.ok) {
