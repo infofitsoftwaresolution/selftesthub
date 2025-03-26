@@ -21,7 +21,7 @@ export const API_ENDPOINTS = {
   ME: getSecureUrl(`${API_URL}/api/v1/auth/me`),
 
   // Quiz endpoints
-  QUIZZES: getSecureUrl(`${API_URL}/api/v1/quizzes`),
+  QUIZZES: getSecureUrl(`${API_URL}/api/v1/admin/quizzes`),
   QUIZ: (id: string) => getSecureUrl(`${API_URL}/api/v1/quizzes/${id}`),
   CREATE_QUIZ: getSecureUrl(`${API_URL}/api/v1/quizzes`),
   UPDATE_QUIZ: (id: string) => getSecureUrl(`${API_URL}/api/v1/quizzes/${id}`),

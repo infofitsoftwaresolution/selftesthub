@@ -8,6 +8,7 @@ from statistics import mean
 from app.crud.quiz_attempt import get_all_quiz_attempts
 from app.schemas.quiz_attempt import QuizAttemptWithDetails
 import logging
+from app.crud.quiz import get_all_quizzes
 
 router = APIRouter()
 logger = logging.getLogger('quiz_api')
@@ -86,4 +87,12 @@ async def get_quiz_attempts(
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error while fetching quiz attempts: {str(e)}"
-        ) 
+        )
+
+@router.get("/quizzes")
+async def get_all_quizzes(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_admin_user)
+):
+    """Get all quizzes for admin"""
+    return get_all_quizzes(db) 
