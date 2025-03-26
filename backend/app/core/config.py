@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str = None
     DOMAIN_NAME: str = "selftesthub.com"
 
+    # Email settings
+    SMTP_USER: str = "infofitsoftwaresolution@gmail.com"
+    SMTP_PASSWORD: str = "viojzynbkdtielrw"  # Gmail App Password
+
     @property
     def CORS_ORIGINS(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS_RAW.split(",") if origin.strip()]
