@@ -78,7 +78,14 @@ const MyResults: React.FC = () => {
 
             const quizData = await quizResponse.json();
             console.log('Fetched quiz data:', quizData); // Debug log
-            return { ...attempt, quiz: quizData };
+            
+            // Find the matching attempt in quizData
+            const matchingAttempt = quizData.find((q: any) => q.id === attempt.id);
+            if (matchingAttempt) {
+              return { ...attempt, quiz: matchingAttempt.quiz };
+            }
+            
+            return attempt;
           } catch (error) {
             console.error(`Failed to fetch quiz ${attempt.quiz.id}:`, error);
           }
