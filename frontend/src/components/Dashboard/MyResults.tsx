@@ -56,14 +56,14 @@ const MyResults: React.FC = () => {
       // Fetch quiz details for each attempt
       const attemptsWithQuizzes = await Promise.all(
         data.map(async (attempt: QuizAttempt) => {
-          if (!attempt.quiz_id) {
-            console.error('Attempt missing quiz_id:', attempt);
+          if (!attempt.quiz?.id) {
+            console.error('Attempt missing quiz.id:', attempt);
             return attempt;
           }
 
           try {
-            console.log('Fetching quiz details for quiz_id:', attempt.quiz_id); // Debug log
-            const quizResponse = await fetch(API_ENDPOINTS.QUIZ_RESULTS(attempt.quiz_id.toString()), {
+            console.log('Fetching quiz details for quiz.id:', attempt.quiz.id); // Debug log
+            const quizResponse = await fetch(API_ENDPOINTS.QUIZ_RESULTS(attempt.quiz.id.toString()), {
               ...fetchOptions,
               headers: {
                 ...fetchOptions.headers,
@@ -72,7 +72,7 @@ const MyResults: React.FC = () => {
             });
 
             if (!quizResponse.ok) {
-              console.error(`Failed to fetch quiz ${attempt.quiz_id}:`, quizResponse.status);
+              console.error(`Failed to fetch quiz ${attempt.quiz.id}:`, quizResponse.status);
               return attempt;
             }
 
@@ -80,7 +80,7 @@ const MyResults: React.FC = () => {
             console.log('Fetched quiz data:', quizData); // Debug log
             return { ...attempt, quiz: quizData };
           } catch (error) {
-            console.error(`Failed to fetch quiz ${attempt.quiz_id}:`, error);
+            console.error(`Failed to fetch quiz ${attempt.quiz.id}:`, error);
           }
           return attempt;
         })
