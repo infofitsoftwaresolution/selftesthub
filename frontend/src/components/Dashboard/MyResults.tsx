@@ -63,7 +63,8 @@ const MyResults: React.FC = () => {
 
           try {
             console.log('Fetching quiz details for quiz.id:', attempt.quiz.id); // Debug log
-            const quizResponse = await fetch(API_ENDPOINTS.QUIZ_RESULTS(attempt.quiz.id.toString()), {
+            // Use the QUIZ endpoint instead of QUIZ_RESULTS
+            const quizResponse = await fetch(API_ENDPOINTS.QUIZ(attempt.quiz.id.toString()), {
               ...fetchOptions,
               headers: {
                 ...fetchOptions.headers,
@@ -79,21 +80,16 @@ const MyResults: React.FC = () => {
             const quizData = await quizResponse.json();
             console.log('Fetched quiz data:', quizData); // Debug log
             
-            // Find the matching attempt in quizData
-            const matchingAttempt = quizData.find((q: any) => q.id === attempt.id);
-            console.log('Matching attempt:', matchingAttempt); // Debug log
-            
-            if (matchingAttempt?.quiz) {
-              // Ensure the quiz object has the required structure
-              const quizWithQuestions = {
+            // Merge the quiz data with the attempt
+            const updatedAttempt = {
+              ...attempt,
+              quiz: {
                 ...attempt.quiz,
-                questions: matchingAttempt.quiz.questions || []
-              };
-              console.log('Quiz with questions:', quizWithQuestions); // Debug log
-              return { ...attempt, quiz: quizWithQuestions };
-            }
-            
-            return attempt;
+                questions: quizData.questions || []
+              }
+            };
+            console.log('Updated attempt with quiz data:', updatedAttempt); // Debug log
+            return updatedAttempt;
           } catch (error) {
             console.error(`Failed to fetch quiz ${attempt.quiz.id}:`, error);
           }
