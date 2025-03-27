@@ -51,11 +51,18 @@ const MyResults: React.FC = () => {
       }
 
       const data = await response.json();
-      
+      console.log('Fetched attempts data:', data); // Debug log
+
       // Fetch quiz details for each attempt
       const attemptsWithQuizzes = await Promise.all(
         data.map(async (attempt: QuizAttempt) => {
+          if (!attempt.quiz_id) {
+            console.error('Attempt missing quiz_id:', attempt);
+            return attempt;
+          }
+
           try {
+            console.log('Fetching quiz details for quiz_id:', attempt.quiz_id); // Debug log
             const quizResponse = await fetch(API_ENDPOINTS.QUIZ_RESULTS(attempt.quiz_id.toString()), {
               ...fetchOptions,
               headers: {
@@ -63,10 +70,15 @@ const MyResults: React.FC = () => {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
               }
             });
-            if (quizResponse.ok) {
-              const quizData = await quizResponse.json();
-              return { ...attempt, quiz: quizData };
+
+            if (!quizResponse.ok) {
+              console.error(`Failed to fetch quiz ${attempt.quiz_id}:`, quizResponse.status);
+              return attempt;
             }
+
+            const quizData = await quizResponse.json();
+            console.log('Fetched quiz data:', quizData); // Debug log
+            return { ...attempt, quiz: quizData };
           } catch (error) {
             console.error(`Failed to fetch quiz ${attempt.quiz_id}:`, error);
           }
@@ -76,6 +88,7 @@ const MyResults: React.FC = () => {
 
       // Filter out attempts without quiz data
       const validAttempts = attemptsWithQuizzes.filter(attempt => attempt.quiz);
+      console.log('Valid attempts:', validAttempts); // Debug log
       setAttempts(validAttempts);
     } catch (error) {
       console.error('Failed to fetch attempts:', error);
