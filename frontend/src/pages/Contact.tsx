@@ -32,7 +32,7 @@ const Contact: React.FC = () => {
             <div className="bg-white p-6 rounded-lg shadow-lg text-center">
               <FaEnvelope className="mx-auto text-blue-600 text-3xl mb-4" />
               <h3 className="text-lg font-semibold mb-2">Email</h3>
-              <p className="text-gray-600">infofitsoftware@gmail.com</p>
+              <p className="text-gray-600">info@infofitsoftware.com</p>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-lg text-center">
