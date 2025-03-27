@@ -10,7 +10,7 @@ import traceback
 from app.api import deps
 from app.core.security import create_access_token, get_password_hash
 from app.schemas.user import UserCreate, UserLogin, Token, UserInDB
-from app.crud.user import create_user, authenticate_user
+from app.crud.user import create_user, authenticate_user, get_user_by_email
 from app.core.email import send_email
 
 # Configure logging
@@ -91,13 +91,9 @@ async def send_registration_otp(
         
         # Check if email already exists
         logger.info("Checking if email already exists in database")
-        user_exists = create_user(db, UserCreate(
-            email=request.email, 
-            password=request.password, 
-            full_name=request.full_name
-        ))
+        existing_user = get_user_by_email(db, email=request.email)
         
-        if user_exists:
+        if existing_user:
             logger.warning(f"Registration failed: Email {request.email} already registered")
             raise HTTPException(
                 status_code=400,
