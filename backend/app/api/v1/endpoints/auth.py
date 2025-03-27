@@ -4,12 +4,22 @@ from typing import Any
 from pydantic import BaseModel
 import random
 from datetime import datetime, timedelta
+import logging
+import traceback
 
 from app.api import deps
 from app.core.security import create_access_token, get_password_hash
 from app.schemas.user import UserCreate, UserLogin, Token, UserInDB
 from app.crud.user import create_user, authenticate_user
 from app.core.email import send_email
+
+# Configure logging
+logging.basicConfig(
+    filename='quiz_logs.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -76,31 +86,67 @@ async def send_registration_otp(
     request: OTPRequest,
     db: Session = Depends(deps.get_db)
 ):
-    # Check if email already exists
-    if create_user(db, UserCreate(email=request.email, password=request.password, full_name=request.full_name)):
+    try:
+        logger.info(f"Starting registration OTP process for email: {request.email}")
+        
+        # Check if email already exists
+        logger.info("Checking if email already exists in database")
+        user_exists = create_user(db, UserCreate(
+            email=request.email, 
+            password=request.password, 
+            full_name=request.full_name
+        ))
+        
+        if user_exists:
+            logger.warning(f"Registration failed: Email {request.email} already registered")
+            raise HTTPException(
+                status_code=400,
+                detail="Email already registered"
+            )
+        
+        # Generate OTP
+        logger.info("Generating OTP")
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        logger.info(f"Generated OTP for {request.email}")
+        
+        # Store OTP with expiration (10 minutes)
+        logger.info("Storing OTP with expiration")
+        otp_store[request.email] = {
+            'otp': otp,
+            'expires': datetime.utcnow() + timedelta(minutes=10),
+            'data': request.dict()
+        }
+        
+        # Send email
+        logger.info("Attempting to send email")
+        try:
+            await send_email(
+                to_email=request.email,
+                subject="Your Registration OTP",
+                body=f"Your OTP for registration is: {otp}\nValid for 10 minutes."
+            )
+            logger.info(f"Email sent successfully to {request.email}")
+        except Exception as email_error:
+            logger.error(f"Failed to send email: {str(email_error)}")
+            logger.error(traceback.format_exc())
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to send OTP email"
+            )
+        
+        logger.info(f"Registration OTP process completed successfully for {request.email}")
+        return {"message": "OTP sent successfully"}
+        
+    except HTTPException as he:
+        logger.error(f"HTTP Exception in send_registration_otp: {str(he)}")
+        raise he
+    except Exception as e:
+        logger.error(f"Unexpected error in send_registration_otp: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
+            status_code=500,
+            detail="Internal server error during registration"
         )
-    
-    # Generate OTP
-    otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-    
-    # Store OTP with expiration (10 minutes)
-    otp_store[request.email] = {
-        'otp': otp,
-        'expires': datetime.utcnow() + timedelta(minutes=10),
-        'data': request.dict()
-    }
-    
-    # Send email
-    await send_email(
-        to_email=request.email,
-        subject="Your Registration OTP",
-        body=f"Your OTP for registration is: {otp}\nValid for 10 minutes."
-    )
-    
-    return {"message": "OTP sent successfully"}
 
 @router.post("/register/verify-otp")
 async def verify_registration_otp(
