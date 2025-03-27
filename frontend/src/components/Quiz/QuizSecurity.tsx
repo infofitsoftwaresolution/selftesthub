@@ -2,12 +2,10 @@ import React, { useEffect, useRef, ReactNode } from 'react';
 
 interface QuizSecurityProps {
   onViolation: () => void;
-  quizId: string;
-  attemptId: number;
   children: ReactNode;
 }
 
-const QuizSecurity: React.FC<QuizSecurityProps> = ({ onViolation, quizId, attemptId, children }) => {
+const QuizSecurity: React.FC<QuizSecurityProps> = ({ onViolation, children }) => {
   const fullscreenRef = useRef<HTMLDivElement>(null);
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
