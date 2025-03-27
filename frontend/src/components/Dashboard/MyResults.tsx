@@ -81,8 +81,16 @@ const MyResults: React.FC = () => {
             
             // Find the matching attempt in quizData
             const matchingAttempt = quizData.find((q: any) => q.id === attempt.id);
-            if (matchingAttempt) {
-              return { ...attempt, quiz: matchingAttempt.quiz };
+            console.log('Matching attempt:', matchingAttempt); // Debug log
+            
+            if (matchingAttempt?.quiz) {
+              // Ensure the quiz object has the required structure
+              const quizWithQuestions = {
+                ...attempt.quiz,
+                questions: matchingAttempt.quiz.questions || []
+              };
+              console.log('Quiz with questions:', quizWithQuestions); // Debug log
+              return { ...attempt, quiz: quizWithQuestions };
             }
             
             return attempt;
@@ -161,7 +169,10 @@ const MyResults: React.FC = () => {
             return (
               <div
                 key={attempt.id}
-                onClick={() => setSelectedAttempt(attempt)}
+                onClick={() => {
+                  console.log('Selected attempt:', attempt); // Debug log
+                  setSelectedAttempt(attempt);
+                }}
                 className={`p-4 rounded-lg cursor-pointer transition-colors ${
                   selectedAttempt?.id === attempt.id
                     ? 'bg-blue-50 border-2 border-blue-500'
@@ -195,45 +206,51 @@ const MyResults: React.FC = () => {
               </div>
 
               <div className="space-y-6">
-                {selectedAttempt.quiz.questions.map((question, index) => {
-                  const userAnswer = selectedAttempt.answers[index.toString()];
-                  const isCorrect = userAnswer === question.correctAnswer;
+                {selectedAttempt.quiz.questions && selectedAttempt.quiz.questions.length > 0 ? (
+                  selectedAttempt.quiz.questions.map((question, index) => {
+                    const userAnswer = selectedAttempt.answers[index.toString()];
+                    const isCorrect = userAnswer === question.correctAnswer;
 
-                  return (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium mb-2">
-                            Question {index + 1}: {question.text}
-                          </p>
-                          <div className="space-y-2">
-                            {question.options.map((option, optIndex) => (
-                              <div
-                                key={optIndex}
-                                className={`p-2 rounded ${
-                                  optIndex === question.correctAnswer
-                                    ? 'bg-green-50 border border-green-200'
-                                    : optIndex === userAnswer
-                                    ? 'bg-red-50 border border-red-200'
-                                    : 'bg-gray-50'
-                                }`}
-                              >
-                                {option}
-                              </div>
-                            ))}
+                    return (
+                      <div key={index} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-medium mb-2">
+                              Question {index + 1}: {question.text}
+                            </p>
+                            <div className="space-y-2">
+                              {question.options.map((option, optIndex) => (
+                                <div
+                                  key={optIndex}
+                                  className={`p-2 rounded ${
+                                    optIndex === question.correctAnswer
+                                      ? 'bg-green-50 border border-green-200'
+                                      : optIndex === userAnswer
+                                      ? 'bg-red-50 border border-red-200'
+                                      : 'bg-gray-50'
+                                  }`}
+                                >
+                                  {option}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            {isCorrect ? (
+                              <FaCheck className="text-green-500 text-xl" />
+                            ) : (
+                              <FaTimes className="text-red-500 text-xl" />
+                            )}
                           </div>
                         </div>
-                        <div className="ml-4">
-                          {isCorrect ? (
-                            <FaCheck className="text-green-500 text-xl" />
-                          ) : (
-                            <FaTimes className="text-red-500 text-xl" />
-                          )}
-                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="text-center text-gray-500">
+                    No questions available for this quiz
+                  </div>
+                )}
               </div>
             </div>
           ) : (
