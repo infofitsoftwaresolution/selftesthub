@@ -25,26 +25,26 @@ router = APIRouter()
 
 # Whitelist of allowed email addresses
 ALLOWED_EMAILS = {
-    "Mmaduegbunamchukwunnso@gmail.com",
-    "Ubakaeze4real09@yahoo.com",
+    "mmaduegbunamchukwunnso@gmail.com",
+    "ubakaeze4real09@yahoo.com",
     "amanioamaino@gmail.com",
-    "Ezeadichieobinna@gmail.com",
+    "ezeadichieobinna@gmail.com",
     "infofitsoftware@gmail.com",
     "infofitsoftwaresolution@gmail.com",
     "markstephens595@gmail.com",
-    "Gospelboy111@gmail.com",
-    "Iloabuchiebele@gmail.com",
-    "Osinafaechezona16@gmail.com",
+    "gospelboy111@gmail.com",
+    "iloabuchiebele@gmail.com",
+    "osinafaechezona16@gmail.com",
     "johnwachuks@gmail.com",
     "mmesomaazubuike29@gmail.com",
     "chinemeremugokwe@gmail.com",
-    "Nwagummesoma2@gmail.com",
+    "nwagummesoma2@gmail.com",
     "ndubuisiokoye174@gmail.com",
     "chineduvictor97@yahoo.com",
     "eberechukwuvivian77@gmail.com",
     "tochianth@gmail.com",
     "adaobijuliet30@gmail.com",
-    "Madukajoshua001@gmail.com",
+    "madukajoshua001@gmail.com",
     "okoyechukz@gmail.com",
     "fmbengineering20@gmail.com",
     "blessedsommypat@gmail.com",
@@ -53,8 +53,8 @@ ALLOWED_EMAILS = {
     "estherobiechina@gmail.com",
     "pauljosh686@gmail.com",
     "jennybright95@yahoo.com",
-    "Okwytex4810@yahoo.com",
-    "Orakpoandrew@gmail.com",
+    "okwytex4810@yahoo.com",
+    "charliemillion212@gmail.com",
     "Nnolie35@gmail.com",
     "obumlixy9@gmail.com",
     "Ifeomaezeude607@gmail.com",
@@ -66,7 +66,7 @@ ALLOWED_EMAILS = {
     "chukwuelok.akunne@gmail.com",
     "emmanuelugoguba@gmail.com",
     "stanleyogechukwu05@gmail.com",
-    "Nnolie25@gmail.com"
+    "nnolie25@gmail.com"
 }
 
 # Add these models to your schemas
