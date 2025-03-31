@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Any
+from typing import Any, List
 from pydantic import BaseModel
 import random
 from datetime import datetime, timedelta
@@ -22,6 +22,52 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Whitelist of allowed email addresses
+ALLOWED_EMAILS = {
+    "Mmaduegbunamchukwunnso@gmail.com",
+    "Ubakaeze4real09@yahoo.com",
+    "amanioamaino@gmail.com",
+    "Ezeadichieobinna@gmail.com",
+    "infofitsoftware@gmail.com",
+    "infofitsoftwaresolution@gmail.com",
+    "markstephens595@gmail.com",
+    "Gospelboy111@gmail.com",
+    "Iloabuchiebele@gmail.com",
+    "Osinafaechezona16@gmail.com",
+    "johnwachuks@gmail.com",
+    "mmesomaazubuike29@gmail.com",
+    "chinemeremugokwe@gmail.com",
+    "Nwagummesoma2@gmail.com",
+    "ndubuisiokoye174@gmail.com",
+    "chineduvictor97@yahoo.com",
+    "eberechukwuvivian77@gmail.com",
+    "tochianth@gmail.com",
+    "adaobijuliet30@gmail.com",
+    "Madukajoshua001@gmail.com",
+    "okoyechukz@gmail.com",
+    "fmbengineering20@gmail.com",
+    "blessedsommypat@gmail.com",
+    "peternonso5@gmail.com",
+    "ezedubem90@gmail.com",
+    "estherobiechina@gmail.com",
+    "pauljosh686@gmail.com",
+    "jennybright95@yahoo.com",
+    "Okwytex4810@yahoo.com",
+    "Orakpoandrew@gmail.com",
+    "Nnolie35@gmail.com",
+    "obumlixy9@gmail.com",
+    "Ifeomaezeude607@gmail.com",
+    "goodnessadanne1@gmail.com",
+    "cynthiaemeraba23@gmail.com",
+    "corneliusikechukwu713@gmail.com",
+    "nwizub49@gmail.com",
+    "okaforjoseph3330@gmail.com",
+    "chukwuelok.akunne@gmail.com",
+    "emmanuelugoguba@gmail.com",
+    "stanleyogechukwu05@gmail.com",
+    "Nnolie25@gmail.com"
+}
 
 # Add these models to your schemas
 class OTPRequest(BaseModel):
@@ -45,6 +91,13 @@ def register(
     """
     Register new user.
     """
+    # Check if email is in whitelist
+    if user_in.email not in ALLOWED_EMAILS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Registration is currently restricted to authorized users only"
+        )
+    
     user = create_user(db, user_in)
     access_token = create_access_token(subject=user.id)
     return {
@@ -61,6 +114,13 @@ def login(
     """
     OAuth2 compatible token login
     """
+    # Check if email is in whitelist
+    if user_in.email not in ALLOWED_EMAILS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access is currently restricted to authorized users only"
+        )
+
     user = authenticate_user(db, user_in.email, user_in.password)
     if not user:
         raise HTTPException(
