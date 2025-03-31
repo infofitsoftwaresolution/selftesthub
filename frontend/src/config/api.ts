@@ -1,6 +1,7 @@
 // Base API URL from environment variable
 const API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com';
-const getSecureUrl = (url: string) => url.replace('http://', 'https://');
+const isDevelopment = import.meta.env.DEV;
+const getSecureUrl = (url: string) => isDevelopment ? url : url.replace('http://', 'https://');
 // Common fetch options
 export const fetchOptions = {
   credentials: 'include' as const,
@@ -9,6 +10,7 @@ export const fetchOptions = {
   },
 };
 console.log('API_URL:', API_URL);
+console.log('Environment:', isDevelopment ? 'Development' : 'Production');
 // API Endpoints
 export const API_ENDPOINTS = {
   // Auth endpoints
