@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaMedal, FaCrown, FaStar, FaChartLine } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
-import { API_ENDPOINTS } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 interface LeaderboardEntry {
   user_id: string;
@@ -33,9 +33,17 @@ const Leaderboard: React.FC = () => {
 
   const fetchQuizzes = async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.QUIZZES);
-      const data = await response.json();
-      setQuizzes(data);
+      const response = await fetch(API_ENDPOINTS.QUIZZES, {
+        ...fetchOptions,
+        headers: {
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setQuizzes(data);
+      }
     } catch (error) {
       console.error('Error fetching quizzes:', error);
     }
@@ -45,10 +53,19 @@ const Leaderboard: React.FC = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `${API_ENDPOINTS.LEADERBOARD}?quiz_id=${selectedQuiz}&time_range=${timeRange}`
+        `${API_ENDPOINTS.LEADERBOARD}?quiz_id=${selectedQuiz}&time_range=${timeRange}`,
+        {
+          ...fetchOptions,
+          headers: {
+            ...fetchOptions.headers,
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
       );
-      const data = await response.json();
-      setLeaderboardData(data);
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboardData(data);
+      }
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
     } finally {
