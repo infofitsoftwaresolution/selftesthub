@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import DashboardLayout from './components/Layout/DashboardLayout';
 import Dashboard from './pages/Dashboard';
 import ManageQuizzes from './pages/admin/ManageQuizzes';
@@ -18,39 +19,41 @@ import QuizReports from './components/Admin/QuizReports';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/features" element={<Features />} />
-        <Route path="/login" element={<Login />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/login" element={<Login />} />
 
-        {/* Protected Routes with DashboardLayout */}
-        <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/my-results" element={<MyResults />} />
-          <Route path="/available-quizzes" element={<AvailableQuizzes />} />
-          <Route path="/admin/quizzes" element={<ManageQuizzes />} />
-          <Route path="/admin/students" element={<StudentReports />} />
-          <Route path="/admin/quiz-reports" element={<QuizReports />} />
-          <Route path="/profile" element={<Profile />} />
-        </Route>
+          {/* Protected Routes with DashboardLayout */}
+          <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/my-results" element={<MyResults />} />
+            <Route path="/available-quizzes" element={<AvailableQuizzes />} />
+            <Route path="/admin/quizzes" element={<ManageQuizzes />} />
+            <Route path="/admin/students" element={<StudentReports />} />
+            <Route path="/admin/quiz-reports" element={<QuizReports />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
 
-        {/* Standalone Protected Routes */}
-        <Route path="/quiz/:quizId" element={
-          <ProtectedRoute>
-            <QuizInterface />
-          </ProtectedRoute>
-        } />
-        <Route path="/quiz-result" element={
-          <ProtectedRoute>
-            <QuizResult />
-          </ProtectedRoute>
-        } />
-      </Routes>
-    </BrowserRouter>
+          {/* Standalone Protected Routes */}
+          <Route path="/quiz/:quizId" element={
+            <ProtectedRoute>
+              <QuizInterface />
+            </ProtectedRoute>
+          } />
+          <Route path="/quiz-result" element={
+            <ProtectedRoute>
+              <QuizResult />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
