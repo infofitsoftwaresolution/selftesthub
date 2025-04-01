@@ -125,7 +125,7 @@ const Leaderboard: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {leaderboardData.map((entry, index) => (
+            {leaderboardData.map((entry) => (
               <tr
                 key={entry.user_id}
                 className={`${
