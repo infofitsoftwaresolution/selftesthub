@@ -25,14 +25,18 @@ const Leaderboard: React.FC = () => {
   const [selectedQuiz, setSelectedQuiz] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('week');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('Leaderboard component mounted');
+    console.log('Current user:', user);
     fetchQuizzes();
     fetchLeaderboardData();
   }, [selectedQuiz, timeRange]);
 
   const fetchQuizzes = async () => {
     try {
+      console.log('Fetching quizzes from:', API_ENDPOINTS.QUIZZES);
       const response = await fetch(API_ENDPOINTS.QUIZZES, {
         ...fetchOptions,
         headers: {
@@ -40,26 +44,40 @@ const Leaderboard: React.FC = () => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      console.log('Quizzes response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched quizzes:', data);
         setQuizzes(data);
+      } else {
+        const errorData = await response.json().catch(() => null);
+        console.error('Failed to fetch quizzes:', errorData);
+        setError('Failed to load quizzes');
       }
     } catch (error) {
       console.error('Error fetching quizzes:', error);
+      setError('Failed to load quizzes');
     }
   };
 
   const fetchLeaderboardData = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const baseUrl = getSecureUrl1(API_ENDPOINTS.LEADERBOARD);
       const queryParams = new URLSearchParams({
         quiz_id: selectedQuiz,
         time_range: timeRange
       }).toString();
       
+      const url = `${baseUrl}?${queryParams}`;
+      console.log('Fetching leaderboard from:', url);
+      console.log('Query parameters:', { quiz_id: selectedQuiz, time_range: timeRange });
+      
       const response = await fetch(
-        `${baseUrl}?${queryParams}`,
+        url,
         {
           ...fetchOptions,
           headers: {
@@ -69,14 +87,20 @@ const Leaderboard: React.FC = () => {
         }
       );
       
+      console.log('Leaderboard response status:', response.status);
+      
       if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('Failed to fetch leaderboard:', errorData);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('Fetched leaderboard data:', data);
       setLeaderboardData(data);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load leaderboard data');
     } finally {
       setLoading(false);
     }
@@ -106,6 +130,16 @@ const Leaderboard: React.FC = () => {
     return (
       <div className="h-64 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-4">
+        <div className="text-red-500 text-center py-4">
+          {error}
+        </div>
       </div>
     );
   }

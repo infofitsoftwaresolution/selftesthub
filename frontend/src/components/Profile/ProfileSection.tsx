@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
+import { useNavigate } from 'react-router-dom';
 
 const ProfileSection: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -86,6 +88,25 @@ const ProfileSection: React.FC = () => {
       });
     } catch (error) {
       setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to change password' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      setLoading(true);
+      await fetch(API_ENDPOINTS.LOGOUT, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      setMessage({ type: 'error', text: 'Failed to logout properly' });
     } finally {
       setLoading(false);
     }
@@ -198,6 +219,17 @@ const ProfileSection: React.FC = () => {
             </button>
           </form>
         )}
+
+        {/* Logout Button */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <button
+            onClick={handleLogout}
+            disabled={loading}
+            className="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+          >
+            {loading ? 'Logging out...' : 'Logout'}
+          </button>
+        </div>
       </div>
     </div>
   );
