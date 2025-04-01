@@ -19,6 +19,9 @@ export const API_ENDPOINTS = {
   LOGOUT: `${API_URL}/api/v1/auth/logout`,
   ME: `${API_URL}/api/v1/auth/me`,
 
+  // ... existing endpoints
+  LEADERBOARD: `${API_URL}/api/v1/leaderboard`,
+
   // Quiz endpoints
   QUIZZES: `${API_URL}/api/v1/quizzes/`,
   ACTIVE_QUIZZES: `${API_URL}/api/v1/quizzes`,
