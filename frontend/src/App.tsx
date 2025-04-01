@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import DashboardLayout from './components/Layout/DashboardLayout';
 import Dashboard from './pages/Dashboard';
 import ManageQuizzes from './pages/admin/ManageQuizzes';
-import UserProfile from './components/Profile/UserProfile';
+import Profile from './pages/Profile';
 import Login from './pages/Login/index';
 import Home from './pages/Home';
 import About from './pages/About';
@@ -35,7 +35,7 @@ function App() {
           <Route path="/admin/quizzes" element={<ManageQuizzes />} />
           <Route path="/admin/students" element={<StudentReports />} />
           <Route path="/admin/quiz-reports" element={<QuizReports />} />
-          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         {/* Standalone Protected Routes */}
