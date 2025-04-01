@@ -83,8 +83,9 @@ def get_leaderboard(
                 # Calculate rank
                 rank = len([s for s in quiz_scores if s > attempt.score]) + 1
                 
+                # Convert user_id to string before creating LeaderboardEntry
                 leaderboard_data.append(LeaderboardEntry(
-                    user_id=attempt.user_id,
+                    user_id=str(attempt.user_id),  # Convert to string
                     full_name=attempt.full_name,
                     score=attempt.score,
                     percentile=percentile,
