@@ -20,6 +20,7 @@ def calculate_percentile(score: float, all_scores: List[float]) -> int:
     position = len([s for s in all_scores if s < score])
     return int((position / len(all_scores)) * 100)
 
+@router.get("", response_model=List[LeaderboardEntry])
 @router.get("/", response_model=List[LeaderboardEntry])
 def get_leaderboard(
     quiz_id: Optional[str] = Query(None, description="Filter by quiz ID"),
@@ -51,7 +52,7 @@ def get_leaderboard(
             query = query.filter(QuizAttempt.completed_at >= now - timedelta(days=30))
 
         # Apply quiz filter if specified
-        if quiz_id:
+        if quiz_id and quiz_id != 'all':
             query = query.filter(QuizAttempt.quiz_id == quiz_id)
 
         # Get all attempts for percentile calculation

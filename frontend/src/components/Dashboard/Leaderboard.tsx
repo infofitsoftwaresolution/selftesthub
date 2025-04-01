@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaMedal, FaCrown, FaStar, FaChartLine } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
-import { API_ENDPOINTS, fetchOptions } from '../../config/api';
+import { API_ENDPOINTS, fetchOptions, getSecureUrl1 } from '../../config/api';
 
 interface LeaderboardEntry {
   user_id: string;
@@ -52,8 +52,14 @@ const Leaderboard: React.FC = () => {
   const fetchLeaderboardData = async () => {
     try {
       setLoading(true);
+      const baseUrl = getSecureUrl1(API_ENDPOINTS.LEADERBOARD);
+      const queryParams = new URLSearchParams({
+        quiz_id: selectedQuiz,
+        time_range: timeRange
+      }).toString();
+      
       const response = await fetch(
-        `${API_ENDPOINTS.LEADERBOARD}?quiz_id=${selectedQuiz}&time_range=${timeRange}`,
+        `${baseUrl}?${queryParams}`,
         {
           ...fetchOptions,
           headers: {
@@ -62,10 +68,13 @@ const Leaderboard: React.FC = () => {
           }
         }
       );
-      if (response.ok) {
-        const data = await response.json();
-        setLeaderboardData(data);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      const data = await response.json();
+      setLeaderboardData(data);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
     } finally {

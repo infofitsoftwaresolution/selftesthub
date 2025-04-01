@@ -2,6 +2,13 @@
 const API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com';
 const isDevelopment = import.meta.env.DEV;
 const getSecureUrl = (url: string) => isDevelopment ? url : url.replace('http://', 'https://');
+
+// Function to ensure HTTPS in production
+export const getSecureUrl1 = (url: string) => {
+  if (isDevelopment) return url;
+  return url.replace('http://', 'https://');
+};
+
 // Common fetch options
 export const fetchOptions = {
   credentials: 'include' as const,
