@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { FaHome, FaBook, FaTrophy, FaUser, FaChartBar, FaBars, FaTimes } from 'react-icons/fa';
+import { FaHome, FaBook, FaTrophy, FaUser, FaChartBar, FaBars, FaTimes, FaCrown } from 'react-icons/fa';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 interface SidebarItemProps {
@@ -102,6 +102,13 @@ const DashboardLayout: React.FC = () => {
             icon={<FaTrophy className="w-4 h-4 mr-2" />}
             text="My Results"
             isActive={location.pathname === '/my-results'}
+            onClick={() => setIsSidebarOpen(false)}
+          />
+          <SidebarItem
+            to="/leaderboard"
+            icon={<FaCrown className="w-4 h-4 mr-2" />}
+            text="Leaderboard"
+            isActive={location.pathname === '/leaderboard'}
             onClick={() => setIsSidebarOpen(false)}
           />
           {isAdmin && (

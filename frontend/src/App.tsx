@@ -16,6 +16,7 @@ import MyResults from './components/Dashboard/MyResults';
 import StudentReports from './components/Admin/StudentReports';
 import Features from './pages/Features';
 import QuizReports from './components/Admin/QuizReports';
+import LeaderboardPage from './pages/Leaderboard';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/my-results" element={<MyResults />} />
             <Route path="/available-quizzes" element={<AvailableQuizzes />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route path="/admin/quizzes" element={<ManageQuizzes />} />
             <Route path="/admin/students" element={<StudentReports />} />
             <Route path="/admin/quiz-reports" element={<QuizReports />} />
