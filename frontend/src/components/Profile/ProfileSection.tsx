@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUserCircle, FaCamera } from 'react-icons/fa';
 
 const ProfileSection: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   const [loading, setLoading] = useState(false);
@@ -70,6 +70,16 @@ const ProfileSection: React.FC = () => {
 
       if (!response.ok) {
         throw new Error(data.detail || 'Failed to update profile');
+      }
+
+      // Update user context with new data
+      if (user) {
+        updateUser({
+          ...user,
+          full_name: profileData.full_name,
+          email: profileData.email,
+          profile_image: data.profile_image || user.profile_image
+        });
       }
 
       setMessage({ type: 'success', text: 'Profile updated successfully' });
