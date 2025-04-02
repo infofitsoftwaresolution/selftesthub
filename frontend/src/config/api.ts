@@ -26,6 +26,10 @@ export const API_ENDPOINTS = {
   LOGOUT: `${API_URL}/api/v1/auth/logout`,
   ME: `${API_URL}/api/v1/auth/me`,
 
+  // Profile endpoints
+  UPDATE_PROFILE: `${API_URL}/api/v1/profile/update`,
+  CHANGE_PASSWORD: `${API_URL}/api/v1/profile/change-password`,
+
   // ... existing endpoints
   LEADERBOARD: `${API_URL}/api/v1/leaderboard`,
 
@@ -55,10 +59,6 @@ export const API_ENDPOINTS = {
   ADMIN_REPORTS: `${API_URL}/api/v1/admin/reports`,
   STUDENT_REPORTS: `${API_URL}/api/v1/admin/student-reports`,
   QUIZ_REPORTS: `${API_URL}/api/v1/admin/quiz-attempts`,
-
-  // Profile endpoints
-  UPDATE_PROFILE: `${API_URL}/api/v1/profile`,
-  CHANGE_PASSWORD: `${API_URL}/api/v1/profile/password`,
 
   // Add these new endpoints
   REGISTER_SEND_OTP: getSecureUrl(`${API_URL}/api/v1/auth/register/send-otp`),
