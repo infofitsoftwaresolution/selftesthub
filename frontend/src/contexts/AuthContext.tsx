@@ -40,6 +40,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         if (response.ok) {
           const userData = await response.json();
+          // Format profile image URL if it exists
+          if (userData.profile_image) {
+            const baseUrl = window.location.origin;
+            userData.profile_image = userData.profile_image.startsWith('http')
+              ? userData.profile_image
+              : `${baseUrl}${userData.profile_image}`;
+          }
           setUser(userData);
         } else {
           localStorage.removeItem('token');
@@ -68,6 +75,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const data = await response.json();
       localStorage.setItem('token', data.access_token);
+      
+      // Format profile image URL if it exists
+      if (data.user.profile_image) {
+        const baseUrl = window.location.origin;
+        data.user.profile_image = data.user.profile_image.startsWith('http')
+          ? data.user.profile_image
+          : `${baseUrl}${data.user.profile_image}`;
+      }
+      
       setUser(data.user);
     } catch (error) {
       console.error('Login error:', error);
