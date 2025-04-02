@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS, fetchOptions, getSecureUrl1 } from '../../config/api';
 
 interface LeaderboardEntry {
-  user_id: string;
+  user_id: number;
   full_name: string;
   score: number;
   percentile: number;
