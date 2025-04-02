@@ -22,7 +22,7 @@ class PasswordChange(BaseModel):
     new_password: str
 
 @router.put("/update", response_model=dict)
-def update_profile(
+async def update_profile(
     full_name: Optional[str] = None,
     email: Optional[str] = None,
     profile_image: Optional[UploadFile] = File(None),
