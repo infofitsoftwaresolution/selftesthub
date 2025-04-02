@@ -27,7 +27,12 @@ const ProfileSection: React.FC = () => {
   useEffect(() => {
     // Load profile image if it exists
     if (user?.profile_image) {
-      setProfileImage(user.profile_image);
+      // Convert relative path to absolute URL
+      const baseUrl = window.location.origin;
+      const imageUrl = user.profile_image.startsWith('http') 
+        ? user.profile_image 
+        : `${baseUrl}${user.profile_image}`;
+      setProfileImage(imageUrl);
     }
   }, [user]);
 
@@ -74,11 +79,18 @@ const ProfileSection: React.FC = () => {
 
       // Update user context with new data
       if (user) {
+        const baseUrl = window.location.origin;
+        const imageUrl = data.profile_image?.startsWith('http') 
+          ? data.profile_image 
+          : data.profile_image 
+            ? `${baseUrl}${data.profile_image}`
+            : user.profile_image;
+            
         updateUser({
           ...user,
           full_name: profileData.full_name,
           email: profileData.email,
-          profile_image: data.profile_image || user.profile_image
+          profile_image: imageUrl
         });
       }
 
