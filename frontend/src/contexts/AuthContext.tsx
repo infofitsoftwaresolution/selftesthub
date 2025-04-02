@@ -2,9 +2,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '../config/api';
 
 interface User {
-  id: string;
-  full_name: string;
+  id: number;
   email: string;
+  full_name: string;
+  is_active: boolean;
+  is_superuser: boolean;
+  profile_image?: string;
 }
 
 interface AuthContextType {
