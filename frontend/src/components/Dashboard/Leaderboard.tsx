@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaMedal, FaCrown, FaStar, FaChartLine } from 'react-icons/fa';
+import { FaMedal, FaCrown, FaStar, FaChartLine, FaUserCircle } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS, fetchOptions, getSecureUrl1 } from '../../config/api';
 
@@ -11,6 +11,7 @@ interface LeaderboardEntry {
   quiz_title: string;
   completed_at: string;
   rank: number;
+  profile_image?: string;
 }
 
 interface QuizOption {
@@ -199,7 +200,18 @@ const Leaderboard: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{entry.full_name}</div>
+                  <div className="flex items-center">
+                    {entry.profile_image ? (
+                      <img
+                        src={entry.profile_image}
+                        alt={entry.full_name}
+                        className="w-8 h-8 rounded-full object-cover mr-3"
+                      />
+                    ) : (
+                      <FaUserCircle className="w-8 h-8 text-gray-400 mr-3" />
+                    )}
+                    <div className="text-sm font-medium text-gray-900">{entry.full_name}</div>
+                  </div>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center">

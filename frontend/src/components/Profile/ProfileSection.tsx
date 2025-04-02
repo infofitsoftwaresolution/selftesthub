@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
 import { useNavigate } from 'react-router-dom';
+import { FaUserCircle, FaCamera } from 'react-icons/fa';
 
 const ProfileSection: React.FC = () => {
   const { user, logout } = useAuth();
@@ -9,6 +10,8 @@ const ProfileSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [profileData, setProfileData] = useState({
     full_name: user?.full_name || '',
@@ -21,19 +24,46 @@ const ProfileSection: React.FC = () => {
     confirm_password: '',
   });
 
+  useEffect(() => {
+    // Load profile image if it exists
+    if (user?.profile_image) {
+      setProfileImage(user.profile_image);
+    }
+  }, [user]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
     try {
+      // Create FormData for multipart/form-data
+      const formData = new FormData();
+      formData.append('full_name', profileData.full_name);
+      formData.append('email', profileData.email);
+      
+      if (imageFile) {
+        formData.append('profile_image', imageFile);
+      }
+
       const response = await fetch(API_ENDPOINTS.UPDATE_PROFILE, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify(profileData),
+        body: formData,
       });
 
       const data = await response.json();
@@ -115,6 +145,31 @@ const ProfileSection: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto p-4">
       <div className="bg-white rounded-lg shadow-md p-6">
+        {/* Profile Picture Section */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="relative">
+            {profileImage ? (
+              <img
+                src={profileImage}
+                alt="Profile"
+                className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
+              />
+            ) : (
+              <FaUserCircle className="w-32 h-32 text-gray-400" />
+            )}
+            <label className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full cursor-pointer hover:bg-blue-600 transition-colors">
+              <FaCamera className="w-4 h-4" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </label>
+          </div>
+          <p className="mt-2 text-sm text-gray-500">Click to change profile picture</p>
+        </div>
+
         <div className="flex space-x-4 mb-6">
           <button
             onClick={() => setActiveTab('profile')}

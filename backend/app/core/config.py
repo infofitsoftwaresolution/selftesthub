@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     SMTP_USER: str = "infofitsoftwaresolution@gmail.com"
     SMTP_PASSWORD: str = "viojzynbkdtielrw"  # Gmail App Password
 
+    # Static files settings
+    STATIC_FILES_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static")
+
     @property
     def CORS_ORIGINS(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS_RAW.split(",") if origin.strip()]

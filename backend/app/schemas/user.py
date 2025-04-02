@@ -3,32 +3,37 @@ from typing import Optional
 from datetime import datetime
 
 class UserBase(BaseModel):
-    email: EmailStr
+    email: Optional[EmailStr] = None
     full_name: Optional[str] = None
+    is_active: Optional[bool] = True
+    is_superuser: bool = False
+    profile_image: Optional[str] = None
 
 class UserCreate(UserBase):
+    email: EmailStr
     password: str
+    full_name: str
 
-class UserUpdate(BaseModel):
-    full_name: Optional[str] = None
+class UserUpdate(UserBase):
     password: Optional[str] = None
-    email: Optional[EmailStr] = None
+
+class UserInDBBase(UserBase):
+    id: Optional[int] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        orm_mode = True
+
+class User(UserInDBBase):
+    pass
+
+class UserInDB(UserInDBBase):
+    hashed_password: str
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
-
-class User(UserBase):
-    id: int
-    is_active: bool = True
-    is_superuser: bool = False
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class UserInDB(User):
-    hashed_password: str
 
 class Token(BaseModel):
     access_token: str

@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.api.v1.api import api_router
 from app.core.config import settings
+import os
 
 app = FastAPI(
     title="Quiz API",
@@ -18,6 +20,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Create static directory if it doesn't exist
+static_dir = os.path.join(settings.STATIC_FILES_DIR, "profile_images")
+os.makedirs(static_dir, exist_ok=True)
+
+# Mount static files directory
+app.mount("/static", StaticFiles(directory=settings.STATIC_FILES_DIR), name="static")
 
 # Include API router with prefix
 app.include_router(api_router, prefix="/api/v1")
