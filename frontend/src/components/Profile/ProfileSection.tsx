@@ -26,22 +26,32 @@ const ProfileSection: React.FC = () => {
 
   useEffect(() => {
     // Load profile image if it exists
+    console.log('User data in useEffect:', user);
     if (user?.profile_image) {
       // Convert relative path to absolute URL
       const baseUrl = window.location.origin;
+      console.log('Base URL:', baseUrl);
+      console.log('Original profile_image:', user.profile_image);
+      
       const imageUrl = user.profile_image.startsWith('http') 
         ? user.profile_image 
         : `${baseUrl}${user.profile_image}`;
+      
+      console.log('Formatted image URL:', imageUrl);
       setProfileImage(imageUrl);
+    } else {
+      console.log('No profile image found in user data');
     }
   }, [user]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log('Selected file:', file.name);
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log('FileReader result:', reader.result);
         setProfileImage(reader.result as string);
       };
       reader.readAsDataURL(file);
@@ -60,9 +70,11 @@ const ProfileSection: React.FC = () => {
       formData.append('email', profileData.email);
       
       if (imageFile) {
+        console.log('Appending image file to FormData:', imageFile.name);
         formData.append('profile_image', imageFile);
       }
 
+      console.log('Sending profile update request to:', API_ENDPOINTS.UPDATE_PROFILE);
       const response = await fetch(API_ENDPOINTS.UPDATE_PROFILE, {
         method: 'PUT',
         headers: {
@@ -72,30 +84,37 @@ const ProfileSection: React.FC = () => {
       });
 
       const data = await response.json();
+      console.log('Profile update response:', data);
 
       if (!response.ok) {
         throw new Error(data.detail || 'Failed to update profile');
       }
 
       // Update user context with new data
-      if (user) {
+      if (user && data.user) {
         const baseUrl = window.location.origin;
-        const imageUrl = data.profile_image?.startsWith('http') 
-          ? data.profile_image 
-          : data.profile_image 
-            ? `${baseUrl}${data.profile_image}`
+        console.log('Base URL for user update:', baseUrl);
+        console.log('Profile image from response:', data.user.profile_image);
+        
+        const imageUrl = data.user.profile_image?.startsWith('http') 
+          ? data.user.profile_image 
+          : data.user.profile_image 
+            ? `${baseUrl}${data.user.profile_image}`
             : user.profile_image;
+        
+        console.log('Final image URL for user update:', imageUrl);
             
         updateUser({
           ...user,
-          full_name: profileData.full_name,
-          email: profileData.email,
+          full_name: data.user.full_name,
+          email: data.user.email,
           profile_image: imageUrl
         });
       }
 
       setMessage({ type: 'success', text: 'Profile updated successfully' });
     } catch (error) {
+      console.error('Profile update error:', error);
       setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to update profile' });
     } finally {
       setLoading(false);

@@ -59,7 +59,17 @@ async def update_profile(
             current_user.profile_image = f"/static/profile_images/{unique_filename}"
 
         db.commit()
-        return {"message": "Profile updated successfully"}
+        
+        # Return updated user data
+        return {
+            "message": "Profile updated successfully",
+            "user": {
+                "id": current_user.id,
+                "email": current_user.email,
+                "full_name": current_user.full_name,
+                "profile_image": current_user.profile_image
+            }
+        }
 
     except Exception as e:
         db.rollback()
