@@ -72,7 +72,8 @@ ALLOWED_EMAILS = {
     "ubakaeze4real09@yahoo.com",
     "ijeomabibian001@gmail.com",
     "prosperhenry45@gmail.com",
-    "dishabansode1503@gmail.com"
+    "dishabansode1503@gmail.com",
+    "azubuikemmesoma29@gmail.com"
 }
 
 # Add these models to your schemas

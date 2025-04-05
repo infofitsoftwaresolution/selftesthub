@@ -104,12 +104,18 @@ const ProfileSection: React.FC = () => {
         
         console.log('Final image URL for user update:', imageUrl);
             
+        // Update the user context
         updateUser({
           ...user,
           full_name: data.user.full_name,
           email: data.user.email,
           profile_image: imageUrl
         });
+
+        // Update the local profile image state
+        setProfileImage(imageUrl);
+        // Clear the image file since it's been uploaded
+        setImageFile(null);
       }
 
       setMessage({ type: 'success', text: 'Profile updated successfully' });
