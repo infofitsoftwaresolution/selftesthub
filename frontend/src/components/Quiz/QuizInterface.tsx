@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 // import TimerDebug from './TimerDebug';
 import { Quiz, Question } from '../../types/quiz';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import QuizSecurity from './QuizSecurity';
-import Timer from './Timer';
 
 const QuizInterface: React.FC = () => {
   const { quizId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [securityViolation, setSecurityViolation] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Start quiz and get attempt ID
   useEffect(() => {
@@ -31,13 +31,11 @@ const QuizInterface: React.FC = () => {
           }
         });
 
-        const data = await response.json();
-        console.log('Quiz start response:', data); // Debug log
-
         if (response.ok) {
-          setAttemptId(data.id);
+          const data = await response.json();
+          setAttemptId(data.attemptId);
         } else {
-          throw new Error(data.detail || 'Failed to start quiz');
+          throw new Error('Failed to start quiz');
         }
       } catch (error) {
         console.error('Error starting quiz:', error);
@@ -53,8 +51,11 @@ const QuizInterface: React.FC = () => {
   // Add submit handler
   const handleSubmit = useCallback(async () => {
     if (!attemptId) {
-      console.error('No active quiz attempt found');
-      navigate('/available-quizzes');
+      alert('No active quiz attempt found');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to submit the quiz?')) {
       return;
     }
     
@@ -77,53 +78,6 @@ const QuizInterface: React.FC = () => {
         body: JSON.stringify({ answers: formattedAnswers })
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to submit quiz');
-      }
-
-      // Only navigate after successful submission
-      navigate('/quiz-result', { 
-        state: { 
-          result: data,
-          message: 'Quiz submitted successfully!'
-        } 
-      });
-    } catch (err) {
-      console.error('Failed to submit quiz:', err);
-      // Show error in the UI instead of navigating away
-      setError(err instanceof Error ? err.message : 'Failed to submit quiz');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [attemptId, quizId, answers, navigate]);
-
-  // Handle timer expiration
-  const handleTimeUp = useCallback(async () => {
-    if (!attemptId || isSubmitting) return;
-    
-    setIsSubmitting(true);
-    try {
-      // Convert answers object keys to strings
-      const formattedAnswers = Object.entries(answers).reduce((acc, [key, value]) => {
-        acc[key.toString()] = value;
-        return acc;
-      }, {} as Record<string, number>);
-
-      const response = await fetch(API_ENDPOINTS.SUBMIT_QUIZ(quizId as string, attemptId.toString()), {
-        method: 'POST',
-        ...fetchOptions,
-        headers: {
-          ...fetchOptions.headers,
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ 
-          answers: formattedAnswers,
-          time_up: true 
-        })
-      });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to submit quiz');
@@ -133,10 +87,11 @@ const QuizInterface: React.FC = () => {
       navigate('/quiz-result', { state: { result } });
     } catch (err) {
       console.error('Failed to submit quiz:', err);
-      // Even if submission fails, navigate away to prevent further attempts
-      navigate('/available-quizzes');
+      alert('Failed to submit quiz. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [attemptId, quizId, answers, navigate, isSubmitting]);
+  }, [attemptId, quizId, answers, navigate]);
 
   // Fetch quiz data
   useEffect(() => {
@@ -161,6 +116,7 @@ const QuizInterface: React.FC = () => {
             }))
           };
           setQuiz(quizWithIds);
+          setTimeLeft(data.duration * 60); // Convert minutes to seconds
         } else {
           throw new Error('Failed to fetch quiz');
         }
@@ -171,6 +127,33 @@ const QuizInterface: React.FC = () => {
 
     fetchQuiz();
   }, [quizId]);
+
+  // Setup timer
+  useEffect(() => {
+    if (quiz) {
+      const startTime = location.state?.startedAt 
+        ? new Date(location.state.startedAt) 
+        : new Date();
+
+      const durationInMs = quiz.duration * 60 * 1000;
+      const endTime = new Date(startTime.getTime() + durationInMs);
+      
+      const initialRemaining = Math.max(0, Math.floor((endTime.getTime() - new Date().getTime()) / 1000));
+      setTimeLeft(initialRemaining);
+
+      const interval = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev === null || prev <= 0) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [quiz]);
 
   // Add answer handler with auto-navigation
   const handleAnswer = useCallback((questionIndex: number, optionIndex: number) => {
@@ -264,10 +247,9 @@ const QuizInterface: React.FC = () => {
               <div className="text-gray-600">
                 Question {currentQuestion + 1} of {quiz?.questions.length}
               </div>
-              <Timer 
-                duration={quiz.duration * 60} 
-                onTimeUp={handleTimeUp}
-              />
+              <div className="text-gray-600 font-semibold">
+                Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+              </div>
             </div>
           </div>
 
@@ -337,12 +319,6 @@ const QuizInterface: React.FC = () => {
               </button>
             )}
           </div>
-
-          {error && (
-            <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
-            </div>
-          )}
 
           {/* Question Navigation Pills */}
           <div className="mt-6">
