@@ -30,7 +30,6 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
   });
 
   const [error, setError] = useState('');
-  const [isDraft, setIsDraft] = useState(false);
 
   const addQuestion = () => {
     if (!currentQuestion.text || currentQuestion.options.some(opt => !opt)) {
