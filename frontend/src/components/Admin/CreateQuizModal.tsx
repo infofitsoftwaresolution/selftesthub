@@ -21,6 +21,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
     type: 'mcq',
     duration: 30,
     questions: [] as Question[],
+    max_attempts: 1
   });
 
   const [currentQuestion, setCurrentQuestion] = useState({
@@ -80,7 +81,8 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
           type: quizData.type,
           duration: quizData.duration,
           questions: formattedQuestions,
-          is_draft: saveAsDraft
+          is_draft: saveAsDraft,
+          max_attempts: quizData.type === 'exam' ? 1 : quizData.max_attempts
         })
       });
 
@@ -99,6 +101,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
         type: 'mcq',
         duration: 30,
         questions: [],
+        max_attempts: 1
       });
       setError('');
     } catch (err) {
@@ -156,13 +159,30 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
             <label className="block text-sm font-medium text-gray-700 mb-1">Quiz Type</label>
             <select
               value={quizData.type}
-              onChange={(e) => setQuizData({ ...quizData, type: e.target.value })}
+              onChange={(e) => setQuizData({ 
+                ...quizData, 
+                type: e.target.value,
+                max_attempts: e.target.value === 'exam' ? 1 : quizData.max_attempts
+              })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="practice">Practice</option>
               <option value="exam">Exam</option>
             </select>
           </div>
+
+          {quizData.type === 'practice' && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Maximum Attempts</label>
+              <input
+                type="number"
+                value={quizData.max_attempts}
+                onChange={(e) => setQuizData({ ...quizData, max_attempts: parseInt(e.target.value) })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="1"
+              />
+            </div>
+          )}
 
           {/* Add Question Form */}
           <div className="bg-gray-50 p-4 rounded-lg mb-6">
