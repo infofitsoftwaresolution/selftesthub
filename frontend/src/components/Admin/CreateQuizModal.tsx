@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
@@ -31,6 +31,26 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
   });
 
   const [error, setError] = useState('');
+
+  // Add useEffect to reset form when modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      // Reset form state when modal is opened
+      setQuizData({
+        title: '',
+        type: 'practice',
+        duration: 30,
+        questions: [],
+        max_attempts: 1
+      });
+      setCurrentQuestion({
+        text: '',
+        options: ['', '', '', ''],
+        correctAnswer: 0,
+      });
+      setError('');
+    }
+  }, [isOpen]);
 
   const resetForm = () => {
     setQuizData({

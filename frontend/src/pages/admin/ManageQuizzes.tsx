@@ -98,6 +98,14 @@ const ManageQuizzes: React.FC = () => {
 
       if (response.ok) {
         await fetchQuizzes(); // Refresh quiz list
+        // Reset the create modal state if it's open
+        if (isCreateModalOpen) {
+          setIsCreateModalOpen(false);
+          // Re-open the modal after a short delay to ensure state is reset
+          setTimeout(() => {
+            setIsCreateModalOpen(true);
+          }, 100);
+        }
       }
     } catch (err) {
       setError('Failed to delete quiz');
