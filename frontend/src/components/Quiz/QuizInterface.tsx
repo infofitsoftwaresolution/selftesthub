@@ -90,7 +90,15 @@ const QuizInterface: React.FC = () => {
       }
 
       const result = await response.json();
-      navigate('/quiz-result', { state: { result } });
+      
+      // Add timestamps if they're not included in the result
+      const resultWithTimestamps = {
+        ...result,
+        started_at: result.started_at || location.state?.startedAt || new Date(Date.now() - (quiz?.duration || 30) * 60 * 1000).toISOString(),
+        completed_at: result.completed_at || new Date().toISOString()
+      };
+      
+      navigate('/quiz-result', { state: { result: resultWithTimestamps } });
     } catch (error) {
       console.error('Error submitting quiz:', error);
       setError('Failed to submit quiz. Please try again.');

@@ -40,7 +40,7 @@ const QuizResult: React.FC = () => {
       const endTime = new Date(result.completed_at);
       
       if (!isNaN(startTime.getTime()) && !isNaN(endTime.getTime())) {
-        const timeTakenMs = endTime.getTime() - startTime.getTime();
+        const timeTakenMs = Math.max(0, endTime.getTime() - startTime.getTime());
         const minutes = Math.floor(timeTakenMs / (1000 * 60));
         const seconds = Math.floor((timeTakenMs % (1000 * 60)) / 1000);
         timeTaken = `${minutes}m ${seconds}s`;
