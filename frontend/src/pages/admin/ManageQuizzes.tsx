@@ -142,7 +142,6 @@ const ManageQuizzes: React.FC = () => {
       {editingQuiz && (
         <EditQuizModal
           quiz={editingQuiz}
-          isOpen={!!editingQuiz}
           onClose={() => setEditingQuiz(null)}
           onUpdate={() => {
             setEditingQuiz(null);
