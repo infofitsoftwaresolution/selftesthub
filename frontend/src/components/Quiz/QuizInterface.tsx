@@ -17,6 +17,7 @@ const QuizInterface: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [securityViolation, setSecurityViolation] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Start quiz and get attempt ID
   useEffect(() => {
@@ -48,26 +49,32 @@ const QuizInterface: React.FC = () => {
     }
   }, [quizId, navigate]);
 
-  // Add submit handler
-  const handleSubmit = useCallback(async () => {
-    if (!attemptId) {
-      alert('No active quiz attempt found');
+  // Add useEffect for timer
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      handleSubmit();
       return;
     }
 
-    if (!window.confirm('Are you sure you want to submit the quiz?')) {
-      return;
-    }
-    
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 0) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  // Modify handleSubmit to handle auto-submission
+  const handleSubmit = async () => {
+    if (isSubmitting || !attemptId) return;
+
     setIsSubmitting(true);
-    
     try {
-      // Convert answers object keys to strings
-      const formattedAnswers = Object.entries(answers).reduce((acc, [key, value]) => {
-        acc[key.toString()] = value;
-        return acc;
-      }, {} as Record<string, number>);
-
       const response = await fetch(API_ENDPOINTS.SUBMIT_QUIZ(quizId as string, attemptId.toString()), {
         method: 'POST',
         ...fetchOptions,
@@ -75,23 +82,22 @@ const QuizInterface: React.FC = () => {
           ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ answers: formattedAnswers })
+        body: JSON.stringify({ answers })
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to submit quiz');
+        throw new Error('Failed to submit quiz');
       }
 
       const result = await response.json();
       navigate('/quiz-result', { state: { result } });
-    } catch (err) {
-      console.error('Failed to submit quiz:', err);
-      alert('Failed to submit quiz. Please try again.');
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      setError('Failed to submit quiz. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
-  }, [attemptId, quizId, answers, navigate]);
+  };
 
   // Fetch quiz data
   useEffect(() => {
@@ -252,6 +258,12 @@ const QuizInterface: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
 
           {/* Question Card */}
           {quiz && (
