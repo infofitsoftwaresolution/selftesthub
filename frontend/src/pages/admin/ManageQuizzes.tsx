@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaEdit, FaTrash } from 'react-icons/fa';
-import { API_ENDPOINTS,fetchOptions } from '../../config/api';
+import { FaEdit, FaTrash, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import CreateQuizModal from '../../components/Admin/CreateQuizModal';
 import EditQuizModal from '../../components/Admin/EditQuizModal';
 import { Quiz } from '../../types/quiz';
@@ -63,6 +63,25 @@ const ManageQuizzes: React.FC = () => {
       }
     } catch (err) {
       setError('Failed to update quiz status');
+    }
+  };
+
+  const handlePublishQuiz = async (quizId: number) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.UPDATE_QUIZ(quizId.toString()), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ is_draft: false })
+      });
+
+      if (response.ok) {
+        await fetchQuizzes(); // Refresh quiz list
+      }
+    } catch (err) {
+      setError('Failed to publish quiz');
     }
   };
 
@@ -144,18 +163,41 @@ const ManageQuizzes: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap">{quiz.questions.length}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{quiz.duration} min</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => handleToggleActive(quiz.id, quiz.is_active)}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      quiz.is_active 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {quiz.is_active ? 'Active' : 'Inactive'}
-                  </button>
+                  {quiz.is_draft ? (
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      Draft
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleToggleActive(quiz.id, quiz.is_active)}
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        quiz.is_active 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {quiz.is_active ? 'Active' : 'Inactive'}
+                    </button>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
+                  {quiz.is_draft ? (
+                    <button 
+                      className="text-green-600 hover:text-green-800 mr-3"
+                      onClick={() => handlePublishQuiz(quiz.id)}
+                      title="Publish Quiz"
+                    >
+                      <FaEye />
+                    </button>
+                  ) : (
+                    <button 
+                      className="text-gray-600 hover:text-gray-800 mr-3"
+                      onClick={() => handleToggleActive(quiz.id, quiz.is_active)}
+                      title={quiz.is_active ? "Hide Quiz" : "Show Quiz"}
+                    >
+                      {quiz.is_active ? <FaEye /> : <FaEyeSlash />}
+                    </button>
+                  )}
                   <button 
                     className="text-blue-600 hover:text-blue-800 mr-3"
                     onClick={() => handleEditQuiz(quiz)}

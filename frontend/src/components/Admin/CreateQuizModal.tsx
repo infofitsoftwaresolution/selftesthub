@@ -30,6 +30,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
   });
 
   const [error, setError] = useState('');
+  const [isDraft, setIsDraft] = useState(false);
 
   const addQuestion = () => {
     if (!currentQuestion.text || currentQuestion.options.some(opt => !opt)) {
@@ -49,7 +50,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
     setError('');
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (saveAsDraft = false) => {
     try {
       if (!quizData.title) {
         setError('Please enter a quiz title');
@@ -79,7 +80,8 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
           title: quizData.title,
           type: quizData.type,
           duration: quizData.duration,
-          questions: formattedQuestions
+          questions: formattedQuestions,
+          is_draft: saveAsDraft
         })
       });
 
@@ -256,10 +258,16 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
             Cancel
           </button>
           <button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit(true)}
+            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600"
+          >
+            Save as Draft
+          </button>
+          <button
+            onClick={() => handleSubmit(false)}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            Create Quiz
+            Publish Quiz
           </button>
         </div>
       </div>

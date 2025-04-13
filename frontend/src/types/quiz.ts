@@ -25,6 +25,7 @@ export interface Quiz {
     type: string;
     questions: Question[];
     is_active: boolean;
+    is_draft: boolean;
     created_by: number;
     created_at: string;
 }
@@ -34,6 +35,7 @@ export interface QuizUpdate {
     duration?: number;
     type?: string;
     is_active?: boolean;
+    is_draft?: boolean;
 }
 
 export function isQuiz(obj: any): obj is Quiz {
@@ -46,6 +48,7 @@ export function isQuiz(obj: any): obj is Quiz {
         typeof obj.duration === 'number' &&
         Array.isArray(obj.questions) &&
         typeof obj.is_active === 'boolean' &&
+        typeof obj.is_draft === 'boolean' &&
         typeof obj.created_by === 'number' &&
         typeof obj.created_at === 'string'
     );
