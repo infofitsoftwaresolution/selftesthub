@@ -4,6 +4,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Quiz, Question } from '../../types/quiz';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import QuizSecurity from './QuizSecurity';
+import Timer from './Timer';
 
 const QuizInterface: React.FC = () => {
   const { quizId } = useParams();
@@ -33,7 +34,7 @@ const QuizInterface: React.FC = () => {
 
         if (response.ok) {
           const data = await response.json();
-          setAttemptId(data.attemptId);
+          setAttemptId(data.id);
         } else {
           throw new Error('Failed to start quiz');
         }
@@ -92,6 +93,12 @@ const QuizInterface: React.FC = () => {
       setIsSubmitting(false);
     }
   }, [attemptId, quizId, answers, navigate]);
+
+  // Handle timer expiration
+  const handleTimeUp = useCallback(() => {
+    alert('Time is up! Your quiz will be submitted automatically.');
+    handleSubmit();
+  }, [handleSubmit]);
 
   // Fetch quiz data
   useEffect(() => {
@@ -247,9 +254,10 @@ const QuizInterface: React.FC = () => {
               <div className="text-gray-600">
                 Question {currentQuestion + 1} of {quiz?.questions.length}
               </div>
-              <div className="text-gray-600 font-semibold">
-                Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-              </div>
+              <Timer 
+                duration={quiz.duration * 60} 
+                onTimeUp={handleTimeUp}
+              />
             </div>
           </div>
 
