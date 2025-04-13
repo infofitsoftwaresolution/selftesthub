@@ -168,7 +168,14 @@ async def update_quiz(
     
     try:
         # Update quiz fields
-        for field, value in quiz_update.dict(exclude_unset=True).items():
+        update_data = quiz_update.dict(exclude_unset=True)
+        
+        # Handle questions separately to ensure proper JSON conversion
+        if 'questions' in update_data:
+            quiz.questions = update_data.pop('questions')
+        
+        # Update remaining fields
+        for field, value in update_data.items():
             if hasattr(quiz, field):
                 setattr(quiz, field, value)
         

@@ -31,6 +31,8 @@ class QuizUpdate(BaseModel):
     duration: Optional[int] = None
     type: Optional[str] = None
     is_active: Optional[bool] = None
+    is_draft: Optional[bool] = None
+    questions: Optional[List[dict]] = None
 
 class Quiz(QuizBase):
     id: int
