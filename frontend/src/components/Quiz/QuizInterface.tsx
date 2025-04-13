@@ -16,6 +16,7 @@ const QuizInterface: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [securityViolation, setSecurityViolation] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Start quiz and get attempt ID
   useEffect(() => {
@@ -75,16 +76,23 @@ const QuizInterface: React.FC = () => {
         body: JSON.stringify({ answers: formattedAnswers })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to submit quiz');
+        throw new Error(data.detail || 'Failed to submit quiz');
       }
 
-      const result = await response.json();
-      navigate('/quiz-result', { state: { result } });
+      // Only navigate after successful submission
+      navigate('/quiz-result', { 
+        state: { 
+          result: data,
+          message: 'Quiz submitted successfully!'
+        } 
+      });
     } catch (err) {
       console.error('Failed to submit quiz:', err);
-      navigate('/available-quizzes');
+      // Show error in the UI instead of navigating away
+      setError(err instanceof Error ? err.message : 'Failed to submit quiz');
     } finally {
       setIsSubmitting(false);
     }
@@ -328,6 +336,12 @@ const QuizInterface: React.FC = () => {
               </button>
             )}
           </div>
+
+          {error && (
+            <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
 
           {/* Question Navigation Pills */}
           <div className="mt-6">
