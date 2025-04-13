@@ -32,16 +32,10 @@ const QuizInterface: React.FC = () => {
         });
 
         const data = await response.json();
+        console.log('Quiz start response:', data); // Debug log
 
         if (response.ok) {
-          // Check if we have an attempt ID in the response
-          if (data.id) {
-            setAttemptId(data.id);
-          } else if (data.attempt_id) {
-            setAttemptId(data.attempt_id);
-          } else {
-            throw new Error('No attempt ID received from server');
-          }
+          setAttemptId(data.id);
         } else {
           throw new Error(data.detail || 'Failed to start quiz');
         }
