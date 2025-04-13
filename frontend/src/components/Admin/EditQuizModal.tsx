@@ -66,9 +66,20 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, onClose, onUpdate }
   const handleSaveQuestion = () => {
     if (!currentQuestion) return;
 
-    const updatedQuestions = currentQuestion.id === Date.now()
-      ? [...quizData.questions, currentQuestion]
-      : quizData.questions.map(q => q.id === currentQuestion.id ? currentQuestion : q);
+    let updatedQuestions;
+    if (currentQuestion.id === Date.now()) {
+      // This is a new question
+      const newQuestion = {
+        ...currentQuestion,
+        id: Math.max(...quizData.questions.map(q => q.id), 0) + 1 // Generate a new unique ID
+      };
+      updatedQuestions = [...quizData.questions, newQuestion];
+    } else {
+      // This is an existing question being edited
+      updatedQuestions = quizData.questions.map(q => 
+        q.id === currentQuestion.id ? currentQuestion : q
+      );
+    }
 
     setQuizData({
       ...quizData,
