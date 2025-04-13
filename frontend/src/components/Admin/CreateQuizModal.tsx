@@ -152,6 +152,18 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
             </div>
           </div>
 
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Quiz Type</label>
+            <select
+              value={quizData.type}
+              onChange={(e) => setQuizData({ ...quizData, type: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="practice">Practice</option>
+              <option value="exam">Exam</option>
+            </select>
+          </div>
+
           {/* Add Question Form */}
           <div className="bg-gray-50 p-4 rounded-lg mb-6">
             <h3 className="text-lg font-medium mb-4">Add New Question</h3>
