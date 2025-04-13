@@ -29,4 +29,22 @@ class Quiz(Base):
                 q.dict() if hasattr(q, 'dict') else q 
                 for q in kwargs['questions']
             ]
-        super().__init__(**kwargs) 
+        super().__init__(**kwargs)
+
+    def update_questions(self, new_questions):
+        """Update questions with proper validation"""
+        if not isinstance(new_questions, list):
+            raise ValueError("Questions must be a list")
+        
+        # Ensure each question has the required fields
+        for q in new_questions:
+            if not isinstance(q, dict):
+                raise ValueError("Each question must be a dictionary")
+            if 'text' not in q or 'options' not in q or 'correctAnswer' not in q:
+                raise ValueError("Each question must have text, options, and correctAnswer")
+            if not isinstance(q['options'], list):
+                raise ValueError("Options must be a list")
+            if not isinstance(q['correctAnswer'], int):
+                raise ValueError("correctAnswer must be an integer")
+        
+        self.questions = new_questions 

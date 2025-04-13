@@ -151,6 +151,8 @@ async def update_quiz(
     Update a quiz.
     Only the quiz creator or an admin can update the quiz.
     """
+    logger.info(f"Updating quiz {quiz_id} with data: {quiz_update.dict()}")
+    
     # Get the quiz
     quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
     if not quiz:
@@ -169,14 +171,23 @@ async def update_quiz(
     try:
         # Update quiz fields
         update_data = quiz_update.dict(exclude_unset=True)
+        logger.info(f"Update data: {update_data}")
         
         # Handle questions separately to ensure proper JSON conversion
         if 'questions' in update_data:
-            quiz.questions = update_data.pop('questions')
+            logger.info(f"Updating questions: {update_data['questions']}")
+            try:
+                quiz.update_questions(update_data.pop('questions'))
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=str(e)
+                )
         
         # Update remaining fields
         for field, value in update_data.items():
             if hasattr(quiz, field):
+                logger.info(f"Updating field {field} with value {value}")
                 setattr(quiz, field, value)
         
         db.commit()
@@ -186,6 +197,7 @@ async def update_quiz(
         
     except Exception as e:
         db.rollback()
+        logger.error(f"Error updating quiz: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error updating quiz: {str(e)}"
