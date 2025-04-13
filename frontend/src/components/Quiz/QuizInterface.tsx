@@ -34,7 +34,8 @@ const QuizInterface: React.FC = () => {
           const data = await response.json();
           setAttemptId(data.id);
         } else {
-          throw new Error('Failed to start quiz');
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Failed to start quiz');
         }
       } catch (error) {
         console.error('Error starting quiz:', error);
@@ -50,7 +51,7 @@ const QuizInterface: React.FC = () => {
   // Add submit handler
   const handleSubmit = useCallback(async () => {
     if (!attemptId) {
-      alert('No active quiz attempt found');
+      console.error('No active quiz attempt found');
       return;
     }
 
@@ -93,10 +94,43 @@ const QuizInterface: React.FC = () => {
   }, [attemptId, quizId, answers, navigate]);
 
   // Handle timer expiration
-  const handleTimeUp = useCallback(() => {
-    alert('Time is up! Your quiz will be submitted automatically.');
-    handleSubmit();
-  }, [handleSubmit]);
+  const handleTimeUp = useCallback(async () => {
+    if (!attemptId || isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      // Convert answers object keys to strings
+      const formattedAnswers = Object.entries(answers).reduce((acc, [key, value]) => {
+        acc[key.toString()] = value;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const response = await fetch(API_ENDPOINTS.SUBMIT_QUIZ(quizId as string, attemptId.toString()), {
+        method: 'POST',
+        ...fetchOptions,
+        headers: {
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ 
+          answers: formattedAnswers,
+          time_up: true 
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to submit quiz');
+      }
+
+      const result = await response.json();
+      navigate('/quiz-result', { state: { result } });
+    } catch (err) {
+      console.error('Failed to submit quiz:', err);
+      // Even if submission fails, navigate away to prevent further attempts
+      navigate('/available-quizzes');
+    }
+  }, [attemptId, quizId, answers, navigate, isSubmitting]);
 
   // Fetch quiz data
   useEffect(() => {
