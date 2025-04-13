@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaClock, FaQuestionCircle, FaPlay } from 'react-icons/fa';
+import { FaClock, FaQuestionCircle, FaPlay, FaLock } from 'react-icons/fa';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import { Quiz } from '../../types/quiz';
 
 const AvailableQuizzes: React.FC = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [attemptedQuizzes, setAttemptedQuizzes] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchQuizzes();
+    fetchAttemptedQuizzes();
   }, []);
 
   const fetchQuizzes = async () => {
@@ -37,6 +39,26 @@ const AvailableQuizzes: React.FC = () => {
     }
   };
 
+  const fetchAttemptedQuizzes = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.MY_ATTEMPTS, {
+        ...fetchOptions,
+        headers: {
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const attemptedQuizIds = data.map((attempt: any) => attempt.quiz_id);
+        setAttemptedQuizzes(attemptedQuizIds);
+      }
+    } catch (err) {
+      console.error('Failed to fetch attempted quizzes:', err);
+    }
+  };
+
   const handleStartQuiz = async (quizId: number) => {
     try {
       const response = await fetch(API_ENDPOINTS.START_QUIZ(quizId.toString()), {
@@ -56,9 +78,13 @@ const AvailableQuizzes: React.FC = () => {
             startedAt: new Date().toISOString()
           }
         });
+      } else {
+        const errorData = await response.json();
+        setError(errorData.detail || 'Failed to start quiz');
       }
     } catch (error) {
       console.error('Failed to start quiz:', error);
+      setError('Failed to start quiz');
     }
   };
 
@@ -69,37 +95,54 @@ const AvailableQuizzes: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {quizzes.map((quiz) => (
-          <div key={quiz.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="p-6">
-              <h3 className="text-xl font-semibold mb-2">{quiz.title}</h3>
-              <div className="space-y-2">
-                <div className="flex items-center text-gray-600">
-                  <FaClock className="h-5 w-5 mr-2" />
-                  <span>{quiz.duration} minutes</span>
-                </div>
-                <div className="flex items-center text-gray-600">
-                  <FaQuestionCircle className="h-5 w-5 mr-2" />
-                  <span>{quiz.questions.length} questions</span>
-                </div>
-                <div className="flex items-center text-gray-600">
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                    {quiz.type.toUpperCase()}
-                  </span>
+        {quizzes.map((quiz) => {
+          const hasAttempted = attemptedQuizzes.includes(quiz.id);
+          return (
+            <div key={quiz.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="p-6">
+                <h3 className="text-xl font-semibold mb-2">{quiz.title}</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center text-gray-600">
+                    <FaClock className="h-5 w-5 mr-2" />
+                    <span>{quiz.duration} minutes</span>
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <FaQuestionCircle className="h-5 w-5 mr-2" />
+                    <span>{quiz.questions.length} questions</span>
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                      {quiz.type.toUpperCase()}
+                    </span>
+                  </div>
                 </div>
               </div>
+              <div className="px-6 pb-6">
+                <button
+                  onClick={() => handleStartQuiz(quiz.id)}
+                  disabled={hasAttempted}
+                  className={`w-full flex items-center justify-center px-4 py-3 rounded-lg transition duration-300 ${
+                    hasAttempted
+                      ? 'bg-gray-400 text-white cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {hasAttempted ? (
+                    <>
+                      <FaLock className="h-4 w-4 mr-2" />
+                      Already Attempted
+                    </>
+                  ) : (
+                    <>
+                      <FaPlay className="h-4 w-4 mr-2" />
+                      Start Quiz
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-            <div className="px-6 pb-6">
-              <button
-                onClick={() => handleStartQuiz(quiz.id)}
-                className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300"
-              >
-                <FaPlay className="h-4 w-4 mr-2" />
-                Start Quiz
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {error && (

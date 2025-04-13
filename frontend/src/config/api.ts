@@ -63,6 +63,8 @@ export const API_ENDPOINTS = {
   // Add these new endpoints
   REGISTER_SEND_OTP: getSecureUrl(`${API_URL}/api/v1/auth/register/send-otp`),
   REGISTER_VERIFY_OTP: getSecureUrl(`${API_URL}/api/v1/auth/register/verify-otp`),
+  QUIZ_ATTEMPTS: `${API_URL}/api/v1/quiz-attempts`,
+  MY_ATTEMPTS: `${API_URL}/api/v1/quiz-attempts/my-attempts`,
 };
 
 export default API_ENDPOINTS; 

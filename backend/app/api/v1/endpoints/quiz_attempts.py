@@ -25,7 +25,7 @@ def create_quiz_attempt(
 ):
     """Start a new quiz attempt"""
     try:
-        # Get the quiz to check max attempts
+        # Get the quiz
         quiz = db.query(Quiz).filter(Quiz.id == quiz_attempt.quiz_id).first()
         if not quiz:
             raise HTTPException(status_code=404, detail="Quiz not found")
@@ -45,21 +45,21 @@ def create_quiz_attempt(
             print("Found ongoing attempt:", ongoing_attempt.id)
             return ongoing_attempt
 
-        # Check if user has reached max attempts
-        completed_attempts = (
+        # Check if user has already attempted this quiz
+        existing_attempt = (
             db.query(QuizAttempt)
             .filter(
                 QuizAttempt.user_id == current_user.id,
                 QuizAttempt.quiz_id == quiz_attempt.quiz_id,
                 QuizAttempt.is_completed.is_(True)
             )
-            .count()
+            .first()
         )
 
-        if completed_attempts >= quiz.max_attempts:
+        if existing_attempt:
             raise HTTPException(
                 status_code=400,
-                detail=f"You have reached the maximum number of attempts ({quiz.max_attempts}) for this quiz"
+                detail="You have already attempted this quiz"
             )
 
         # Create new attempt
@@ -67,7 +67,7 @@ def create_quiz_attempt(
             quiz_id=quiz_attempt.quiz_id,
             user_id=current_user.id,
             started_at=datetime.utcnow(),
-            is_completed=False  # Explicitly set to False
+            is_completed=False
         )
         db.add(new_attempt)
         db.commit()
