@@ -31,12 +31,19 @@ const QuizInterface: React.FC = () => {
           }
         });
 
+        const data = await response.json();
+
         if (response.ok) {
-          const data = await response.json();
-          setAttemptId(data.id);
+          // Check if we have an attempt ID in the response
+          if (data.id) {
+            setAttemptId(data.id);
+          } else if (data.attempt_id) {
+            setAttemptId(data.attempt_id);
+          } else {
+            throw new Error('No attempt ID received from server');
+          }
         } else {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || 'Failed to start quiz');
+          throw new Error(data.detail || 'Failed to start quiz');
         }
       } catch (error) {
         console.error('Error starting quiz:', error);
