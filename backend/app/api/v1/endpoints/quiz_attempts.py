@@ -11,6 +11,7 @@ from app.schemas.quiz_attempt import (
 )
 from datetime import datetime
 import logging
+from app.models.quiz import Quiz
 
 router = APIRouter()
 
@@ -24,6 +25,11 @@ def create_quiz_attempt(
 ):
     """Start a new quiz attempt"""
     try:
+        # Get the quiz to check max attempts
+        quiz = db.query(Quiz).filter(Quiz.id == quiz_attempt.quiz_id).first()
+        if not quiz:
+            raise HTTPException(status_code=404, detail="Quiz not found")
+
         # Check if user has any ongoing attempts
         ongoing_attempt = (
             db.query(QuizAttempt)
@@ -38,6 +44,23 @@ def create_quiz_attempt(
         if ongoing_attempt:
             print("Found ongoing attempt:", ongoing_attempt.id)
             return ongoing_attempt
+
+        # Check if user has reached max attempts
+        completed_attempts = (
+            db.query(QuizAttempt)
+            .filter(
+                QuizAttempt.user_id == current_user.id,
+                QuizAttempt.quiz_id == quiz_attempt.quiz_id,
+                QuizAttempt.is_completed.is_(True)
+            )
+            .count()
+        )
+
+        if completed_attempts >= quiz.max_attempts:
+            raise HTTPException(
+                status_code=400,
+                detail=f"You have reached the maximum number of attempts ({quiz.max_attempts}) for this quiz"
+            )
 
         # Create new attempt
         new_attempt = QuizAttempt(

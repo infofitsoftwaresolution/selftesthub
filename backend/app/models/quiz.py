@@ -15,6 +15,8 @@ class Quiz(Base):
     is_active = Column(Boolean, server_default='true')
     created_at = Column(DateTime, server_default=text('now()'))
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    max_attempts = Column(Integer, nullable=False, server_default='1')
+    is_draft = Column(Boolean, server_default='false')
     
     # Relationships
     creator = relationship("User", back_populates="quizzes")
