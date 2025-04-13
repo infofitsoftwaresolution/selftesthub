@@ -18,7 +18,7 @@ interface CreateQuizModalProps {
 const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQuizCreated }) => {
   const [quizData, setQuizData] = useState({
     title: '',
-    type: 'mcq',
+    type: 'practice',
     duration: 30,
     questions: [] as Question[],
     max_attempts: 1
@@ -31,6 +31,22 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
   });
 
   const [error, setError] = useState('');
+
+  const resetForm = () => {
+    setQuizData({
+      title: '',
+      type: 'practice',
+      duration: 30,
+      questions: [],
+      max_attempts: 1
+    });
+    setCurrentQuestion({
+      text: '',
+      options: ['', '', '', ''],
+      correctAnswer: 0,
+    });
+    setError('');
+  };
 
   const addQuestion = () => {
     if (!currentQuestion.text || currentQuestion.options.some(opt => !opt)) {
@@ -94,16 +110,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
       await response.json(); // Just consume the response
       onQuizCreated();
       onClose();
-      
-      // Reset form
-      setQuizData({
-        title: '',
-        type: 'mcq',
-        duration: 30,
-        questions: [],
-        max_attempts: 1
-      });
-      setError('');
+      resetForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create quiz');
     }
