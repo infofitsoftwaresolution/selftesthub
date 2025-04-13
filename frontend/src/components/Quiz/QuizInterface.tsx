@@ -92,17 +92,32 @@ const QuizInterface: React.FC = () => {
       const result = await response.json();
       console.log("Original result from API:", result);
       
-      // Add timestamps if they're not included in the result
-      const startedAt = result.started_at || location.state?.startedAt || new Date(Date.now() - (quiz?.duration || 30) * 60 * 1000).toISOString();
-      const completedAt = result.completed_at || new Date().toISOString();
+      // Get the current time for completion
+      const now = new Date();
       
-      console.log("Using start time:", startedAt);
-      console.log("Using end time:", completedAt);
+      // Determine the start time
+      let startTime;
+      if (result.started_at) {
+        startTime = result.started_at;
+      } else if (location.state?.startedAt) {
+        startTime = location.state.startedAt;
+      } else {
+        // Calculate start time based on quiz duration
+        const quizDurationMs = (quiz?.duration || 30) * 60 * 1000;
+        const calculatedStartTime = new Date(now.getTime() - quizDurationMs);
+        startTime = calculatedStartTime.toISOString();
+      }
+      
+      // Use current time for completion
+      const endTime = now.toISOString();
+      
+      console.log("Using start time:", startTime);
+      console.log("Using end time:", endTime);
       
       const resultWithTimestamps = {
         ...result,
-        started_at: startedAt,
-        completed_at: completedAt
+        started_at: startTime,
+        completed_at: endTime
       };
       
       console.log("Final result with timestamps:", resultWithTimestamps);
