@@ -36,18 +36,35 @@ const QuizResult: React.FC = () => {
   let timeTaken = "N/A";
   if (result.started_at && result.completed_at) {
     try {
+      console.log("Start time:", result.started_at);
+      console.log("End time:", result.completed_at);
+      
       const startTime = new Date(result.started_at);
       const endTime = new Date(result.completed_at);
       
+      console.log("Parsed start time:", startTime);
+      console.log("Parsed end time:", endTime);
+      
       if (!isNaN(startTime.getTime()) && !isNaN(endTime.getTime())) {
         const timeTakenMs = Math.max(0, endTime.getTime() - startTime.getTime());
+        console.log("Time taken in ms:", timeTakenMs);
+        
         const minutes = Math.floor(timeTakenMs / (1000 * 60));
         const seconds = Math.floor((timeTakenMs % (1000 * 60)) / 1000);
+        console.log("Minutes:", minutes, "Seconds:", seconds);
+        
         timeTaken = `${minutes}m ${seconds}s`;
+      } else {
+        console.log("Invalid timestamps detected");
       }
     } catch (e) {
       console.error("Error calculating time taken:", e);
     }
+  } else {
+    console.log("Missing timestamps:", { 
+      started_at: result.started_at, 
+      completed_at: result.completed_at 
+    });
   }
 
   // Calculate wrong answers if not provided

@@ -90,13 +90,22 @@ const QuizInterface: React.FC = () => {
       }
 
       const result = await response.json();
+      console.log("Original result from API:", result);
       
       // Add timestamps if they're not included in the result
+      const startedAt = result.started_at || location.state?.startedAt || new Date(Date.now() - (quiz?.duration || 30) * 60 * 1000).toISOString();
+      const completedAt = result.completed_at || new Date().toISOString();
+      
+      console.log("Using start time:", startedAt);
+      console.log("Using end time:", completedAt);
+      
       const resultWithTimestamps = {
         ...result,
-        started_at: result.started_at || location.state?.startedAt || new Date(Date.now() - (quiz?.duration || 30) * 60 * 1000).toISOString(),
-        completed_at: result.completed_at || new Date().toISOString()
+        started_at: startedAt,
+        completed_at: completedAt
       };
+      
+      console.log("Final result with timestamps:", resultWithTimestamps);
       
       navigate('/quiz-result', { state: { result: resultWithTimestamps } });
     } catch (error) {
