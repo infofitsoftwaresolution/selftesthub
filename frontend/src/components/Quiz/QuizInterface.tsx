@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 // import TimerDebug from './TimerDebug';
 import { Quiz, Question } from '../../types/quiz';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
@@ -8,13 +8,11 @@ import Timer from './Timer';
 
 const QuizInterface: React.FC = () => {
   const { quizId } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
   
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [securityViolation, setSecurityViolation] = useState(false);
@@ -123,7 +121,6 @@ const QuizInterface: React.FC = () => {
             }))
           };
           setQuiz(quizWithIds);
-          setTimeLeft(data.duration * 60); // Convert minutes to seconds
         } else {
           throw new Error('Failed to fetch quiz');
         }
@@ -134,33 +131,6 @@ const QuizInterface: React.FC = () => {
 
     fetchQuiz();
   }, [quizId]);
-
-  // Setup timer
-  useEffect(() => {
-    if (quiz) {
-      const startTime = location.state?.startedAt 
-        ? new Date(location.state.startedAt) 
-        : new Date();
-
-      const durationInMs = quiz.duration * 60 * 1000;
-      const endTime = new Date(startTime.getTime() + durationInMs);
-      
-      const initialRemaining = Math.max(0, Math.floor((endTime.getTime() - new Date().getTime()) / 1000));
-      setTimeLeft(initialRemaining);
-
-      const interval = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev === null || prev <= 0) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [quiz]);
 
   // Add answer handler with auto-navigation
   const handleAnswer = useCallback((questionIndex: number, optionIndex: number) => {
