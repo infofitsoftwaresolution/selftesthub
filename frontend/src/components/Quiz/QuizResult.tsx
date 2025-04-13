@@ -33,12 +33,27 @@ const QuizResult: React.FC = () => {
   }
 
   // Calculate time taken
-  const startTime = new Date(result.started_at);
-  const endTime = new Date(result.completed_at);
-  const timeTakenMs = endTime.getTime() - startTime.getTime();
-  const minutes = Math.floor(timeTakenMs / (1000 * 60));
-  const seconds = Math.floor((timeTakenMs % (1000 * 60)) / 1000);
-  const timeTaken = `${minutes}m ${seconds}s`;
+  let timeTaken = "N/A";
+  if (result.started_at && result.completed_at) {
+    try {
+      const startTime = new Date(result.started_at);
+      const endTime = new Date(result.completed_at);
+      
+      if (!isNaN(startTime.getTime()) && !isNaN(endTime.getTime())) {
+        const timeTakenMs = endTime.getTime() - startTime.getTime();
+        const minutes = Math.floor(timeTakenMs / (1000 * 60));
+        const seconds = Math.floor((timeTakenMs % (1000 * 60)) / 1000);
+        timeTaken = `${minutes}m ${seconds}s`;
+      }
+    } catch (e) {
+      console.error("Error calculating time taken:", e);
+    }
+  }
+
+  // Calculate wrong answers if not provided
+  const wrongAnswers = result.wrong_answers !== undefined 
+    ? result.wrong_answers 
+    : result.total_questions - result.correct_answers;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -65,7 +80,7 @@ const QuizResult: React.FC = () => {
                 <FaTimesCircle className="text-red-500 text-xl mr-3" />
                 <div>
                   <div className="text-sm text-gray-600">Wrong Answers</div>
-                  <div className="text-lg font-semibold text-red-700">{result.wrong_answers}</div>
+                  <div className="text-lg font-semibold text-red-700">{wrongAnswers}</div>
                 </div>
               </div>
             </div>
