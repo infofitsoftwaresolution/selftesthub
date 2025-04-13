@@ -52,10 +52,7 @@ const QuizInterface: React.FC = () => {
   const handleSubmit = useCallback(async () => {
     if (!attemptId) {
       console.error('No active quiz attempt found');
-      return;
-    }
-
-    if (!window.confirm('Are you sure you want to submit the quiz?')) {
+      navigate('/available-quizzes');
       return;
     }
     
@@ -87,7 +84,7 @@ const QuizInterface: React.FC = () => {
       navigate('/quiz-result', { state: { result } });
     } catch (err) {
       console.error('Failed to submit quiz:', err);
-      alert('Failed to submit quiz. Please try again.');
+      navigate('/available-quizzes');
     } finally {
       setIsSubmitting(false);
     }
