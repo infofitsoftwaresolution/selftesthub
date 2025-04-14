@@ -153,54 +153,100 @@ async def update_quiz(
     """
     logger.info(f"Updating quiz {quiz_id} with data: {quiz_update.dict()}")
     
-    # Get the quiz
-    quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
-    if not quiz:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Quiz not found"
-        )
-    
-    # Check if user has permission to update
-    if quiz.created_by != current_user.id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions to update this quiz"
-        )
-    
     try:
-        # Update quiz fields
-        update_data = quiz_update.dict(exclude_unset=True)
-        logger.info(f"Update data: {update_data}")
+        # Get the quiz
+        quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
+        if not quiz:
+            logger.error(f"Quiz {quiz_id} not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Quiz not found"
+            )
         
-        # Handle questions separately to ensure proper JSON conversion
-        if 'questions' in update_data:
-            logger.info(f"Updating questions: {update_data['questions']}")
+        # Check if user has permission to update
+        if quiz.created_by != current_user.id and not current_user.is_admin:
+            logger.error(f"User {current_user.id} does not have permission to update quiz {quiz_id}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions to update this quiz"
+            )
+        
+        try:
+            # Update quiz fields
+            update_data = quiz_update.dict(exclude_unset=True)
+            logger.info(f"Update data after exclude_unset: {update_data}")
+            
+            # Handle questions separately to ensure proper JSON conversion
+            if 'questions' in update_data:
+                logger.info(f"Updating questions: {update_data['questions']}")
+                try:
+                    quiz.update_questions(update_data.pop('questions'))
+                except ValueError as e:
+                    logger.error(f"Error updating questions: {str(e)}")
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=str(e)
+                    )
+            
+            # Handle boolean fields explicitly
+            if 'is_active' in update_data:
+                try:
+                    is_active_value = bool(update_data.pop('is_active'))
+                    logger.info(f"Setting is_active to: {is_active_value}")
+                    setattr(quiz, 'is_active', is_active_value)
+                except Exception as e:
+                    logger.error(f"Error setting is_active: {str(e)}")
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid value for is_active: {str(e)}"
+                    )
+            
+            # Update remaining fields
+            for field, value in update_data.items():
+                if hasattr(quiz, field):
+                    logger.info(f"Updating field {field} with value {value}")
+                    try:
+                        setattr(quiz, field, value)
+                    except Exception as e:
+                        logger.error(f"Error setting field {field}: {str(e)}")
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Error updating field {field}: {str(e)}"
+                        )
+                else:
+                    logger.warning(f"Field {field} not found in quiz model")
+            
             try:
-                quiz.update_questions(update_data.pop('questions'))
-            except ValueError as e:
+                db.commit()
+                db.refresh(quiz)
+            except Exception as e:
+                logger.error(f"Database error during commit: {str(e)}")
+                db.rollback()
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=str(e)
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Database error: {str(e)}"
                 )
-        
-        # Update remaining fields
-        for field, value in update_data.items():
-            if hasattr(quiz, field):
-                logger.info(f"Updating field {field} with value {value}")
-                setattr(quiz, field, value)
-        
-        db.commit()
-        db.refresh(quiz)
-        
-        return quiz
-        
+            
+            logger.info(f"Quiz {quiz_id} updated successfully")
+            return quiz
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error updating quiz fields: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error updating quiz fields: {str(e)}"
+            )
+            
+    except HTTPException:
+        raise
     except Exception as e:
-        db.rollback()
-        logger.error(f"Error updating quiz: {str(e)}", exc_info=True)
+        logger.error(f"Unexpected error in update_quiz: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error updating quiz: {str(e)}"
+            detail=f"Unexpected error: {str(e)}"
         )
 
 @router.delete("/{quiz_id}", response_model=dict)

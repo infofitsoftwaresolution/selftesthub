@@ -49,6 +49,7 @@ const ManageQuizzes: React.FC = () => {
 
   const handleToggleActive = async (quizId: number, currentStatus: boolean) => {
     try {
+      console.log('Toggling quiz status:', { quizId, currentStatus });
       const response = await fetch(API_ENDPOINTS.UPDATE_QUIZ(quizId.toString()), {
         method: 'PATCH',
         headers: {
@@ -58,10 +59,19 @@ const ManageQuizzes: React.FC = () => {
         body: JSON.stringify({ is_active: !currentStatus })
       });
 
+      console.log('Toggle response status:', response.status);
+      
       if (response.ok) {
+        const responseData = await response.json();
+        console.log('Toggle response data:', responseData);
         await fetchQuizzes(); // Refresh quiz list
+      } else {
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        console.error('Error response:', errorData);
+        setError(`Failed to update quiz status: ${errorData.detail || 'Unknown error'}`);
       }
     } catch (err) {
+      console.error('Error toggling quiz status:', err);
       setError('Failed to update quiz status');
     }
   };
