@@ -12,6 +12,7 @@ from app.schemas.quiz_attempt import (
 from datetime import datetime
 import logging
 from app.models.quiz import Quiz
+from app.core.security import create_exam_token
 
 router = APIRouter()
 
@@ -72,6 +73,14 @@ def create_quiz_attempt(
         db.add(new_attempt)
         db.commit()
         db.refresh(new_attempt)
+        
+        # If this is an exam-type quiz, create a special exam token
+        if quiz.type == "exam":
+            exam_token = create_exam_token(subject=current_user.id)
+            return {
+                **new_attempt.__dict__,
+                "exam_token": exam_token
+            }
         
         print("Created new attempt:", new_attempt.id)
         return new_attempt

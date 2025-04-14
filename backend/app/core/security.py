@@ -19,6 +19,17 @@ def create_access_token(
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
+def create_exam_token(subject: Union[str, Any]) -> str:
+    """
+    Create a token specifically for exam sessions with extended duration.
+    This token will be valid for the duration of the exam plus a buffer.
+    """
+    # Token expires after 2 hours (120 minutes) to accommodate long exams
+    expire = datetime.utcnow() + timedelta(minutes=120)
+    to_encode = {"exp": expire, "sub": str(subject), "type": "exam"}
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
 def verify_token(token: str) -> dict:
     try:
         payload = jwt.decode(
