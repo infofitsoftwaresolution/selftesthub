@@ -25,6 +25,7 @@ router = APIRouter()
 
 # Whitelist of allowed email addresses
 ALLOWED_EMAILS = {
+    "lordjaja77@gmail.com",
     "kingsleyuzokwe0@gmail.com",
     "mmaduegbunamchukwunnso@gmail.com",
     "ubakaeze4real09@yahoo.com",
