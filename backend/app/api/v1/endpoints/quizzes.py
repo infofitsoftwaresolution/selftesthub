@@ -164,7 +164,7 @@ async def update_quiz(
             )
         
         # Check if user has permission to update
-        if quiz.created_by != current_user.id and not current_user.is_admin:
+        if quiz.created_by != current_user.id and not current_user.is_superuser:
             logger.error(f"User {current_user.id} does not have permission to update quiz {quiz_id}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -268,7 +268,7 @@ async def delete_quiz(
         )
     
     # Check if user has permission to delete
-    if quiz.created_by != current_user.id and not current_user.is_admin:
+    if quiz.created_by != current_user.id and not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions to delete this quiz"
