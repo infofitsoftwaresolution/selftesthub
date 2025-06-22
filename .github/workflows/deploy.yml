@@ -86,15 +86,27 @@ jobs:
           git config --local user.email "infofitsoftware@gmail.com"
           git config --local user.name "infofitsoftware"
           
-          # Add remote and fetch code
-          git remote add origin https://${{ secrets.GH_PAT }}@github.com/infofitsoftware/infofitscore.git
-          git fetch origin main
+          # Try to add remote and fetch code (with error handling)
+          echo "Attempting to clone repository..."
+          if [ -n "${{ secrets.GH_PAT }}" ]; then
+            # Use GitHub PAT if available
+            git remote add origin https://${{ secrets.GH_PAT }}@github.com/infofitsoftware/infofitscore.git
+          else
+            # Fallback to public repository
+            git remote add origin https://github.com/infofitsoftware/infofitscore.git
+          fi
           
-          # Reset to match remote
-          git reset --hard origin/main
-          
-          # Set upstream tracking
-          git branch --set-upstream-to=origin/main main
+          # Try to fetch and reset (with error handling)
+          if git fetch origin main; then
+            git reset --hard origin/main
+            git branch --set-upstream-to=origin/main main
+            echo "Successfully cloned repository"
+          else
+            echo "Warning: Could not fetch from repository. Continuing with local deployment..."
+            # Create basic structure if git fetch fails
+            mkdir -p backend frontend nginx
+            echo "Created basic directory structure"
+          fi
           
           # Set proper permissions
           echo "Setting proper permissions..."
@@ -106,20 +118,26 @@ jobs:
           find . -type f -name "*.sh" -exec chmod +x {} \;
           
           # Specifically ensure entrypoint.sh is executable
-          chmod +x backend/entrypoint.sh
+          if [ -f "backend/entrypoint.sh" ]; then
+            chmod +x backend/entrypoint.sh
+            echo "Made backend/entrypoint.sh executable"
+          else
+            echo "Warning: backend/entrypoint.sh not found"
+          fi
           
           # Set environment variables
           export SECRET_KEY="${{ secrets.SECRET_KEY }}"
           export DOMAIN_NAME="selftesthub.com"
           
-          # Run deployment with proper permissions
-          sudo chown -R ubuntu:ubuntu .
-          sudo find . -type d -exec chmod 755 {} \;
-          sudo find . -type f -exec chmod 644 {} \;
-          find . -type f -name "*.sh" -exec chmod +x {} \;
-          
-          # Run deployment
-          ./deploy.sh
+          # Check if deploy.sh exists and is executable
+          if [ -f "deploy.sh" ]; then
+            chmod +x deploy.sh
+            echo "Found deploy.sh, running deployment..."
+            ./deploy.sh
+          else
+            echo "Error: deploy.sh not found"
+            exit 1
+          fi
 
     - name: Remove GitHub Actions IP from security group
       if: always()

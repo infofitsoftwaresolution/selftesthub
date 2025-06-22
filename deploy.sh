@@ -56,12 +56,25 @@ if [ ! -f "nginx/ssl/live/selftesthub.com/fullchain.pem" ]; then
     sudo ./setup-ssl.sh
 fi
 
-# Update code from repository
-echo "Updating code from repository..."
-git fetch origin main
-git reset --hard origin/main
+# Initialize Git repository if it doesn't exist or is corrupted
+echo "Initializing Git repository..."
+if [ ! -d ".git" ] || [ ! -f ".git/config" ]; then
+    echo "Git repository not found or corrupted. Initializing..."
+    rm -rf .git
+    git init
+    git remote add origin https://github.com/your-username/infofitscore.git || true
+fi
 
-# Add this after git reset --hard origin/main
+# Try to update code from repository (skip if fails)
+echo "Attempting to update code from repository..."
+if git remote get-url origin >/dev/null 2>&1; then
+    git fetch origin main || echo "Warning: Could not fetch from repository"
+    git reset --hard origin/main || echo "Warning: Could not reset to origin/main"
+else
+    echo "Warning: No remote repository configured, continuing with local files"
+fi
+
+# Add this after git operations
 echo "Setting proper permissions..."
 sudo chown -R ubuntu:ubuntu .
 sudo find . -type d -exec chmod 755 {} \;
@@ -71,7 +84,11 @@ sudo find . -type f -exec chmod 644 {} \;
 find . -type f -name "*.sh" -exec chmod +x {} \;
 
 # Specifically ensure entrypoint.sh is executable
-chmod +x backend/entrypoint.sh
+if [ -f "backend/entrypoint.sh" ]; then
+    chmod +x backend/entrypoint.sh
+else
+    echo "Warning: backend/entrypoint.sh not found"
+fi
 
 # Update environment variables
 echo "Updating environment variables..."
@@ -91,7 +108,7 @@ VITE_API_URL=https://selftesthub.com
 EOL
 
 # Add at the beginning of the script, after cd into directory
-echo "Cleaning up Docker resources..+"
+echo "Cleaning up Docker resources..."
 docker-compose down || true
 docker system prune -af || true
 docker volume prune -f || true
