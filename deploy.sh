@@ -83,7 +83,7 @@ sudo find . -type f -exec chmod 644 {} \;
 # Make all shell scripts executable
 find . -type f -name "*.sh" -exec chmod +x {} \;
 
-# Specifically ensure entrypoint.sh is executable
+# Specifically ensure entrypoint.sh is executab
 if [ -f "backend/entrypoint.sh" ]; then
     chmod +x backend/entrypoint.sh
 else
