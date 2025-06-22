@@ -33,6 +33,7 @@ ALLOWED_EMAILS = {
     "amanioamaino@gmail.com",
     "ezeadichieobinna@gmail.com",
     "infofitsoftware@gmail.com",
+    "shubhamsingh6087@gmail.com"
     "infofitsoftwaresolution@gmail.com",
     "markstephens595@gmail.com",
     "gospelboy111@gmail.com",
