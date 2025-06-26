@@ -10,9 +10,10 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: process.env.NODE_ENV === 'production' 
-          ? 'https://localhost:8000'  // Production
+          ? 'http://backend:8000'  // Production - use Docker container name
           : 'http://localhost:8000',  // Development
         changeOrigin: true,
+        secure: false,
       }
     }
   },
