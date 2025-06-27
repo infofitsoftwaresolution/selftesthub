@@ -217,12 +217,12 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
-                <input
-                  type="text"
+                <textarea
                   value={currentQuestion.text}
                   onChange={(e) => setCurrentQuestion({ ...currentQuestion, text: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter question"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[80px]"
+                  placeholder="Enter question (supports multiple lines)"
+                  rows={3}
                 />
               </div>
               
@@ -233,16 +233,16 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
                       Option {index + 1}
                     </label>
                     <div className="flex">
-                      <input
-                        type="text"
+                      <textarea
                         value={option}
                         onChange={(e) => {
                           const newOptions = [...currentQuestion.options];
                           newOptions[index] = e.target.value;
                           setCurrentQuestion({ ...currentQuestion, options: newOptions });
                         }}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder={`Option ${index + 1}`}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[60px]"
+                        placeholder={`Option ${index + 1} (supports multiple lines)`}
+                        rows={2}
                       />
                       <button
                         type="button"
@@ -290,15 +290,16 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
                       <FaTimes />
                     </button>
                   </div>
-                  <p className="mt-1">{question.text}</p>
+                  <div className="mt-1 whitespace-pre-wrap">{question.text}</div>
                   <div className="mt-2 space-y-1 ml-4">
                     {question.options.map((option, optIndex) => (
-                      <p
+                      <div
                         key={optIndex}
                         className={optIndex === question.correctAnswer ? 'text-green-600 font-medium' : ''}
                       >
-                        {optIndex + 1}. {option}
-                      </p>
+                        <span>{optIndex + 1}. </span>
+                        <span className="whitespace-pre-wrap">{option}</span>
+                      </div>
                     ))}
                   </div>
                 </div>

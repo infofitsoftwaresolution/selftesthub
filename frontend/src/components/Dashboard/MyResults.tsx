@@ -212,7 +212,7 @@ const MyResults: React.FC = () => {
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <p className="font-medium mb-2">
-                              Question {index + 1}: {question.text}
+                              Question {index + 1}: <span className="whitespace-pre-wrap">{question.text}</span>
                             </p>
                             <div className="space-y-2">
                               {question.options.map((option, optIndex) => (
@@ -226,7 +226,7 @@ const MyResults: React.FC = () => {
                                       : 'bg-gray-50'
                                   }`}
                                 >
-                                  {option}
+                                  <div className="whitespace-pre-wrap">{option}</div>
                                 </div>
                               ))}
                             </div>

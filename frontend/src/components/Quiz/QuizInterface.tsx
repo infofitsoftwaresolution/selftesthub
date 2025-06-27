@@ -300,7 +300,7 @@ const QuizInterface: React.FC = () => {
           {/* Question Card */}
           {quiz && (
             <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-              <h2 className="text-xl text-gray-800 mb-6">
+              <h2 className="text-xl text-gray-800 mb-6 whitespace-pre-wrap">
                 {quiz.questions[currentQuestion].text}
               </h2>
               
@@ -315,15 +315,15 @@ const QuizInterface: React.FC = () => {
                         : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
                     } border-2`}
                   >
-                    <div className="flex items-center">
-                      <div className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 ${
+                    <div className="flex items-start">
+                      <div className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 mt-1 flex-shrink-0 ${
                         answers[currentQuestion] === index 
                           ? 'bg-blue-500 text-white' 
                           : 'bg-gray-200'
                       }`}>
                         {String.fromCharCode(65 + index)}
                       </div>
-                      {option}
+                      <div className="whitespace-pre-wrap">{option}</div>
                     </div>
                   </button>
                 ))}

@@ -152,7 +152,7 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, onClose, onUpdate }
               {quizData.questions.map((question) => (
                 <div key={question.id} className="border p-4 rounded-md">
                   <div className="flex justify-between items-start mb-2">
-                    <p className="font-medium">{question.text}</p>
+                    <div className="font-medium whitespace-pre-wrap">{question.text}</div>
                     <div className="flex space-x-2">
                       <button
                         type="button"
@@ -180,7 +180,7 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, onClose, onUpdate }
                             : 'bg-gray-50'
                         }`}
                       >
-                        {option}
+                        <div className="whitespace-pre-wrap">{option}</div>
                       </div>
                     ))}
                   </div>
@@ -202,11 +202,12 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, onClose, onUpdate }
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
-                  <input
-                    type="text"
+                  <textarea
                     value={currentQuestion.text}
                     onChange={(e) => setCurrentQuestion({ ...currentQuestion, text: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[80px]"
+                    placeholder="Enter question (supports multiple lines)"
+                    rows={3}
                   />
                 </div>
 
@@ -217,15 +218,16 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, onClose, onUpdate }
                         Option {index + 1}
                       </label>
                       <div className="flex">
-                        <input
-                          type="text"
+                        <textarea
                           value={option}
                           onChange={(e) => {
                             const newOptions = [...currentQuestion.options];
                             newOptions[index] = e.target.value;
                             setCurrentQuestion({ ...currentQuestion, options: newOptions });
                           }}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[60px]"
+                          placeholder={`Option ${index + 1} (supports multiple lines)`}
+                          rows={2}
                         />
                         <button
                           type="button"
