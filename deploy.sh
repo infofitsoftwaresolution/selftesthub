@@ -128,36 +128,11 @@ cat > nginx/conf.d/app.conf << 'EOL'
 error_log /var/log/nginx/error.log debug;
 access_log /var/log/nginx/access.log combined;
 
-# HTTP server (temporary for SSL setup)
+# HTTP - redirect all requests to HTTPS www version
 server {
     listen 80;
     server_name selftesthub.com www.selftesthub.com;
-    
-    # Frontend
-    location / {
-        proxy_pass http://frontend:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    # Backend API
-    location /api/ {
-        proxy_pass http://backend:8000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
+    return 301 https://www.selftesthub.com$request_uri;
 }
 
 # HTTPS
@@ -218,17 +193,26 @@ if [ -f "nginx/ssl/live/selftesthub.com/fullchain.pem" ]; then
 error_log /var/log/nginx/error.log debug;
 access_log /var/log/nginx/access.log combined;
 
-# HTTP - redirect all requests to HTTPS
+# HTTP - redirect all requests to HTTPS www version
 server {
     listen 80;
     server_name selftesthub.com www.selftesthub.com;
-    return 301 https://$host$request_uri;
+    return 301 https://www.selftesthub.com$request_uri;
 }
 
-# HTTPS
+# HTTPS - redirect non-www to www
 server {
     listen 443 ssl;
-    server_name selftesthub.com www.selftesthub.com;
+    server_name selftesthub.com;
+    ssl_certificate /etc/nginx/ssl/live/selftesthub.com/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/live/selftesthub.com/privkey.pem;
+    return 301 https://www.selftesthub.com$request_uri;
+}
+
+# HTTPS - main server block
+server {
+    listen 443 ssl;
+    server_name www.selftesthub.com;
 
     ssl_certificate /etc/nginx/ssl/live/selftesthub.com/fullchain.pem;
     ssl_certificate_key /etc/nginx/ssl/live/selftesthub.com/privkey.pem;
@@ -296,5 +280,5 @@ echo "Deployment completed successfully!"
 
 # Print the URLs
 echo "Application URLs:"
-echo "Frontend: https://selftesthub.com"
-echo "Backend API: https://selftesthub.com/api" 
+echo "Frontend: https://www.selftesthub.com"
+echo "Backend API: https://www.selftesthub.com/api" 
