@@ -50,9 +50,9 @@ echo "Creating Nginx temp directories..."
 mkdir -p /tmp/nginx/{client_temp,proxy_temp,fastcgi_temp,uwsgi_temp,scgi_temp}
 chmod -R 755 /tmp/nginx
 
-# Run SSL setup if certificates don't exist
-if [ ! -f "nginx/ssl/live/selftesthub.com/fullchain.pem" ]; then
-    echo "Setting up SSL certificates..."
+# Run SSL setup if certificates don't exist or if subdomain is missing
+if [ ! -f "nginx/ssl/live/selftesthub.com/fullchain.pem" ] || ! openssl x509 -in nginx/ssl/live/selftesthub.com/fullchain.pem -text -noout | grep -q "utrains.selftesthub.com"; then
+    echo "Setting up SSL certificates (including subdomain)..."
     sudo ./setup-ssl.sh
 fi
 
@@ -131,14 +131,14 @@ access_log /var/log/nginx/access.log combined;
 # HTTP - redirect all requests to HTTPS www version
 server {
     listen 80;
-    server_name selftesthub.com www.selftesthub.com;
+    server_name selftesthub.com www.selftesthub.com utrains.selftesthub.com;
     return 301 https://www.selftesthub.com$request_uri;
 }
 
 # HTTPS
 server {
     listen 443 ssl;
-    server_name selftesthub.com www.selftesthub.com;
+    server_name selftesthub.com www.selftesthub.com utrains.selftesthub.com;
 
     ssl_certificate /etc/nginx/ssl/live/selftesthub.com/fullchain.pem;
     ssl_certificate_key /etc/nginx/ssl/live/selftesthub.com/privkey.pem;
@@ -196,7 +196,7 @@ access_log /var/log/nginx/access.log combined;
 # HTTP - redirect all requests to HTTPS www version
 server {
     listen 80;
-    server_name selftesthub.com www.selftesthub.com;
+    server_name selftesthub.com www.selftesthub.com utrains.selftesthub.com;
     return 301 https://www.selftesthub.com$request_uri;
 }
 

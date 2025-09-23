@@ -139,7 +139,7 @@ jobs:
           # HTTP - redirect all requests to HTTPS www version
           server {
               listen 80;
-              server_name selftesthub.com www.selftesthub.com;
+              server_name selftesthub.com www.selftesthub.com utrains.selftesthub.com;
               return 301 https://www.selftesthub.com$request_uri;
           }
           
@@ -147,8 +147,17 @@ jobs:
           server {
               listen 443 ssl;
               server_name selftesthub.com;
-              ssl_certificate /etc/nginx/ssl/selftesthub.com.crt;
-              ssl_certificate_key /etc/nginx/ssl/selftesthub.com.key;
+              ssl_certificate /etc/nginx/ssl/live/selftesthub.com/fullchain.pem;
+              ssl_certificate_key /etc/nginx/ssl/live/selftesthub.com/privkey.pem;
+              return 301 https://www.selftesthub.com$request_uri;
+          }
+          
+          # HTTPS - redirect subdomain to main domain
+          server {
+              listen 443 ssl;
+              server_name utrains.selftesthub.com;
+              ssl_certificate /etc/nginx/ssl/live/selftesthub.com/fullchain.pem;
+              ssl_certificate_key /etc/nginx/ssl/live/selftesthub.com/privkey.pem;
               return 301 https://www.selftesthub.com$request_uri;
           }
           
@@ -157,8 +166,8 @@ jobs:
               listen 443 ssl;
               server_name www.selftesthub.com;
           
-              ssl_certificate /etc/nginx/ssl/selftesthub.com.crt;
-              ssl_certificate_key /etc/nginx/ssl/selftesthub.com.key;
+              ssl_certificate /etc/nginx/ssl/live/selftesthub.com/fullchain.pem;
+              ssl_certificate_key /etc/nginx/ssl/live/selftesthub.com/privkey.pem;
           
               # SSL configurations
               ssl_protocols TLSv1.2 TLSv1.3;
@@ -202,6 +211,17 @@ jobs:
               limit_req zone=one burst=5 nodelay;
           }
           EOF
+          
+          # Ensure SSL certificate includes subdomain
+          echo "Checking SSL certificate for subdomain..."
+          if [ -f "nginx/ssl/live/selftesthub.com/fullchain.pem" ]; then
+            if ! openssl x509 -in nginx/ssl/live/selftesthub.com/fullchain.pem -text -noout | grep -q "utrains.selftesthub.com"; then
+              echo "Subdomain not found in certificate, renewing SSL certificate..."
+              sudo ./setup-ssl.sh
+            else
+              echo "SSL certificate includes subdomain"
+            fi
+          fi
           
           # Check if deploy.sh exists and is executable
           if [ -f "deploy.sh" ]; then
