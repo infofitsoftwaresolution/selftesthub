@@ -139,7 +139,7 @@ jobs:
           # HTTP - redirect all requests to HTTPS www version
           server {
               listen 80;
-              server_name selftesthub.com www.selftesthub.com utrains.selftesthub.com;
+              server_name selftesthub.com www.selftesthub.com;
               return 301 https://www.selftesthub.com$request_uri;
           }
           
@@ -147,15 +147,6 @@ jobs:
           server {
               listen 443 ssl;
               server_name selftesthub.com;
-              ssl_certificate /etc/nginx/ssl/live/selftesthub.com/fullchain.pem;
-              ssl_certificate_key /etc/nginx/ssl/live/selftesthub.com/privkey.pem;
-              return 301 https://www.selftesthub.com$request_uri;
-          }
-          
-          # HTTPS - redirect subdomain to main domain
-          server {
-              listen 443 ssl;
-              server_name utrains.selftesthub.com;
               ssl_certificate /etc/nginx/ssl/live/selftesthub.com/fullchain.pem;
               ssl_certificate_key /etc/nginx/ssl/live/selftesthub.com/privkey.pem;
               return 301 https://www.selftesthub.com$request_uri;
@@ -212,14 +203,14 @@ jobs:
           }
           EOF
           
-          # Ensure SSL certificate includes subdomain
-          echo "Checking SSL certificate for subdomain..."
+          # Ensure SSL certificate is valid for main domains only
+          echo "Checking SSL certificate for main domains..."
           if [ -f "nginx/ssl/live/selftesthub.com/fullchain.pem" ]; then
-            if ! openssl x509 -in nginx/ssl/live/selftesthub.com/fullchain.pem -text -noout | grep -q "utrains.selftesthub.com"; then
-              echo "Subdomain not found in certificate, renewing SSL certificate..."
+            if ! openssl x509 -in nginx/ssl/live/selftesthub.com/fullchain.pem -text -noout | grep -q "www.selftesthub.com"; then
+              echo "Main domain not found in certificate, renewing SSL certificate..."
               sudo ./setup-ssl.sh
             else
-              echo "SSL certificate includes subdomain"
+              echo "SSL certificate is valid for main domains"
             fi
           fi
           

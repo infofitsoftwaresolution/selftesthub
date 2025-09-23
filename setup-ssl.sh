@@ -22,7 +22,7 @@ certbot certonly --standalone \
     --agree-tos \
     --no-eff-email \
     --force-renewal \
-    -d selftesthub.com -d www.selftesthub.com -d utrains.selftesthub.com \
+    -d selftesthub.com -d www.selftesthub.com \
     --non-interactive
 
 # Create SSL directory
