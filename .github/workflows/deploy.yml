@@ -102,7 +102,7 @@ jobs:
             git branch --set-upstream-to=origin/main main
             echo "Successfully cloned repository"
           else
-            echo "Warning: Could not fetch from repository. Continuing with local deployment..."
+            echo "Warning: Could not fetch from repository. Continuing with local deployment...."
             # Create basic structure if git fetch fails
             mkdir -p backend frontend nginx
             echo "Created basic directory structure"
