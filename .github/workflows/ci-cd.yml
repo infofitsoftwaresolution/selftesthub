@@ -251,21 +251,31 @@ jobs:
             export PYTHONPATH=$DEPLOY_DIR/backend
             alembic upgrade head || { echo "❌ Alembic migration failed!"; exit 1; }
 
-            # ---- Start/Restart Backend with systemd or PM2-like ----
-            echo "🚀 Starting backend..."
+            # ---- Start/Restart Backend with systemd ----
+            echo "🚀 Configuring systemd service for backend..."
 
-            # Stop existing process
-            pkill -f "uvicorn app.main:app" 2>/dev/null || true
-            sleep 2
+            sudo tee /etc/systemd/system/selftesthub-backend.service > /dev/null << SYSTEMD_EOF
+            [Unit]
+            Description=SelfTestHub FastAPI Backend
+            After=network.target
 
-            # Start uvicorn in background
-            nohup $DEPLOY_DIR/backend/venv/bin/uvicorn app.main:app \
-              --host 0.0.0.0 \
-              --port $BACKEND_PORT \
-              --workers 2 \
-              > $DEPLOY_DIR/backend/uvicorn.log 2>&1 < /dev/null &
+            [Service]
+            User=${{ secrets.DEPLOY_USER }}
+            WorkingDirectory=$DEPLOY_DIR/backend
+            Environment="PATH=$DEPLOY_DIR/backend/venv/bin"
+            ExecStart=$DEPLOY_DIR/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $BACKEND_PORT --workers 2
+            Restart=always
+            StandardOutput=syslog
+            StandardError=syslog
+            SyslogIdentifier=selftesthub-backend
 
-            echo "Backend PID: $!"
+            [Install]
+            WantedBy=multi-user.target
+            SYSTEMD_EOF
+
+            sudo systemctl daemon-reload
+            sudo systemctl enable selftesthub-backend.service
+            sudo systemctl restart selftesthub-backend.service
 
             # ---- Setup NGINX ----
             echo "🌐 Configuring NGINX..."
@@ -330,8 +340,8 @@ jobs:
               echo "✅ Backend is running (HTTP $BACKEND_HEALTH)"
             else
               echo "❌ Backend returned HTTP $BACKEND_HEALTH. It probably crashed!"
-              echo "Last 20 lines of uvicorn log:"
-              tail -20 $DEPLOY_DIR/backend/uvicorn.log 2>/dev/null || echo "No log file"
+              echo "Last 20 lines of backend log:"
+              sudo journalctl -u selftesthub-backend.service -n 20 --no-pager || echo "No log available"
               exit 1
             fi
 
