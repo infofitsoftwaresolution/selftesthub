@@ -1,8 +1,3 @@
-{
-  "dependencies": {
-    "react-icons": "^5.5.0"
-  }
-}
 # InfoFit Score - Quiz Platform
 
 A full-stack MCQ/Test quiz platform built with FastAPI, React, and PostgreSQL.
