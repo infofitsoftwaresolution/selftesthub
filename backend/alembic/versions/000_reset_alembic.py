@@ -13,10 +13,8 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    # Drop and recreate alembic_version table
-    op.execute('DROP TABLE IF EXISTS alembic_version')
-    op.execute('CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)')
-    op.execute("INSERT INTO alembic_version (version_num) VALUES ('000')")
+    # Base migration - no-op starting point
+    pass
 
 def downgrade() -> None:
-    op.execute('DROP TABLE IF EXISTS alembic_version') 
+    pass 

@@ -1,12 +1,12 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 import os
 from pydantic import ConfigDict
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Quiz App"
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = "bc678a9427f54284ff421052bea33678067e2476acfc87c144e33d6ba4fba5ee"
+    SECRET_KEY: str = ""  # Must be set in .env
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     
@@ -14,16 +14,19 @@ class Settings(BaseSettings):
     CORS_ORIGINS_RAW: str = "http://localhost:3000,https://localhost:3000,http://selftesthub.com,https://selftesthub.com,http://www.selftesthub.com,https://www.selftesthub.com"
 
     # Database settings
-    POSTGRES_SERVER: str = "infofitscore.c7yic444gxi0.ap-south-1.rds.amazonaws.com"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "infofitsoftware"
-    POSTGRES_DB: str = "postgres"
-    DATABASE_URL: str = None
+    POSTGRES_SERVER: str = ""  # Set in .env
+    POSTGRES_USER: str = ""  # Set in .env
+    POSTGRES_PASSWORD: str = ""  # Set in .env
+    POSTGRES_DB: str = ""  # Set in .env
+    DATABASE_URL: Optional[str] = None
     DOMAIN_NAME: str = "selftesthub.com"
 
+    # SSL certificate path for AWS RDS
+    SSL_CERT_PATH: str = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "global-bundle.pem")
+
     # Email settings
-    SMTP_USER: str = "infofitsoftwaresolution@gmail.com"
-    SMTP_PASSWORD: str = "viojzynbkdtielrw"  # Gmail App Password
+    SMTP_USER: str = ""  # Set in .env
+    SMTP_PASSWORD: str = ""  # Set in .env
 
     # Static files settings
     STATIC_FILES_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static")

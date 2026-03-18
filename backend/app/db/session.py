@@ -1,8 +1,17 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
+import os
 
 from app.core.config import settings
+
+# SSL connection args for AWS RDS
+connect_args = {}
+if os.path.exists(settings.SSL_CERT_PATH):
+    connect_args = {
+        "sslmode": "verify-full",
+        "sslrootcert": settings.SSL_CERT_PATH
+    }
 
 # Create SQLAlchemy engine with proper connection settings
 engine = create_engine(
@@ -11,7 +20,8 @@ engine = create_engine(
     pool_size=20,
     max_overflow=30,
     pool_timeout=60,
-    echo=False
+    echo=False,
+    connect_args=connect_args
 )
 
 # Create SessionLocal class
