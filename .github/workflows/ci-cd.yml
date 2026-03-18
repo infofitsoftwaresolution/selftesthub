@@ -228,7 +228,7 @@ jobs:
 
             # Create .env file
             cat > .env << 'ENV_EOF'
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            DATABASE_URL=postgresql://selftesthub:${{ secrets.DB_PASSWORD }}@database-1.c3ea24kmsrmf.ap-south-1.rds.amazonaws.com:5432/Selftesthub?sslmode=verify-full&sslrootcert=./global-bundle.pem
             POSTGRES_SERVER=database-1.c3ea24kmsrmf.ap-south-1.rds.amazonaws.com
             POSTGRES_USER=selftesthub
             POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }}
@@ -249,7 +249,7 @@ jobs:
             # ---- Run Alembic Migrations ----
             echo "🗄️ Running database migrations..."
             export PYTHONPATH=$DEPLOY_DIR/backend
-            alembic upgrade head || echo "⚠️ Migration warning (tables may already exist)"
+            alembic upgrade head || { echo "❌ Alembic migration failed!"; exit 1; }
 
             # ---- Start/Restart Backend with systemd or PM2-like ----
             echo "🚀 Starting backend..."
@@ -263,7 +263,7 @@ jobs:
               --host 0.0.0.0 \
               --port $BACKEND_PORT \
               --workers 2 \
-              > $DEPLOY_DIR/backend/uvicorn.log 2>&1 &
+              > $DEPLOY_DIR/backend/uvicorn.log 2>&1 < /dev/null &
 
             echo "Backend PID: $!"
 
@@ -329,9 +329,10 @@ jobs:
             if [ "$BACKEND_HEALTH" = "200" ]; then
               echo "✅ Backend is running (HTTP $BACKEND_HEALTH)"
             else
-              echo "⚠️ Backend returned HTTP $BACKEND_HEALTH"
+              echo "❌ Backend returned HTTP $BACKEND_HEALTH. It probably crashed!"
               echo "Last 20 lines of uvicorn log:"
               tail -20 $DEPLOY_DIR/backend/uvicorn.log 2>/dev/null || echo "No log file"
+              exit 1
             fi
 
             # Check frontend via NGINX
