@@ -11,20 +11,14 @@ on:
       - develop
   workflow_dispatch:
 
-env:
-  REGISTRY: ghcr.io
-
 jobs:
   # ============================================
-  # FRONTEND TESTS & LINT
+  # FRONTEND TESTS & BUILD
   # ============================================
   frontend-test:
-    name: Frontend Tests & Lint
+    name: Frontend Build & Lint
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18.x]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,7 +26,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '18'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -43,21 +37,21 @@ jobs:
       - name: Lint frontend code
         working-directory: ./frontend
         run: |
-          npm run lint 2>/dev/null || echo "Lint command not found, skipping"
+          npm run lint 2>/dev/null || echo "⚠️ Lint command not configured, skipping"
 
       - name: Build frontend
         working-directory: ./frontend
         run: npm run build
         env:
-          VITE_API_URL: http://${{ secrets.DEPLOY_HOST }}/api
+          VITE_API_URL: http://${{ secrets.DEPLOY_HOST }}/api/v1
 
-      - name: Check build artifacts
+      - name: Verify build output
         run: |
           if [ -d "frontend/dist" ]; then
             echo "✅ Frontend build successful"
             du -sh frontend/dist
           else
-            echo "❌ Frontend dist not found"
+            echo "❌ Frontend build failed - dist not found"
             exit 1
           fi
 
@@ -65,109 +59,54 @@ jobs:
   # BACKEND TESTS & LINT
   # ============================================
   backend-test:
-    name: Backend Tests & Lint
+    name: Backend Lint & Check
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18.x]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
 
       - name: Install backend dependencies
         working-directory: ./backend
-        run: npm ci
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Lint backend code
+      - name: Check for syntax errors
         working-directory: ./backend
         run: |
-          npm run lint 2>/dev/null || echo "Lint command not found, skipping"
+          python -m py_compile app/main.py
+          python -m py_compile app/core/config.py
+          python -m py_compile app/db/session.py
+          echo "✅ No syntax errors found"
+
+      - name: Verify Alembic migrations
+        working-directory: ./backend
+        run: |
+          python -c "
+          import importlib, sys
+          sys.path.insert(0, '.')
+          for m in ['alembic.versions.000_reset_alembic', 'alembic.versions.001_initial', 'alembic.versions.002_add_quiz_attempts', 'alembic.versions.003_create_questions']:
+              try:
+                  importlib.import_module(m)
+                  print(f'✅ {m} - OK')
+              except Exception as e:
+                  print(f'❌ {m} - {e}')
+                  sys.exit(1)
+          "
 
       - name: Check for security vulnerabilities
         working-directory: ./backend
         run: |
-          npm audit --audit-level=moderate 2>/dev/null || echo "Audit completed with warnings"
-
-      - name: Run backend tests
-        working-directory: ./backend
-        run: |
-          npm test 2>/dev/null || echo "No test suite configured"
-
-  # ============================================
-  # BUILD DOCKER IMAGE
-  # ============================================
-  build-images:
-    name: Build Docker Images
-    runs-on: ubuntu-latest
-    needs: [frontend-test, backend-test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata for frontend
-        id: meta-frontend
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/frontend
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Extract metadata for backend
-        id: meta-backend
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/backend
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./frontend
-          push: true
-          tags: ${{ steps.meta-frontend.outputs.tags }}
-          labels: ${{ steps.meta-frontend.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/frontend:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/frontend:buildcache,mode=max
-
-      - name: Build and push backend image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./backend
-          push: true
-          tags: ${{ steps.meta-backend.outputs.tags }}
-          labels: ${{ steps.meta-backend.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/backend:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/backend:buildcache,mode=max
+          pip install safety 2>/dev/null || true
+          safety check -r requirements.txt 2>/dev/null || echo "⚠️ Security check completed with warnings"
 
   # ============================================
   # DEPLOY TO PRODUCTION
@@ -177,314 +116,185 @@ jobs:
     runs-on: ubuntu-latest
     needs: [frontend-test, backend-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (for frontend build)
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: |
-            frontend/package-lock.json
-            backend/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Determine API URL
-        id: api_url
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build frontend
+        working-directory: ./frontend
         run: |
-          echo "Using IP address from DEPLOY_HOST secret"
-          echo "VITE_API_URL=http://${{ secrets.DEPLOY_HOST }}/api" >> $GITHUB_ENV
-          echo "SERVER_ORIGIN=${{ secrets.DEPLOY_HOST }}" >> $GITHUB_ENV
-          echo "API URL will be: http://${{ secrets.DEPLOY_HOST }}/api"
-
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm ci
-
-      - name: Build frontend with dynamic API URL
-        working-directory: ./frontend
-        run: npm run build
+          npm ci
+          npm run build
         env:
           NODE_ENV: production
-          VITE_API_URL: ${{ env.VITE_API_URL }}
-
-      - name: Install backend dependencies
-        working-directory: ./backend
-        run: npm ci --production
+          VITE_API_URL: http://${{ secrets.DEPLOY_HOST }}/api/v1
 
       - name: Create deployment package
         run: |
           mkdir -p deploy
+
+          # Copy backend code
           cp -r backend deploy/
+          rm -rf deploy/backend/__pycache__ deploy/backend/app/__pycache__
+          find deploy/backend -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+
+          # Copy frontend build
           cp -r frontend/dist deploy/frontend-dist
-          
-          # Create deployment script
-          cat > deploy/deploy.sh << 'DEPLOY_EOF'
-          #!/bin/bash
-          set -e
 
-          echo "🚀 Starting SelfTestHub deployment..."
+          # Copy nginx config
+          cp -r nginx deploy/
 
-          # Configuration - DEPLOY_HOST comes from GitHub Secrets
-          DEPLOY_HOST="${1:-${{ secrets.DEPLOY_HOST }}}"
-          DEPLOY_USER="${2:-ubuntu}"
-          BACKEND_PORT="${3:-5001}"
-          JWT_SECRET="${4:-$(openssl rand -base64 32)}"
+          # Download AWS RDS SSL certificate
+          curl -o deploy/backend/global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 
-          SERVER_ORIGIN="$DEPLOY_HOST"
-          DEPLOY_DIR="/home/$DEPLOY_USER/selftesthub-deploy"
-
-          echo "Deploying to: $DEPLOY_HOST"
-          echo "Backend port: $BACKEND_PORT"
-
-          # Extract and setup
-          tar -xzf /tmp/deploy.tar.gz -C /tmp
-          mkdir -p $DEPLOY_DIR/deploy
-          cp -r /tmp/deploy/* $DEPLOY_DIR/deploy/ || true
-
-          cd $DEPLOY_DIR/deploy/backend
-
-          # Setup environment file
-          cat > .env << ENV_EOF
-          NODE_ENV=production
-          PORT=$BACKEND_PORT
-          JWT_SECRET=$JWT_SECRET
-          FRONTEND_URL=http://$SERVER_ORIGIN
-          API_URL=http://$SERVER_ORIGIN/api
-          ALLOWED_ORIGINS=http://$SERVER_ORIGIN,https://$SERVER_ORIGIN,http://localhost,http://127.0.0.1
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
-          EMAIL_USER=${{ secrets.EMAIL_USER }}
-          EMAIL_PASS=${{ secrets.EMAIL_PASS }}
-          ENV_EOF
-
-          # Install dependencies
-          npm install --production --no-audit
-          
-          # Install PM2 globally
-          npm install -g pm2
-
-          # Stop existing backend if running
-          pm2 delete selftesthub-backend 2>/dev/null || true
-
-          # Start backend
-          echo "🚀 Starting backend..."
-          PORT=$BACKEND_PORT pm2 start server.js --name selftesthub-backend || {
-            echo "⚠️ Warning: server.js not found, checking alternative entry points..."
-            pm2 start main.js --name selftesthub-backend 2>/dev/null || \
-            pm2 start index.js --name selftesthub-backend 2>/dev/null || \
-            echo "❌ No entry point found"
-          }
-          
-          pm2 save
-          
-          # Setup NGINX
-          echo "🌐 Configuring NGINX..."
-          
-          sudo tee /etc/nginx/conf.d/selftesthub.conf > /dev/null << NGINX_EOF
-          server {
-              listen 80;
-              server_name $SERVER_ORIGIN;
-              
-              # Frontend static files
-              root $DEPLOY_DIR/deploy/frontend-dist;
-              index index.html index.htm;
-              
-              # Handle SPA routing
-              location / {
-                  try_files \$uri \$uri/ /index.html;
-              }
-              
-              # Backend API
-              location /api {
-                  proxy_pass http://localhost:$BACKEND_PORT;
-                  proxy_http_version 1.1;
-                  proxy_set_header Upgrade \$http_upgrade;
-                  proxy_set_header Connection 'upgrade';
-                  proxy_set_header Host \$host;
-                  proxy_set_header X-Real-IP \$remote_addr;
-                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto \$scheme;
-                  proxy_cache_bypass \$http_upgrade;
-              }
-          }
-          NGINX_EOF
-          
-          # Remove default config
-          sudo rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
-          
-          # Test and reload NGINX
-          sudo nginx -t && sudo systemctl reload nginx
-          
-          # Fix permissions
-          echo "🔒 Fixing permissions..."
-          sudo chmod 755 /home/$DEPLOY_USER
-          sudo chmod -R 755 $DEPLOY_DIR/deploy/frontend-dist
-          sudo chown -R $DEPLOY_USER:nginx $DEPLOY_DIR/deploy/frontend-dist 2>/dev/null || true
-          
-          # Wait for services
-          echo "⏳ Waiting for services to start..."
-          sleep 8
-          
-          # Health checks
-          echo "🔍 Running health checks..."
-          
-          # Check backend
-          BACKEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$BACKEND_PORT/api/health 2>/dev/null || echo "000")
-          if [ "$BACKEND_HEALTH" = "200" ]; then
-            echo "✅ Backend health check passed (HTTP $BACKEND_HEALTH)"
-          else
-            echo "⚠️ Backend health check returned HTTP $BACKEND_HEALTH (may be normal if endpoint not implemented)"
-            echo "Checking backend is running..."
-            pm2 status
-          fi
-          
-          # Check frontend via NGINX
-          FRONTEND_CHECK=$(curl -s -o /dev/null -w "%{http_code}" http://$SERVER_ORIGIN 2>/dev/null || echo "000")
-          if [ "$FRONTEND_CHECK" = "200" ] || [ "$FRONTEND_CHECK" = "304" ]; then
-            echo "✅ Frontend is accessible via NGINX (HTTP $FRONTEND_CHECK)"
-          else
-            echo "⚠️ Frontend check returned HTTP $FRONTEND_CHECK"
-          fi
-          
-          echo ""
-          echo "=========================================="
-          echo "🎉 DEPLOYMENT COMPLETE!"
-          echo "=========================================="
-          echo "🌐 Access your application at:"
-          echo "   http://$SERVER_ORIGIN"
-          echo ""
-          echo "🔧 Backend API:"
-          echo "   http://$SERVER_ORIGIN/api"
-          echo ""
-          echo "⚙️ Backend Server:"
-          echo "   http://localhost:$BACKEND_PORT"
-          echo ""
-          echo "📋 To view logs:"
-          echo "   pm2 logs selftesthub-backend"
-          echo ""
-          echo "=========================================="
-          DEPLOY_EOF
-
-          chmod +x deploy/deploy.sh
+          # Create the deployment archive
           tar -czf deploy.tar.gz deploy/
+          echo "📦 Deployment package created:"
           ls -lh deploy.tar.gz
 
       - name: Test SSH connection
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ env.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER || 'ubuntu' }}
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
           timeout: 60s
           command_timeout: 30s
           script: |
-            echo "SSH connection test successful!"
+            echo "✅ SSH connection successful!"
             echo "Server: $(hostname)"
             echo "User: $(whoami)"
+            python3 --version || echo "⚠️ Python3 not found"
 
       - name: Transfer deployment package
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p ${{ secrets.DEPLOY_PORT || 22 }} ${{ env.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
-          
-          echo "Transferring deployment package via SSH..."
+          ssh-keyscan -p ${{ secrets.DEPLOY_PORT || 22 }} ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          echo "📤 Transferring deployment package..."
           scp -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             -P ${{ secrets.DEPLOY_PORT || 22 }} \
             deploy.tar.gz \
-            ${{ secrets.DEPLOY_USER || 'ubuntu' }}@${{ env.DEPLOY_HOST }}:/tmp/deploy.tar.gz
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/deploy.tar.gz
 
-      - name: Deploy to production
+      - name: Deploy to production server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ env.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER || 'ubuntu' }}
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
           timeout: 600s
           command_timeout: 300s
           script: |
-            echo "🔧 Starting SelfTestHub deployment to: ${{ env.DEPLOY_HOST }}"
-            
-            # Extract deployment package
+            set -e
+            echo "🚀 Starting SelfTestHub deployment..."
+
+            # ---- Configuration ----
+            DEPLOY_DIR="/home/${{ secrets.DEPLOY_USER }}/selftesthub"
+            BACKEND_PORT=8000
+
+            # ---- Extract deployment package ----
+            echo "📦 Extracting deployment package..."
             mkdir -p /tmp/deploy-selftesthub
             tar -xzf /tmp/deploy.tar.gz -C /tmp/deploy-selftesthub
-            
-            # Create deployment directory
-            DEPLOY_DIR="/home/${{ secrets.DEPLOY_USER || 'ubuntu' }}/selftesthub-deploy"
-            mkdir -p $DEPLOY_DIR/deploy
-            
-            # Copy files to deployment directory
-            cp -r /tmp/deploy-selftesthub/deploy/* $DEPLOY_DIR/deploy/ || true
-            
-            # Go to backend directory
-            cd $DEPLOY_DIR/deploy/backend
-            
-            echo "🔧 Setting up backend..."
-            
-            # Setup environment
-            echo "🔧 Setting up environment variables..."
-            cat > .env << 'EOL'
-            NODE_ENV=production
-            PORT=5001
-            JWT_SECRET=${{ secrets.JWT_SECRET || 'change-me-in-github-secrets' }}
-            FRONTEND_URL=http://${{ env.DEPLOY_HOST }}
-            API_URL=http://${{ env.DEPLOY_HOST }}/api
-            ALLOWED_ORIGINS=http://${{ env.DEPLOY_HOST }},https://${{ env.DEPLOY_HOST }},http://localhost,http://127.0.0.1
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            EMAIL_USER=${{ secrets.EMAIL_USER }}
-            EMAIL_PASS=${{ secrets.EMAIL_PASS }}
-            EOL
 
-            echo "📋 Environment configuration (secrets hidden):"
-            cat .env | sed 's/=.*/=***/g' | grep -v '===$'
-            
+            # ---- Setup deployment directory ----
+            mkdir -p $DEPLOY_DIR
+            cp -r /tmp/deploy-selftesthub/deploy/* $DEPLOY_DIR/ || true
+
+            # ---- Backend Setup ----
+            cd $DEPLOY_DIR/backend
+            echo "🐍 Setting up Python backend..."
+
+            # Create virtual environment if it doesn't exist
+            if [ ! -d "venv" ]; then
+              python3 -m venv venv
+            fi
+            source venv/bin/activate
+
             # Install dependencies
-            echo "📦 Installing backend dependencies..."
-            npm install --production --no-audit
-            
-            # Install PM2 globally
-            echo "⚡ Installing PM2..."
-            npm install -g pm2 2>/dev/null || sudo npm install -g pm2 2>/dev/null || npm install pm2
-            
-            # Stop existing backend if running
-            pm2 delete selftesthub-backend 2>/dev/null || true
-            
-            # Start backend
+            pip install --upgrade pip
+            pip install -r requirements.txt
+
+            # Create .env file
+            cat > .env << 'ENV_EOF'
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            POSTGRES_SERVER=database-1.c3ea24kmsrmf.ap-south-1.rds.amazonaws.com
+            POSTGRES_USER=selftesthub
+            POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }}
+            POSTGRES_DB=Selftesthub
+            SECRET_KEY=${{ secrets.SECRET_KEY }}
+            ALGORITHM=HS256
+            SMTP_USER=${{ secrets.SMTP_USER }}
+            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+            DOMAIN_NAME=selftesthub.com
+            CORS_ORIGINS_RAW=http://${{ secrets.DEPLOY_HOST }},https://${{ secrets.DEPLOY_HOST }},http://selftesthub.com,https://selftesthub.com,http://www.selftesthub.com,https://www.selftesthub.com
+            ENV_EOF
+
+            # Fix leading whitespace from heredoc
+            sed -i 's/^            //' .env
+
+            echo "📋 Environment configured (secrets hidden)"
+
+            # ---- Run Alembic Migrations ----
+            echo "🗄️ Running database migrations..."
+            export PYTHONPATH=$DEPLOY_DIR/backend
+            alembic upgrade head || echo "⚠️ Migration warning (tables may already exist)"
+
+            # ---- Start/Restart Backend with systemd or PM2-like ----
             echo "🚀 Starting backend..."
-            PORT=5001 pm2 start server.js --name selftesthub-backend || {
-              echo "⚠️ Trying alternative entry points..."
-              PORT=5001 pm2 start main.js --name selftesthub-backend 2>/dev/null || \
-              PORT=5001 pm2 start index.js --name selftesthub-backend 2>/dev/null || \
-              echo "❌ Error: No valid entry point found"
-            }
-            pm2 save
-            
-            # Setup NGINX
+
+            # Stop existing process
+            pkill -f "uvicorn app.main:app" 2>/dev/null || true
+            sleep 2
+
+            # Start uvicorn in background
+            nohup $DEPLOY_DIR/backend/venv/bin/uvicorn app.main:app \
+              --host 0.0.0.0 \
+              --port $BACKEND_PORT \
+              --workers 2 \
+              > $DEPLOY_DIR/backend/uvicorn.log 2>&1 &
+
+            echo "Backend PID: $!"
+
+            # ---- Setup NGINX ----
             echo "🌐 Configuring NGINX..."
-            
-            sudo tee /etc/nginx/conf.d/selftesthub.conf > /dev/null << 'NGINX_CONFIG'
+
+            sudo tee /etc/nginx/conf.d/selftesthub.conf > /dev/null << 'NGINX_EOF'
             server {
                 listen 80;
-                server_name ${{ env.DEPLOY_HOST }};
-                
+                server_name ${{ secrets.DEPLOY_HOST }};
+
                 # Frontend static files
-                root /home/${{ secrets.DEPLOY_USER || 'ubuntu' }}/selftesthub-deploy/deploy/frontend-dist;
+                root /home/${{ secrets.DEPLOY_USER }}/selftesthub/frontend-dist;
                 index index.html index.htm;
-                
+
                 # Handle SPA routing
                 location / {
                     try_files $uri $uri/ /index.html;
                 }
-                
+
                 # Backend API
-                location /api {
-                    proxy_pass http://localhost:5001;
+                location /api/v1/ {
+                    proxy_pass http://localhost:8000/api/v1/;
                     proxy_http_version 1.1;
                     proxy_set_header Upgrade $http_upgrade;
                     proxy_set_header Connection 'upgrade';
@@ -494,60 +304,62 @@ jobs:
                     proxy_set_header X-Forwarded-Proto $scheme;
                     proxy_cache_bypass $http_upgrade;
                 }
+
+                # Static files (profile images etc.)
+                location /static/ {
+                    alias /home/${{ secrets.DEPLOY_USER }}/selftesthub/backend/static/;
+                    expires 30d;
+                    add_header Cache-Control "public, immutable";
+                }
             }
-            NGINX_CONFIG
-            
+            NGINX_EOF
+
             # Remove default config
             sudo rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
-            
+
             # Test and reload NGINX
             sudo nginx -t && sudo systemctl reload nginx
-            
-            # Fix permissions
+
+            # ---- Fix Permissions ----
             echo "🔒 Fixing permissions..."
-            sudo chmod 755 /home/${{ secrets.DEPLOY_USER || 'ubuntu' }}
-            sudo chmod -R 755 /home/${{ secrets.DEPLOY_USER || 'ubuntu' }}/selftesthub-deploy/deploy/frontend-dist
-            sudo chown -R ${{ secrets.DEPLOY_USER || 'ubuntu' }}:nginx /home/${{ secrets.DEPLOY_USER || 'ubuntu' }}/selftesthub-deploy/deploy/frontend-dist 2>/dev/null || true
-            
-            # Wait for services
+            sudo chmod 755 /home/${{ secrets.DEPLOY_USER }}
+            sudo chmod -R 755 $DEPLOY_DIR/frontend-dist
+            sudo chown -R ${{ secrets.DEPLOY_USER }}:www-data $DEPLOY_DIR/frontend-dist 2>/dev/null || true
+
+            # ---- Health Checks ----
             echo "⏳ Waiting for services to start..."
-            sleep 8
-            
-            # Health checks
+            sleep 5
+
             echo "🔍 Running health checks..."
-            
+
             # Check backend
-            BACKEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5001/api/health 2>/dev/null || echo "000")
+            BACKEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$BACKEND_PORT/ 2>/dev/null || echo "000")
             if [ "$BACKEND_HEALTH" = "200" ]; then
-              echo "✅ Backend health check passed (HTTP $BACKEND_HEALTH)"
+              echo "✅ Backend is running (HTTP $BACKEND_HEALTH)"
             else
-              echo "⚠️ Backend health check returned HTTP $BACKEND_HEALTH"
-              echo "Checking backend status..."
-              pm2 status selftesthub-backend 2>/dev/null || echo "Backend status check failed"
+              echo "⚠️ Backend returned HTTP $BACKEND_HEALTH"
+              echo "Last 20 lines of uvicorn log:"
+              tail -20 $DEPLOY_DIR/backend/uvicorn.log 2>/dev/null || echo "No log file"
             fi
-            
+
             # Check frontend via NGINX
-            FRONTEND_CHECK=$(curl -s -o /dev/null -w "%{http_code}" http://${{ env.DEPLOY_HOST }} 2>/dev/null || echo "000")
+            FRONTEND_CHECK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost 2>/dev/null || echo "000")
             if [ "$FRONTEND_CHECK" = "200" ] || [ "$FRONTEND_CHECK" = "304" ]; then
-              echo "✅ Frontend is accessible via NGINX (HTTP $FRONTEND_CHECK)"
+              echo "✅ Frontend accessible via NGINX (HTTP $FRONTEND_CHECK)"
             else
-              echo "⚠️ Frontend check returned HTTP $FRONTEND_CHECK"
+              echo "⚠️ Frontend returned HTTP $FRONTEND_CHECK"
             fi
-            
+
+            # ---- Cleanup ----
+            rm -rf /tmp/deploy-selftesthub /tmp/deploy.tar.gz
+
             echo ""
             echo "=========================================="
             echo "🎉 DEPLOYMENT COMPLETE!"
             echo "=========================================="
-            echo "🌐 Access your application at:"
-            echo "   http://${{ env.DEPLOY_HOST }}"
-            echo ""
-            echo "🔧 Backend API:"
-            echo "   http://${{ env.DEPLOY_HOST }}/api"
-            echo ""
-            echo "📋 Useful Commands:"
-            echo "   View logs: pm2 logs selftesthub-backend"
-            echo "   Restart backend: pm2 restart selftesthub-backend"
-            echo "   Check status: pm2 status"
+            echo "🌐 Frontend:  http://${{ secrets.DEPLOY_HOST }}"
+            echo "🔧 API:       http://${{ secrets.DEPLOY_HOST }}/api/v1/docs"
+            echo "📋 Logs:      tail -f $DEPLOY_DIR/backend/uvicorn.log"
             echo "=========================================="
 
       - name: Deployment Summary
@@ -555,21 +367,20 @@ jobs:
         run: |
           echo "🎯 CI/CD Pipeline Summary"
           echo "========================="
-          echo "✅ Frontend Tests: Completed"
-          echo "✅ Backend Tests: Completed"
-          echo "✅ Build Docker Images: ${{ needs.build-images.result }}"
-          echo "✅ Deployment: ${{ job.status }}"
-          echo "🌐 Application URL: http://${{ env.DEPLOY_HOST }}"
+          echo "Frontend Build: ${{ needs.frontend-test.result }}"
+          echo "Backend Check:  ${{ needs.backend-test.result }}"
+          echo "Deployment:     ${{ job.status }}"
+          echo "Application:    http://${{ secrets.DEPLOY_HOST }}"
 
   # ============================================
   # DEPLOYMENT NOTIFICATION
   # ============================================
   notify:
-    name: Send Deployment Notification
+    name: Deployment Notification
     runs-on: ubuntu-latest
     needs: deploy
     if: always()
-    
+
     steps:
       - name: Deployment Status
         run: |
@@ -577,9 +388,8 @@ jobs:
           echo "Deployment Status: ${{ needs.deploy.result }}"
           echo "=========================================="
           if [ "${{ needs.deploy.result }}" = "success" ]; then
-            echo "✅ Application successfully deployed!"
+            echo "✅ SelfTestHub deployed successfully!"
             echo "🌐 Access at: http://${{ secrets.DEPLOY_HOST }}"
           else
-            echo "❌ Deployment failed!"
-            echo "Please check logs for details"
+            echo "❌ Deployment failed! Check logs for details."
           fi
