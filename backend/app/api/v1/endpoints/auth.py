@@ -13,13 +13,14 @@ from app.schemas.user import UserCreate, UserLogin, Token, UserInDB
 from app.crud.user import create_user, authenticate_user, get_user_by_email
 from app.core.email import send_email
 
-# Configure logging
-logging.basicConfig(
-    filename='quiz_logs.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Configure logging to console
 logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
 router = APIRouter()
 
@@ -144,45 +145,56 @@ def login(
             detail="Access is currently restricted to authorized users only"
         )
 
-    # Hardcoded Master SuperAdmin check
-    if user_in.email == "infofitsoftware@gmail.com" and user_in.password == "Infofit@SuperAdmin2026":
-        logger.info("Master SuperAdmin login detected")
-        user = get_user_by_email(db, email=user_in.email)
+    try:
+        # Hardcoded Master SuperAdmin check
+        if user_in.email == "infofitsoftware@gmail.com" and user_in.password == "Infofit@SuperAdmin2026":
+            logger.info("Master SuperAdmin login detected")
+            user = get_user_by_email(db, email=user_in.email)
+            if not user:
+                # If not in DB yet, create it automatically
+                master_in = UserCreate(
+                    email=user_in.email,
+                    password=user_in.password,
+                    full_name="Infofit SuperAdmin",
+                    is_active=True,
+                    is_superuser=True
+                )
+                user = create_user(db, master_in)
+                # Ensure it is superuser
+                user.is_superuser = True
+                db.commit()
+                db.refresh(user)
+        else:
+            user = authenticate_user(db, user_in.email, user_in.password)
+            
         if not user:
-            # If not in DB yet, create it automatically
-            master_in = UserCreate(
-                email=user_in.email,
-                password=user_in.password,
-                full_name="Infofit SuperAdmin",
-                is_active=True,
-                is_superuser=True
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
             )
-            user = create_user(db, master_in)
-            # Ensure it is superuser
-            user.is_superuser = True
-            db.commit()
-            db.refresh(user)
-    else:
-        user = authenticate_user(db, user_in.email, user_in.password)
-        
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token = create_access_token(subject=user.id)
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "full_name": user.full_name,
-            "is_superuser": user.is_superuser,
-            "profile_image": user.profile_image
+            
+        access_token = create_access_token(subject=user.id)
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "full_name": user.full_name,
+                "is_superuser": user.is_superuser,
+                "profile_image": user.profile_image
+            }
         }
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"LOGIN ERROR: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal Server Error during login: {str(e)}"
+        )
 
 @router.get("/me", response_model=UserInDB)
 def read_users_me(current_user: UserInDB = Depends(deps.get_current_user)):
