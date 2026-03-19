@@ -90,7 +90,6 @@ const QuizInterface: React.FC = () => {
       }
 
       const result = await response.json();
-      console.log("Original result from API:", result);
       
       // Get the current time for completion
       const now = new Date();
@@ -111,16 +110,11 @@ const QuizInterface: React.FC = () => {
       // Use current time for completion
       const endTime = now.toISOString();
       
-      console.log("Using start time:", startTime);
-      console.log("Using end time:", endTime);
-      
       const resultWithTimestamps = {
         ...result,
         started_at: startTime,
         completed_at: endTime
       };
-      
-      console.log("Final result with timestamps:", resultWithTimestamps);
       
       navigate('/quiz-result', { state: { result: resultWithTimestamps } });
     } catch (error) {

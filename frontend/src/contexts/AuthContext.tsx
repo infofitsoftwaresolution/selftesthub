@@ -36,7 +36,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        console.log('Checking auth with token');
         const response = await fetch(API_ENDPOINTS.ME, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -44,27 +43,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         if (response.ok) {
           const userData = await response.json();
-          console.log('User data from /me endpoint:', userData);
           
           // Format profile image URL if it exists
           if (userData.profile_image) {
             const baseUrl = window.location.origin;
-            console.log('Base URL for /me endpoint:', baseUrl);
-            console.log('Original profile_image from /me:', userData.profile_image);
             
             userData.profile_image = userData.profile_image.startsWith('http')
               ? userData.profile_image
               : `${baseUrl}${userData.profile_image}`;
-              
-            console.log('Formatted profile_image for /me:', userData.profile_image);
           }
           setUser(userData);
         } else {
-          console.log('Auth check failed, removing token');
           localStorage.removeItem('token');
         }
-      } else {
-        console.log('No token found for auth check');
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -100,7 +91,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setUser(data.user);
     } catch (error) {
-      console.error('Login error:', error);
       throw error;
     }
   };
@@ -128,13 +118,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('token', data.access_token);
       setUser(data.user);
     } catch (error) {
-      console.error('Registration error:', error);
       throw error;
     }
   };
 
   const updateUser = (userData: User) => {
-    console.log('Updating user data:', userData);
     setUser(userData);
   };
 

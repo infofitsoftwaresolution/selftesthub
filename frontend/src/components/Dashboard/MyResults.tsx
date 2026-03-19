@@ -51,18 +51,15 @@ const MyResults: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log('Fetched attempts data:', data); // Debug log
-
+      
       // Fetch quiz details for each attempt
       const attemptsWithQuizzes = await Promise.all(
         data.map(async (attempt: QuizAttempt) => {
           if (!attempt.quiz?.id) {
-            console.error('Attempt missing quiz.id:', attempt);
             return attempt;
           }
 
           try {
-            console.log('Fetching quiz details for quiz.id:', attempt.quiz.id); // Debug log
             // Use the QUIZ endpoint instead of QUIZ_RESULTS
             const quizResponse = await fetch(API_ENDPOINTS.QUIZ(attempt.quiz.id.toString()), {
               ...fetchOptions,
@@ -73,12 +70,10 @@ const MyResults: React.FC = () => {
             });
 
             if (!quizResponse.ok) {
-              console.error(`Failed to fetch quiz ${attempt.quiz.id}:`, quizResponse.status);
               return attempt;
             }
 
             const quizData = await quizResponse.json();
-            console.log('Fetched quiz data:', quizData); // Debug log
             
             // Merge the quiz data with the attempt
             const updatedAttempt = {
@@ -99,10 +94,8 @@ const MyResults: React.FC = () => {
 
       // Filter out attempts without quiz data
       const validAttempts = attemptsWithQuizzes.filter(attempt => attempt.quiz);
-      console.log('Valid attempts:', validAttempts); // Debug log
       setAttempts(validAttempts);
     } catch (error) {
-      console.error('Failed to fetch attempts:', error);
       setError(error instanceof Error ? error.message : 'Failed to load results');
     } finally {
       setLoading(false);
@@ -166,7 +159,6 @@ const MyResults: React.FC = () => {
               <div
                 key={attempt.id}
                 onClick={() => {
-                  console.log('Selected attempt:', attempt); // Debug log
                   setSelectedAttempt(attempt);
                 }}
                 className={`p-4 rounded-lg cursor-pointer transition-colors ${

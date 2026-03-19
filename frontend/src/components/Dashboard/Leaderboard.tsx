@@ -29,15 +29,12 @@ const Leaderboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('Leaderboard component mounted');
-    console.log('Current user:', user);
     fetchQuizzes();
     fetchLeaderboardData();
   }, [selectedQuiz, timeRange]);
 
   const fetchQuizzes = async () => {
     try {
-      console.log('Fetching quizzes from:', API_ENDPOINTS.QUIZZES);
       const response = await fetch(API_ENDPOINTS.QUIZZES, {
         ...fetchOptions,
         headers: {

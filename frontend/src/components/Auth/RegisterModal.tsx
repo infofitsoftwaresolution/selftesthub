@@ -30,7 +30,6 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
     setError('');
 
     try {
-      console.log('Sending request to:', API_ENDPOINTS.REGISTER_SEND_OTP);
       const response = await fetch(API_ENDPOINTS.REGISTER_SEND_OTP, {
         method: 'POST',
         headers: {
@@ -43,10 +42,8 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
         })
       });
 
-      console.log('Response status:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
-
+      
       if (response.ok) {
         setOtpSent(true);
         setError('');
@@ -54,7 +51,6 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
         setError(data.detail || 'Failed to send OTP');
       }
     } catch (err) {
-      console.error('Error details:', err);
       setError('Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);

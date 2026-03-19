@@ -36,15 +36,9 @@ const QuizResult: React.FC = () => {
   let timeTaken = "N/A";
   if (result.started_at && result.completed_at) {
     try {
-      console.log("Start time:", result.started_at);
-      console.log("End time:", result.completed_at);
-      
       // Parse timestamps and ensure they're in the correct format
       const startTime = new Date(result.started_at);
       const endTime = new Date(result.completed_at);
-      
-      console.log("Parsed start time:", startTime);
-      console.log("Parsed end time:", endTime);
       
       // Check if timestamps are valid
       if (!isNaN(startTime.getTime()) && !isNaN(endTime.getTime())) {
@@ -53,32 +47,22 @@ const QuizResult: React.FC = () => {
         
         // If time difference is negative, try to fix it
         if (timeTakenMs < 0) {
-          console.log("Negative time difference detected, attempting to fix...");
-          
           // Try to extract just the time part and compare
           const startTimeStr = startTime.toTimeString().split(' ')[0];
           const endTimeStr = endTime.toTimeString().split(' ')[0];
           
-          console.log("Start time string:", startTimeStr);
-          console.log("End time string:", endTimeStr);
-          
           // If the dates are the same day but times are reversed, swap them
           if (startTime.toDateString() === endTime.toDateString() && 
               startTimeStr > endTimeStr) {
-            console.log("Swapping start and end times");
             timeTakenMs = startTime.getTime() - endTime.getTime();
           } else {
             // If we can't determine the correct order, use a fallback
-            console.log("Using fallback time calculation");
             timeTakenMs = Math.abs(timeTakenMs);
           }
         }
         
-        console.log("Time taken in ms:", timeTakenMs);
-        
         const minutes = Math.floor(timeTakenMs / (1000 * 60));
         const seconds = Math.floor((timeTakenMs % (1000 * 60)) / 1000);
-        console.log("Minutes:", minutes, "Seconds:", seconds);
         
         timeTaken = `${minutes}m ${seconds}s`;
       } else {

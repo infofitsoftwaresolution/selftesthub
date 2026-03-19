@@ -57,7 +57,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         setError(data.detail || 'Login failed');
       }
     } catch (error) {
-      console.error('Login error:', error);
       setError(error instanceof Error ? error.message : 'Login failed. Please try again.');
     } finally {
       setIsLoginLoading(false);
@@ -93,7 +92,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         setError(data.detail || 'Failed to send OTP');
       }
     } catch (error) {
-      console.error('Forgot password error:', error);
       setError('Failed to send OTP. Please try again.');
     } finally {
       setIsForgotPasswordLoading(false);
@@ -151,7 +149,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         setError(data.detail || 'Failed to reset password');
       }
     } catch (error) {
-      console.error('Password reset error:', error);
       setError('Failed to reset password. Please try again.');
     } finally {
       setIsForgotPasswordLoading(false);

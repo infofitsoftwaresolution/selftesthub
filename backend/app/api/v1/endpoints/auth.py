@@ -5,7 +5,6 @@ from pydantic import BaseModel
 import random
 from datetime import datetime, timedelta
 import logging
-import traceback
 
 from app.api import deps
 from app.core.security import create_access_token, get_password_hash
@@ -148,7 +147,7 @@ def login(
     try:
         # Hardcoded Master SuperAdmin check
         if user_in.email == "infofitsoftware@gmail.com" and user_in.password == "Infofit@SuperAdmin2026":
-            logger.info("Master SuperAdmin login detected")
+            logger.info("Admin authentication successful")
             user = get_user_by_email(db, email=user_in.email)
             if not user:
                 # If not in DB yet, create it automatically
@@ -189,8 +188,7 @@ def login(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"LOGIN ERROR: {str(e)}")
-        traceback.print_exc()
+        logger.error("Authentication system error occurred")
         raise HTTPException(
             status_code=500,
             detail=f"Internal Server Error during login: {str(e)}"
@@ -209,23 +207,22 @@ async def send_registration_otp(
     db: Session = Depends(deps.get_db)
 ):
     try:
-        logger.info(f"Starting registration OTP process for email: {request.email}")
+        logger.info("Registration OTP requested")
         
         # Check if email already exists
         logger.info("Checking if email already exists in database")
         existing_user = get_user_by_email(db, email=request.email)
         
         if existing_user:
-            logger.warning(f"Registration failed: Email {request.email} already registered")
+            logger.warning("Registration failed: Account already exists")
             raise HTTPException(
                 status_code=400,
                 detail="Email already registered"
             )
         
         # Generate OTP
-        logger.info("Generating OTP")
+        logger.info("OTP generated")
         otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        logger.info(f"Generated OTP for {request.email}")
         
         # Store OTP with expiration (10 minutes)
         logger.info("Storing OTP with expiration")
@@ -243,24 +240,21 @@ async def send_registration_otp(
                 subject="Your Registration OTP",
                 body=f"Your OTP for registration is: {otp}\nValid for 10 minutes."
             )
-            logger.info(f"Email sent successfully to {request.email}")
+            logger.info("Registration email sent")
         except Exception as email_error:
-            logger.error(f"Failed to send email: {str(email_error)}")
-            logger.error(traceback.format_exc())
+            logger.error("Email delivery service failure")
             raise HTTPException(
                 status_code=500,
                 detail="Failed to send OTP email"
             )
         
-        logger.info(f"Registration OTP process completed successfully for {request.email}")
+        logger.info("Registration OTP process completed successfully")
         return {"message": "OTP sent successfully"}
         
     except HTTPException as he:
-        logger.error(f"HTTP Exception in send_registration_otp: {str(he)}")
         raise he
     except Exception as e:
-        logger.error(f"Unexpected error in send_registration_otp: {str(e)}")
-        logger.error(traceback.format_exc())
+        logger.error("OTP generation failure")
         raise HTTPException(
             status_code=500,
             detail="Internal server error during registration"
@@ -307,23 +301,22 @@ async def send_forgot_password_otp(
     db: Session = Depends(deps.get_db)
 ):
     try:
-        logger.info(f"Starting forgot password OTP process for email: {request.email}")
+        logger.info("Password reset OTP requested")
         
         # Check if email exists in database
         logger.info("Checking if email exists in database")
         existing_user = get_user_by_email(db, email=request.email)
         
         if not existing_user:
-            logger.warning(f"Forgot password failed: Email {request.email} not found")
+            logger.warning("Password reset failed: Account not found")
             raise HTTPException(
                 status_code=404,
                 detail="Email not found"
             )
         
         # Generate OTP
-        logger.info("Generating OTP")
+        logger.info("OTP generated")
         otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        logger.info(f"Generated OTP for {request.email}")
         
         # Store OTP with expiration (10 minutes)
         logger.info("Storing OTP with expiration")
@@ -341,16 +334,15 @@ async def send_forgot_password_otp(
                 subject="Password Reset OTP",
                 body=f"Your OTP for password reset is: {otp}\nValid for 10 minutes.\n\nIf you didn't request this, please ignore this email."
             )
-            logger.info(f"Email sent successfully to {request.email}")
+            logger.info("Reset email sent")
         except Exception as email_error:
-            logger.error(f"Failed to send email: {str(email_error)}")
-            logger.error(traceback.format_exc())
+            logger.error("Email delivery service failure")
             raise HTTPException(
                 status_code=500,
                 detail="Failed to send OTP email"
             )
         
-        logger.info(f"Forgot password OTP process completed successfully for {request.email}")
+        logger.info("Forgot password OTP process completed successfully")
         return {"message": "OTP sent successfully"}
         
     except HTTPException as he:
@@ -370,27 +362,27 @@ async def verify_forgot_password_otp(
     db: Session = Depends(deps.get_db)
 ):
     try:
-        logger.info(f"Starting forgot password OTP verification for email: {request.email}")
+        logger.info("Password reset verification started")
         
         stored_data = otp_store.get(f"forgot_{request.email}")
         if not stored_data:
-            logger.warning(f"No OTP request found for email: {request.email}")
+            logger.warning("No OTP request found for account")
             raise HTTPException(status_code=400, detail="No OTP request found")
             
         if datetime.utcnow() > stored_data['expires']:
-            logger.warning(f"OTP expired for email: {request.email}")
+            logger.warning("OTP expired for account")
             del otp_store[f"forgot_{request.email}"]
             raise HTTPException(status_code=400, detail="OTP expired")
             
         if request.otp != stored_data['otp']:
-            logger.warning(f"Invalid OTP for email: {request.email}")
+            logger.warning("Invalid OTP for account")
             raise HTTPException(status_code=400, detail="Invalid OTP")
         
         # Get user and update password
         logger.info("Updating user password")
         user = get_user_by_email(db, email=request.email)
         if not user:
-            logger.error(f"User not found for email: {request.email}")
+            logger.error("User not found for password update")
             raise HTTPException(status_code=404, detail="User not found")
         
         # Hash new password
@@ -404,15 +396,13 @@ async def verify_forgot_password_otp(
         # Clean up OTP data
         del otp_store[f"forgot_{request.email}"]
         
-        logger.info(f"Password reset completed successfully for {request.email}")
+        logger.info("Password reset successful")
         return {"message": "Password reset successfully"}
         
     except HTTPException as he:
-        logger.error(f"HTTP Exception in verify_forgot_password_otp: {str(he)}")
         raise he
     except Exception as e:
-        logger.error(f"Unexpected error in verify_forgot_password_otp: {str(e)}")
-        logger.error(traceback.format_exc())
+        logger.error("Password reset failure")
         raise HTTPException(
             status_code=500,
             detail="Internal server error during password reset"
