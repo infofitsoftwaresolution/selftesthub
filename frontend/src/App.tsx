@@ -14,6 +14,14 @@ import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import AuditLogs from './pages/admin/AuditLogs';
 import LeaderboardPage from './pages/Leaderboard';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
+import AvailableQuizzes from './components/Dashboard/AvailableQuizzes';
+import QuizInterface from './components/Quiz/QuizInterface';
+import QuizResult from './components/Quiz/QuizResult';
+import MyResults from './components/Dashboard/MyResults';
+import StudentReports from './components/Admin/StudentReports';
+import Features from './pages/Features';
+import QuizReports from './components/Admin/QuizReports';
 
 function App() {
   return (

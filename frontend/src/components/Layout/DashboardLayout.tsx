@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { FaHome, FaBook, FaTrophy, FaUser, FaChartBar, FaBars, FaTimes, FaCrown, FaShieldAlt, FaHistory, FaColumns, FaUsers } from 'react-icons/fa';
-import { API_ENDPOINTS, fetchOptions } from '../../config/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarItemProps {
   to: string;
