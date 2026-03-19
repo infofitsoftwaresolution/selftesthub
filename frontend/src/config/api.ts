@@ -1,5 +1,6 @@
-// Base API URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com';
+// Base API URL from environment variable - strip trailing /api/v1 if present to avoid duplication
+const RAW_API_URL = import.meta.env.VITE_API_URL || 'https://selftesthub.com';
+const API_URL = RAW_API_URL.replace(/\/api\/v1\/?$/, '');
 const isDevelopment = import.meta.env.DEV;
 const getSecureUrl = (url: string) => isDevelopment ? url : url.replace('http://', 'https://');
 
