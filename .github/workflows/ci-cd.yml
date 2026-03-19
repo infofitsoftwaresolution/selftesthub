@@ -342,16 +342,15 @@ jobs:
 
             # ---- Setup SSL (Let's Encrypt) ----
             echo "🔐 Setting up SSL with Let's Encrypt..."
-            if ! command -v certbot &> /dev/null; then
+            if [ ! -f /opt/certbot/bin/certbot ]; then
                 sudo yum install -y python3 augeas-libs 2>/dev/null || true
                 sudo python3 -m venv /opt/certbot/
                 sudo /opt/certbot/bin/pip install --upgrade pip
                 sudo /opt/certbot/bin/pip install certbot certbot-nginx
-                sudo ln -s /opt/certbot/bin/certbot /usr/bin/certbot 2>/dev/null || true
             fi
             
             # Run Certbot non-interactively to secure the config
-            sudo certbot --nginx -n --agree-tos --email ${{ secrets.SMTP_USER }} -d selftesthub.com -d www.selftesthub.com --redirect || echo "⚠️ Certbot challenge failed (DNS may still be propagating)"
+            sudo /opt/certbot/bin/certbot --nginx -n --agree-tos --register-unsafely-without-email -d selftesthub.com -d www.selftesthub.com --redirect || echo "⚠️ Certbot challenge failed (DNS may still be propagating)"
 
             # Test and restart NGINX to apply SSL
             sudo nginx -t && sudo systemctl restart nginx
