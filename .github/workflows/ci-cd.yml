@@ -282,12 +282,18 @@ jobs:
 
             if ! command -v nginx &> /dev/null; then
                 echo "Nginx not found, installing..."
-                sudo apt-get update && sudo apt-get -y install nginx
+                if command -v apt-get &> /dev/null; then
+                    sudo apt-get update && sudo apt-get -y install nginx
+                else
+                    sudo yum install -y nginx
+                fi
             fi
             
-            echo "🛡️ Configuring UFW Firewall for NGINX..."
-            sudo ufw allow 'Nginx Full' || true
-            sudo ufw reload || true
+            echo "🛡️ Configuring Firewall for NGINX..."
+            if command -v ufw &> /dev/null; then
+                sudo ufw allow 'Nginx Full' || true
+                sudo ufw reload || true
+            fi
             
             sudo mkdir -p /etc/nginx/conf.d
 
@@ -330,8 +336,8 @@ jobs:
             # Remove default config
             sudo rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
 
-            # Test and reload NGINX
-            sudo nginx -t && sudo systemctl reload nginx
+            # Test and restart NGINX
+            sudo nginx -t && sudo systemctl enable nginx && sudo systemctl restart nginx
 
             # ---- Fix Permissions ----
             echo "🔒 Fixing permissions..."
