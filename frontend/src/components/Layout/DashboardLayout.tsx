@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { FaHome, FaBook, FaTrophy, FaUser, FaChartBar, FaBars, FaTimes, FaCrown } from 'react-icons/fa';
+import { FaHome, FaBook, FaTrophy, FaUser, FaChartBar, FaBars, FaTimes, FaCrown, FaShieldAlt, FaHistory, FaColumns, FaUsers } from 'react-icons/fa';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 interface SidebarItemProps {
@@ -26,33 +26,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ to, icon, text, isActive, onC
 
 const DashboardLayout: React.FC = () => {
   const location = useLocation();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { user, isAdmin, isSuperAdmin } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      try {
-        const response = await fetch(API_ENDPOINTS.ME, {
-          ...fetchOptions,
-          headers: {
-            ...fetchOptions.headers,
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          console.log('User Data:', userData);
-          setIsAdmin(userData.is_superuser);
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, []);
 
   // Close sidebar when route changes
   useEffect(() => {
@@ -114,7 +89,14 @@ const DashboardLayout: React.FC = () => {
           {isAdmin && (
             <>
               <div className="my-4 border-t border-gray-200"></div>
-              <h2 className="mb-2 text-sm font-semibold text-gray-600">Admin</h2>
+              <h2 className="mb-2 text-sm font-semibold text-gray-600 px-3 uppercase tracking-wider">Admin Control</h2>
+              <SidebarItem
+                to="/admin"
+                icon={<FaColumns className="w-4 h-4 mr-2" />}
+                text="Admin Dashboard"
+                isActive={location.pathname === '/admin'}
+                onClick={() => setIsSidebarOpen(false)}
+              />
               <SidebarItem
                 to="/admin/quizzes"
                 icon={<FaBook className="w-4 h-4 mr-2" />}
@@ -134,6 +116,34 @@ const DashboardLayout: React.FC = () => {
                 icon={<FaChartBar className="w-4 h-4 mr-2" />}
                 text="Quiz Reports"
                 isActive={location.pathname === '/admin/quiz-reports'}
+                onClick={() => setIsSidebarOpen(false)}
+              />
+            </>
+          )}
+
+          {isSuperAdmin && (
+            <>
+              <div className="my-4 border-t border-gray-200"></div>
+              <h2 className="mb-2 text-sm font-semibold text-gray-600 px-3 uppercase tracking-wider">SuperAdmin Control</h2>
+              <SidebarItem
+                to="/superadmin"
+                icon={<FaShieldAlt className="w-4 h-4 mr-2" />}
+                text="Command Center"
+                isActive={location.pathname === '/superadmin'}
+                onClick={() => setIsSidebarOpen(false)}
+              />
+              <SidebarItem
+                to="/admin/users"
+                icon={<FaUsers className="w-4 h-4 mr-2" />}
+                text="User Management"
+                isActive={location.pathname === '/admin/users'}
+                onClick={() => setIsSidebarOpen(false)}
+              />
+              <SidebarItem
+                to="/admin/audit-logs"
+                icon={<FaHistory className="w-4 h-4 mr-2" />}
+                text="Audit Logs"
+                isActive={location.pathname === '/admin/audit-logs'}
                 onClick={() => setIsSidebarOpen(false)}
               />
             </>

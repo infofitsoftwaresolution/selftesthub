@@ -7,12 +7,15 @@ interface User {
   full_name: string;
   is_active: boolean;
   is_superuser: boolean;
+  role?: 'user' | 'admin' | 'superadmin';
   profile_image?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (fullName: string, email: string, password: string) => Promise<void>;
@@ -135,9 +138,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(userData);
   };
 
+  const isAdmin = user?.is_superuser || user?.role === 'admin' || user?.role === 'superadmin';
+  const isSuperAdmin = user?.is_superuser || user?.role === 'superadmin';
+
   const value = {
     user,
     loading,
+    isAdmin: !!isAdmin,
+    isSuperAdmin: !!isSuperAdmin,
     login,
     logout,
     register,
