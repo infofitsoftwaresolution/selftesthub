@@ -33,7 +33,7 @@ ALLOWED_EMAILS = {
     "amanioamaino@gmail.com",
     "ezeadichieobinna@gmail.com",
     "infofitsoftware@gmail.com",
-    "shubhamsingh6087@gmail.com"
+    "shubhamsingh6087@gmail.com",
     "infofitsoftwaresolution@gmail.com",
     "markstephens595@gmail.com",
     "gospelboy111@gmail.com",
@@ -174,7 +174,14 @@ def login(
     access_token = create_access_token(subject=user.id)
     return {
         "access_token": access_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "is_superuser": user.is_superuser,
+            "profile_image": user.profile_image
+        }
     }
 
 @router.get("/me", response_model=UserInDB)
