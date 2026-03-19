@@ -132,7 +132,7 @@ jobs:
           npm ci
           npm run build
         env:
-          VITE_API_URL: http://${{ secrets.DEPLOY_HOST }}/api/v1
+          VITE_API_URL: https://selftesthub.com/api/v1
 
       - name: Create deployment package
         run: |
