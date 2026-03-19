@@ -26,7 +26,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ to, icon, text, isActive, onC
 
 const DashboardLayout: React.FC = () => {
   const location = useLocation();
-  const { user, isAdmin, isSuperAdmin } = useAuth();
+  const { isAdmin, isSuperAdmin } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Close sidebar when route changes
