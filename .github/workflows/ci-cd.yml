@@ -389,13 +389,12 @@ jobs:
             # ---- Cleanup ----
             rm -rf /tmp/deploy-selftesthub /tmp/deploy.tar.gz
 
-            echo ""
             echo "=========================================="
             echo "🎉 DEPLOYMENT COMPLETE!"
             echo "=========================================="
-            echo "🌐 Frontend:  http://${{ secrets.DEPLOY_HOST }}"
-            echo "🔧 API:       http://${{ secrets.DEPLOY_HOST }}/api/v1/docs"
-            echo "📋 Logs:      tail -f $DEPLOY_DIR/backend/uvicorn.log"
+            echo "🌐 Frontend:  https://selftesthub.com"
+            echo "🔧 Swagger:   https://selftesthub.com/api/v1/docs"
+            echo "📋 Logs:      sudo journalctl -u selftesthub-backend -f"
             echo "=========================================="
 
       - name: Deployment Summary
@@ -406,7 +405,7 @@ jobs:
           echo "Frontend Build: ${{ needs.frontend-test.result }}"
           echo "Backend Check:  ${{ needs.backend-test.result }}"
           echo "Deployment:     ${{ job.status }}"
-          echo "Application:    http://${{ secrets.DEPLOY_HOST }}"
+          echo "Application:    https://selftesthub.com"
 
   # ============================================
   # DEPLOYMENT NOTIFICATION
@@ -425,7 +424,7 @@ jobs:
           echo "=========================================="
           if [ "${{ needs.deploy.result }}" = "success" ]; then
             echo "✅ SelfTestHub deployed successfully!"
-            echo "🌐 Access at: http://${{ secrets.DEPLOY_HOST }}"
+            echo "🌐 Access at: https://selftesthub.com"
           else
             echo "❌ Deployment failed! Check logs for details."
           fi
