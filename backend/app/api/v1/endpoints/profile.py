@@ -14,8 +14,8 @@ from app.core.config import settings
 router = APIRouter()
 
 class ProfileUpdate(BaseModel):
-    full_name: str | None = None
-    email: EmailStr | None = None
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
 
 class PasswordChange(BaseModel):
     current_password: str
