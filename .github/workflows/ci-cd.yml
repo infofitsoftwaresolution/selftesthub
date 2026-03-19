@@ -285,6 +285,10 @@ jobs:
                 sudo apt-get update && sudo apt-get -y install nginx
             fi
             
+            echo "🛡️ Configuring UFW Firewall for NGINX..."
+            sudo ufw allow 'Nginx Full' || true
+            sudo ufw reload || true
+            
             sudo mkdir -p /etc/nginx/conf.d
 
             sudo tee /etc/nginx/conf.d/selftesthub.conf > /dev/null << 'NGINX_EOF'
