@@ -300,7 +300,7 @@ jobs:
             sudo tee /etc/nginx/conf.d/selftesthub.conf > /dev/null << 'NGINX_EOF'
             server {
                 listen 80;
-                server_name ${{ secrets.DEPLOY_HOST }};
+                server_name selftesthub.com www.selftesthub.com;
 
                 # Frontend static files
                 root /home/${{ secrets.DEPLOY_USER }}/selftesthub/frontend-dist;
@@ -335,9 +335,26 @@ jobs:
 
             # Remove default config
             sudo rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
+            
+            # Start Nginx (so Certbot can verify the domain challenge)
+            sudo systemctl enable nginx
+            sudo systemctl start nginx
 
-            # Test and restart NGINX
-            sudo nginx -t && sudo systemctl enable nginx && sudo systemctl restart nginx
+            # ---- Setup SSL (Let's Encrypt) ----
+            echo "🔐 Setting up SSL with Let's Encrypt..."
+            if ! command -v certbot &> /dev/null; then
+                sudo yum install -y python3 augeas-libs 2>/dev/null || true
+                sudo python3 -m venv /opt/certbot/
+                sudo /opt/certbot/bin/pip install --upgrade pip
+                sudo /opt/certbot/bin/pip install certbot certbot-nginx
+                sudo ln -s /opt/certbot/bin/certbot /usr/bin/certbot 2>/dev/null || true
+            fi
+            
+            # Run Certbot non-interactively to secure the config
+            sudo certbot --nginx -n --agree-tos --email ${{ secrets.SMTP_USER }} -d selftesthub.com -d www.selftesthub.com --redirect || echo "⚠️ Certbot challenge failed (DNS may still be propagating)"
+
+            # Test and restart NGINX to apply SSL
+            sudo nginx -t && sudo systemctl restart nginx
 
             # ---- Fix Permissions ----
             echo "🔒 Fixing permissions..."
