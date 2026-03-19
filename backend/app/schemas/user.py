@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, Dict, Any
 from datetime import datetime
 
 class UserBase(BaseModel):
@@ -37,4 +37,5 @@ class UserLogin(BaseModel):
 
 class Token(BaseModel):
     access_token: str
-    token_type: str = "bearer" 
+    token_type: str = "bearer"
+    user: Optional[Dict[str, Any]] = None 

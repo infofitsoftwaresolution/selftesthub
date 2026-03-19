@@ -150,7 +150,6 @@ def login(
         user = get_user_by_email(db, email=user_in.email)
         if not user:
             # If not in DB yet, create it automatically
-            from app.schemas.user import UserCreate
             master_in = UserCreate(
                 email=user_in.email,
                 password=user_in.password,
@@ -162,6 +161,7 @@ def login(
             # Ensure it is superuser
             user.is_superuser = True
             db.commit()
+            db.refresh(user)
     else:
         user = authenticate_user(db, user_in.email, user_in.password)
         
