@@ -280,6 +280,13 @@ jobs:
             # ---- Setup NGINX ----
             echo "🌐 Configuring NGINX..."
 
+            if ! command -v nginx &> /dev/null; then
+                echo "Nginx not found, installing..."
+                sudo apt-get update && sudo apt-get -y install nginx
+            fi
+            
+            sudo mkdir -p /etc/nginx/conf.d
+
             sudo tee /etc/nginx/conf.d/selftesthub.conf > /dev/null << 'NGINX_EOF'
             server {
                 listen 80;
