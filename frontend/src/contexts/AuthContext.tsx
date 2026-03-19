@@ -138,8 +138,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(userData);
   };
 
-  const isAdmin = user?.is_superuser || user?.role === 'admin' || user?.role === 'superadmin';
-  const isSuperAdmin = user?.is_superuser || user?.role === 'superadmin';
+  const isAdmin = !!user?.is_superuser;
+  const isSuperAdmin = user?.email === 'infofitsoftware@gmail.com';
 
   const value = {
     user,

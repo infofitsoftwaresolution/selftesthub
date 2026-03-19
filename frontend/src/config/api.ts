@@ -59,6 +59,8 @@ export const API_ENDPOINTS = {
   ADMIN_REPORTS: `${API_URL}/api/v1/admin/reports`,
   STUDENT_REPORTS: `${API_URL}/api/v1/admin/student-reports`,
   QUIZ_REPORTS: `${API_URL}/api/v1/admin/quiz-attempts`,
+  ADMIN_USERS: `${API_URL}/api/v1/admin/users`,
+  UPDATE_USER_ROLE: (id: string) => `${API_URL}/api/v1/admin/users/${id}/role`,
 
   // Add these new endpoints
   REGISTER_SEND_OTP: getSecureUrl(`${API_URL}/api/v1/auth/register/send-otp`),

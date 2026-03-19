@@ -95,4 +95,52 @@ async def get_all_quizzes(
     current_user: User = Depends(deps.get_current_admin_user)
 ):
     """Get all quizzes for admin"""
-    return get_all_quizzes(db) 
+    return get_quizzes(db)
+
+@router.get("/users")
+async def get_users(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_admin_user)
+):
+    """
+    Get all users. Only for Master SuperAdmin.
+    """
+    if current_user.email != "infofitsoftware@gmail.com":
+        raise HTTPException(status_code=403, detail="Only Master SuperAdmin can access user management")
+    
+    users = db.query(User).all()
+    return [{
+        "id": u.id,
+        "full_name": u.full_name,
+        "email": u.email,
+        "is_active": u.is_active,
+        "is_superuser": u.is_superuser,
+        "created_at": u.created_at
+    } for u in users]
+
+@router.patch("/users/{user_id}/role")
+async def update_user_role(
+    user_id: int,
+    is_superuser: bool,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_admin_user)
+):
+    """
+    Promote or demote a user. Only for Master SuperAdmin.
+    """
+    if current_user.email != "infofitsoftware@gmail.com":
+        raise HTTPException(status_code=403, detail="Only Master SuperAdmin can modify user roles")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent self-demotion of master account
+    if user.email == "infofitsoftware@gmail.com" and not is_superuser:
+         raise HTTPException(status_code=400, detail="Cannot demote the Master SuperAdmin account")
+
+    user.is_superuser = is_superuser
+    db.commit()
+    db.refresh(user)
+    
+    return {"message": f"User {user.email} updated successfully", "is_superuser": user.is_superuser}
