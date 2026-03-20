@@ -18,6 +18,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,8 +75,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
 
       const data = await response.json();
       if (response.ok) {
-        onClose();
-        // Handle successful registration
+        setIsSuccess(true);
       } else {
         setError(data.detail || 'Invalid OTP');
       }
@@ -94,12 +94,31 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
         <div className="mt-3">
           <h3 className="text-2xl font-bold text-center text-gray-900 mb-4">Create Account</h3>
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
               {error}
             </div>
           )}
           
-          {!otpSent ? (
+          {isSuccess ? (
+            <div className="text-center py-6">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl leading-6 font-bold text-gray-900 mb-2">Registration Successful!</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Your email has been verified and your account is created.
+              </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700"
+              >
+                Go to Login
+              </button>
+            </div>
+          ) : !otpSent ? (
             // Registration Form
             <form onSubmit={handleSendOTP} className="space-y-4">
               <div>
