@@ -100,8 +100,10 @@ class ForgotPasswordVerify(BaseModel):
     otp: str
     new_password: str
 
-# Store OTPs temporarily (in production, use Redis or similar)
-otp_store = {}
+from app.core.sqlite_store import PersistentOTPStore
+
+# Store OTPs persistently across workers/restarts
+otp_store = PersistentOTPStore()
 
 @router.post("/register", response_model=Token)
 def register(
@@ -209,8 +211,17 @@ async def send_registration_otp(
     db: Session = Depends(deps.get_db)
 ):
     try:
-        logger.info("Registration OTP requested")
+        request.email = request.email.strip().lower()
+        logger.info(f"Registration OTP requested for {request.email}")
         
+        # Check whitelist before attempting anything
+        if request.email not in ALLOWED_EMAILS:
+            logger.warning(f"Registration failed: {request.email} not in whitelist")
+            raise HTTPException(
+                status_code=403,
+                detail="Email not authorized for registration"
+            )
+            
         # Check if email already exists
         logger.info("Checking if email already exists in database")
         existing_user = get_user_by_email(db, email=request.email)
@@ -267,6 +278,7 @@ async def verify_registration_otp(
     request: OTPVerify,
     db: Session = Depends(deps.get_db)
 ):
+    request.email = request.email.strip().lower()
     stored_data = otp_store.get(request.email)
     if not stored_data:
         raise HTTPException(status_code=400, detail="No OTP request found")
