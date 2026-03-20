@@ -1,5 +1,6 @@
 import smtplib
 from email.mime.text import MIMEText
+from fastapi import HTTPException
 from app.core.config import settings
 
 async def send_email(to_email: str, subject: str, body: str):

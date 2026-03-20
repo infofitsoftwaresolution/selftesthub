@@ -14,7 +14,6 @@ const ManageQuizzes: React.FC = () => {
 
   const fetchQuizzes = async () => {
     try {
-      console.log('Fetching quizzes from here in the fetchquizzes',API_ENDPOINTS.QUIZZES);
       const response = await fetch(API_ENDPOINTS.QUIZZES, {
         ...fetchOptions,
         headers: {
@@ -25,13 +24,14 @@ const ManageQuizzes: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setQuizzes(data);
+        setError('');
       } else {
-        const data = await response.json();
-        setError(data.detail || 'Failed to fetch quizzes');
+        const data = await response.json().catch(() => null);
+        setError(data?.detail || `Server responded with ${response.status}`);
       }
     } catch (error) {
       console.error('Error fetching quizzes:', error);
-      setError('Something went wrong. Please try again.');
+      setError('Unable to connect to the server. Please check your internet connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -125,10 +125,17 @@ const ManageQuizzes: React.FC = () => {
   };
 
   if (loading) return <div className="p-4">Loading...</div>;
-  if (error) return <div className="p-4 text-red-500">{error}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded flex justify-between items-center">
+          <span>{error}</span>
+          <button onClick={() => { setError(''); fetchQuizzes(); }} className="text-red-700 hover:text-red-900 text-sm underline ml-4">
+            Retry
+          </button>
+        </div>
+      )}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Manage Quizzes</h1>
         <button

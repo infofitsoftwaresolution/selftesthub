@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Any, List
 from pydantic import BaseModel
 import random
+import traceback
 from datetime import datetime, timedelta
 import logging
 
