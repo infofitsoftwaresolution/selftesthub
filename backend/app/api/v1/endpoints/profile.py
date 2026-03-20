@@ -80,8 +80,8 @@ async def update_profile(
 
 @router.put("/change-password", response_model=dict)
 def change_password(
-    current_password: str,
-    new_password: str,
+    current_password: str = Form(...),
+    new_password: str = Form(...),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
 ):

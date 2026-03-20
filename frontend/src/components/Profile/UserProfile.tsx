@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS, fetchOptions } from '../../config/api';
+import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface UserData {
@@ -12,6 +12,7 @@ interface UserData {
 
 const UserProfile: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
@@ -30,10 +31,9 @@ const UserProfile: React.FC = () => {
 
   const fetchUserProfile = async () => {
     try {
+      setLoading(true);
       const response = await fetch(API_ENDPOINTS.ME, {
-        ...fetchOptions,
         headers: {
-          ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
@@ -48,7 +48,20 @@ const UserProfile: React.FC = () => {
       }
     } catch (err) {
       setError('Failed to load profile data');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Safe error extraction — avoids [object Object] display
+  const extractError = (data: any): string => {
+    if (!data) return 'An error occurred';
+    if (typeof data.detail === 'string') return data.detail;
+    if (Array.isArray(data.detail)) {
+      return data.detail.map((d: any) => d.msg || JSON.stringify(d)).join(', ');
+    }
+    if (typeof data.message === 'string') return data.message;
+    return JSON.stringify(data);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +70,7 @@ const UserProfile: React.FC = () => {
     setSuccess('');
 
     try {
-      // Backend expects form-data, not JSON
+      // --- Update profile name ---
       const body = new FormData();
       if (formData.full_name) {
         body.append('full_name', formData.full_name);
@@ -73,21 +86,22 @@ const UserProfile: React.FC = () => {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.detail || 'Failed to update profile');
+        setError(extractError(data));
         return;
       }
 
-      // Handle password change if provided
+      // --- Handle password change if provided ---
       if (formData.current_password && formData.new_password) {
         if (formData.new_password !== formData.confirm_password) {
           setError('New passwords do not match');
           return;
         }
+
         const pwBody = new FormData();
         pwBody.append('current_password', formData.current_password);
         pwBody.append('new_password', formData.new_password);
 
-        const pwResponse = await fetch(API_ENDPOINTS.UPDATE_PROFILE.replace('/update', '/change-password'), {
+        const pwResponse = await fetch(API_ENDPOINTS.CHANGE_PASSWORD, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -97,7 +111,7 @@ const UserProfile: React.FC = () => {
 
         if (!pwResponse.ok) {
           const pwData = await pwResponse.json();
-          setError(pwData.detail || 'Failed to change password');
+          setError(extractError(pwData));
           return;
         }
       }
@@ -115,6 +129,15 @@ const UserProfile: React.FC = () => {
     localStorage.removeItem('token');
     navigate('/');
   };
+
+  // Show loading spinner while fetching profile data
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-lg shadow">
@@ -180,6 +203,7 @@ const UserProfile: React.FC = () => {
               type="password"
               value={formData.current_password}
               onChange={(e) => setFormData({ ...formData, current_password: e.target.value })}
+              placeholder="Leave blank to keep current password"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -189,6 +213,7 @@ const UserProfile: React.FC = () => {
               type="password"
               value={formData.new_password}
               onChange={(e) => setFormData({ ...formData, new_password: e.target.value })}
+              placeholder="Leave blank to keep current password"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -198,6 +223,7 @@ const UserProfile: React.FC = () => {
               type="password"
               value={formData.confirm_password}
               onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
+              placeholder="Leave blank to keep current password"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -222,4 +248,4 @@ const UserProfile: React.FC = () => {
   );
 };
 
-export default UserProfile; 
+export default UserProfile;

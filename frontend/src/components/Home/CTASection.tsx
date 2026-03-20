@@ -1,11 +1,21 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-interface CTASectionProps {
-  onLoginClick: () => void;
-  onRegisterClick: () => void;
-}
+const CTASection: React.FC = () => {
+  const navigate = useNavigate();
 
-const CTASection: React.FC<CTASectionProps> = ({ onLoginClick, onRegisterClick }) => {
+  const handleGetStarted = () => {
+    // Scroll to top first, then navigate to login page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      navigate('/login');
+    }, 300);
+  };
+
+  const handleSignIn = () => {
+    navigate('/login');
+  };
+
   return (
     <section className="py-16 bg-blue-600 text-white">
       <div className="container mx-auto px-4 text-center">
@@ -16,13 +26,13 @@ const CTASection: React.FC<CTASectionProps> = ({ onLoginClick, onRegisterClick }
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
-            onClick={onRegisterClick}
+            onClick={handleGetStarted}
             className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
           >
             Get Started Free
           </button>
           <button
-            onClick={onLoginClick}
+            onClick={handleSignIn}
             className="border-2 border-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors"
           >
             Sign In
