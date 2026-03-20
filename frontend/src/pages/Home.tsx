@@ -19,7 +19,7 @@ const Home: React.FC = () => {
       <FeaturesSection />
       <StatsSection />
       <TestimonialsSection />
-      <CTASection />
+      <CTASection onLoginClick={() => setShowLogin(true)} onRegisterClick={() => setShowRegister(true)} />
 
       {/* Single global modals — prevents duplicate backdrop freeze */}
       <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />

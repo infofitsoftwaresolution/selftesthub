@@ -1,19 +1,25 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
-const CTASection: React.FC = () => {
-  const navigate = useNavigate();
+interface CTASectionProps {
+  onLoginClick?: () => void;
+  onRegisterClick?: () => void;
+}
 
+const CTASection: React.FC<CTASectionProps> = ({ onLoginClick, onRegisterClick }) => {
   const handleGetStarted = () => {
-    // Scroll to top first, then navigate to login page
+    if (onRegisterClick) {
+      onRegisterClick();
+    }
+    // Scroll to top so user sees the modal
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => {
-      navigate('/login');
-    }, 300);
   };
 
   const handleSignIn = () => {
-    navigate('/login');
+    if (onLoginClick) {
+      onLoginClick();
+    }
+    // Scroll to top so user sees the modal
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (

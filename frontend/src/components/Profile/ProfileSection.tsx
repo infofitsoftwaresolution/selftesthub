@@ -18,6 +18,16 @@ const ProfileSection: React.FC = () => {
     email: user?.email || '',
   });
 
+  // Re-populate profileData when user loads from AuthContext (e.g. after page refresh)
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        full_name: user.full_name || '',
+        email: user.email || '',
+      });
+    }
+  }, [user]);
+
   const [passwordData, setPasswordData] = useState({
     current_password: '',
     new_password: '',
@@ -125,22 +135,30 @@ const ProfileSection: React.FC = () => {
     }
 
     try {
+      // Backend expects FormData (uses Form() annotations), not JSON
+      const formData = new FormData();
+      formData.append('current_password', passwordData.current_password);
+      formData.append('new_password', passwordData.new_password);
+
       const response = await fetch(API_ENDPOINTS.CHANGE_PASSWORD, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({
-          current_password: passwordData.current_password,
-          new_password: passwordData.new_password,
-        }),
+        body: formData,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Failed to change password');
+        // Safely extract error message — prevents [object Object] display
+        let errorMsg = 'Failed to change password';
+        if (typeof data.detail === 'string') {
+          errorMsg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMsg = data.detail.map((d: any) => d.msg || JSON.stringify(d)).join(', ');
+        }
+        throw new Error(errorMsg);
       }
 
       setMessage({ type: 'success', text: 'Password changed successfully' });
