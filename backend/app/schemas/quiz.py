@@ -25,6 +25,8 @@ class QuizBase(BaseModel):
 
 class QuizCreate(QuizBase):
     questions: List[QuestionCreate]
+    is_draft: bool = False
+    max_attempts: int = 1
 
 class QuizUpdate(BaseModel):
     title: Optional[str] = None
@@ -32,12 +34,15 @@ class QuizUpdate(BaseModel):
     type: Optional[str] = None
     is_active: Optional[bool] = None
     is_draft: Optional[bool] = None
+    max_attempts: Optional[int] = None
     questions: Optional[List[dict]] = None
 
 class Quiz(QuizBase):
     id: int
     created_by: int
     created_at: datetime
+    is_draft: Optional[bool] = False
+    max_attempts: Optional[int] = 1
     questions: List[dict]  # Keep as dict for JSON compatibility
 
     class Config:

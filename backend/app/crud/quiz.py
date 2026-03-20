@@ -11,6 +11,8 @@ def create_quiz(db: Session, quiz: QuizCreate, user_id: int) -> QuizModel:
         duration=quiz.duration,
         type=quiz.type,
         is_active=quiz.is_active,
+        is_draft=getattr(quiz, 'is_draft', False),
+        max_attempts=getattr(quiz, 'max_attempts', 1),
         created_by=user_id,
         questions=[{
             'text': q.text,
