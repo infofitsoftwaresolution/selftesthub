@@ -18,12 +18,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 def calculate_percentile(score: float, all_scores: List[float]) -> int:
-    """Calculate the percentile rank of a score."""
+    """Calculate the normalized percentile rank of a score."""
     if not all_scores:
         return 0
-    all_scores.sort()
-    position = len([s for s in all_scores if s < score])
-    return int((position / len(all_scores)) * 100)
+        
+    below = sum(1 for s in all_scores if s < score)
+    equals = sum(1 for s in all_scores if s == score)
+    
+    # Standard formula: (Count below + 0.5 * Count equal) / Total * 100
+    percentile = ((below + (0.5 * equals)) / len(all_scores)) * 100
+    return int(min(100, max(0, round(percentile))))
 
 @router.get("", response_model=List[LeaderboardEntry])
 @router.get("/", response_model=List[LeaderboardEntry])

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface UserData {
   id: number;
@@ -21,6 +22,7 @@ const UserProfile: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
 
   useEffect(() => {
     fetchUserProfile();
@@ -40,6 +42,7 @@ const UserProfile: React.FC = () => {
         const data = await response.json();
         setUserData(data);
         setFormData(prev => ({ ...prev, full_name: data.full_name }));
+        updateUser(data);
       } else {
         throw new Error('Failed to fetch profile');
       }
