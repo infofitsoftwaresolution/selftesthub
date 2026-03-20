@@ -70,6 +70,9 @@ export const API_ENDPOINTS = {
   FORGOT_PASSWORD_VERIFY_OTP: getSecureUrl(`${API_URL}/api/v1/auth/forgot-password/verify-otp`),
   QUIZ_ATTEMPTS: `${API_URL}/api/v1/quiz-attempts`,
   MY_ATTEMPTS: `${API_URL}/api/v1/quiz-attempts/my-attempts`,
+
+  // Dashboard
+  DASHBOARD_STATS: `${API_URL}/api/v1/dashboard/stats`,
 };
 
 export default API_ENDPOINTS; 

@@ -27,13 +27,16 @@ const AvailableQuizzes: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch quizzes');
+        // No active quizzes isn't an error — show empty state
+        setQuizzes([]);
+        return;
       }
 
       const data = await response.json();
       setQuizzes(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      console.error('Error fetching quizzes:', err);
+      setQuizzes([]);
     } finally {
       setLoading(false);
     }

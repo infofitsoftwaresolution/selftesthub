@@ -42,20 +42,17 @@ const Leaderboard: React.FC = () => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
-      console.log('Quizzes response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched quizzes:', data);
         setQuizzes(data);
       } else {
-        const errorData = await response.json().catch(() => null);
-        console.error('Failed to fetch quizzes:', errorData);
-        setError('Failed to load quizzes');
+        // Silently set empty — no quizzes is not an error
+        setQuizzes([]);
       }
     } catch (error) {
       console.error('Error fetching quizzes:', error);
-      setError('Failed to load quizzes');
+      setQuizzes([]);
     }
   };
 
@@ -71,8 +68,6 @@ const Leaderboard: React.FC = () => {
       }).toString();
       
       const url = `${baseUrl}?${queryParams}`;
-      console.log('Fetching leaderboard from:', url);
-      console.log('Query parameters:', { quiz_id: selectedQuiz, time_range: timeRange });
       
       const response = await fetch(
         url,
@@ -85,20 +80,18 @@ const Leaderboard: React.FC = () => {
         }
       );
       
-      console.log('Leaderboard response status:', response.status);
-      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        console.error('Failed to fetch leaderboard:', errorData);
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // If no data or server error, show empty leaderboard instead of error
+        setLeaderboardData([]);
+        return;
       }
       
       const data = await response.json();
-      console.log('Fetched leaderboard data:', data);
       setLeaderboardData(data);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load leaderboard data');
+      // Show empty state instead of error message
+      setLeaderboardData([]);
     } finally {
       setLoading(false);
     }
@@ -135,8 +128,8 @@ const Leaderboard: React.FC = () => {
   if (error) {
     return (
       <div className="bg-white rounded-lg shadow-md p-4">
-        <div className="text-red-500 text-center py-4">
-          {error}
+        <div className="text-gray-500 text-center py-8">
+          No leaderboard data available yet.
         </div>
       </div>
     );

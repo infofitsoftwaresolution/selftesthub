@@ -1,11 +1,17 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import QuickStats from '../components/Dashboard/QuickStats';
 import AvailableQuizzes from '../components/Dashboard/AvailableQuizzes';
 import PerformanceChart from '../components/Dashboard/PerformanceChart';
 import Leaderboard from '../components/Dashboard/Leaderboard';
 
 const Dashboard: React.FC = () => {
-  const userName = "Student"; // TODO: Get from user context
+  const { user, isAdmin, isSuperAdmin } = useAuth();
+
+  // Redirect admins and superadmins to their own dashboards
+  if (isSuperAdmin) return <Navigate to="/superadmin" replace />;
+  if (isAdmin) return <Navigate to="/admin" replace />;
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -14,7 +20,7 @@ const Dashboard: React.FC = () => {
         {/* Welcome Section */}
         <div className="mb-4 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">
-            Welcome back, {userName}! 👋
+            Welcome back, {user?.full_name || 'Student'}! 👋
           </h1>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-1 sm:mt-2">
             Ready to test your knowledge today?
@@ -60,4 +66,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;
