@@ -25,7 +25,7 @@ def simulate_user(user_id):
         token = login_res.json().get("access_token")
         headers = {"Authorization": f"Bearer {token}"}
         
-        quizzes_res = session.get(f"{BASE_URL}/dashboard/available-quizzes", headers=headers)
+        quizzes_res = session.get(f"{BASE_URL}/quizzes/", headers=headers)
         if quizzes_res.status_code != 200:
             return f"User {user_id}: Fetch Quizzes Failed ({quizzes_res.status_code}) - {quizzes_res.text}"
         
@@ -37,7 +37,7 @@ def simulate_user(user_id):
         time.sleep(random.uniform(1.0, 3.0))
         
         submit_res = session.post(
-            f"{BASE_URL}/quizzes/{QUIZ_ID}/attempts/{attempt_id}/submit",
+            f"{BASE_URL}/quizzes/{QUIZ_ID}/submit?attempt_id={attempt_id}",
             headers=headers,
             json={"answers": {"1": 0}}
         )
