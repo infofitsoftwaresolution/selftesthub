@@ -102,8 +102,11 @@ const MyResults: React.FC = () => {
     }
   };
 
+  // Enforce UTC parsing to fix 5.5 hour discrepancy
+  const formatAsUTC = (dateStr: string) => dateStr && !dateStr.endsWith('Z') ? `${dateStr}Z` : dateStr;
+
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(formatAsUTC(dateString)).toLocaleString('en-US', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -113,10 +116,10 @@ const MyResults: React.FC = () => {
   };
 
   const calculateTimeTaken = (start: string, end: string) => {
-    const startTime = new Date(start).getTime();
-    const endTime = new Date(end).getTime();
-    const minutes = Math.floor((endTime - startTime) / (1000 * 60));
-    return `${minutes} minutes`;
+    const startTime = new Date(formatAsUTC(start)).getTime();
+    const endTime = new Date(formatAsUTC(end)).getTime();
+    let minutes = Math.floor((endTime - startTime) / (1000 * 60));
+    return `${Math.max(0, minutes)} minutes`;
   };
 
   if (loading) {

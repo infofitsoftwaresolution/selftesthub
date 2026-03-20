@@ -225,7 +225,7 @@ const DashboardLayout: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <main className="p-4 lg:p-6">
+        <main key={location.pathname} className="p-4 lg:p-6" style={{ animation: 'globalFadeIn 0.4s ease-out forwards' }}>
           <Outlet />
         </main>
       </div>

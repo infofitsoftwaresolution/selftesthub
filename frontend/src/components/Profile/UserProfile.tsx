@@ -119,7 +119,7 @@ const UserProfile: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700">Member Since</label>
             <p className="mt-1 text-gray-900">
-              {new Date(userData.created_at).toLocaleDateString()}
+              {new Date((userData.created_at && !userData.created_at.endsWith('Z') ? `${userData.created_at}Z` : userData.created_at)).toLocaleDateString()}
             </p>
           </div>
           <button
