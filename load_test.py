@@ -4,7 +4,7 @@ import time
 import random
 
 # CONFIGURATION
-BASE_URL = "https://api.selftesthub.com/api/v1"
+BASE_URL = "https://selftesthub.com/api/v1"
 TEST_EMAIL = "chinuakash64@gmail.com"  # Change to any valid whitelisted user you have
 TEST_PASSWORD = "chinuakash"           # Change to the user's password
 NUM_CONCURRENT_USERS = 100               # Number of simultaneous test takers
