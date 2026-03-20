@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 interface NavbarProps {
-  onLoginClick: () => void;
+  onLoginClick?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onLoginClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLoginClick = () => {
+    if (onLoginClick) {
+      onLoginClick();
+    } else {
+      navigate('/');
+    }
+  };
 
   const isActivePath = (path: string) => location.pathname === path;
 
@@ -65,7 +74,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick }) => {
                 Contact
               </Link>
               <button 
-                onClick={onLoginClick}
+                onClick={handleLoginClick}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
               >
                 Login
@@ -140,7 +149,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick }) => {
           </Link>
           <button
             onClick={() => {
-              onLoginClick();
+              handleLoginClick();
               setIsOpen(false);
             }}
             className="w-full text-left block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700"
