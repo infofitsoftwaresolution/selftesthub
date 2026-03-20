@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import LoginModal from '../Auth/LoginModal';
 
-const Navbar: React.FC = () => {
-  const [showLogin, setShowLogin] = useState(false);
+interface NavbarProps {
+  onLoginClick: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ onLoginClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
@@ -15,7 +17,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between h-16">
           <div className="flex">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-blue-600">MCQ Exam</span>
+              <span className="text-2xl font-bold text-blue-600">SelfTestHub</span>
             </Link>
           </div>
           
@@ -63,7 +65,7 @@ const Navbar: React.FC = () => {
                 Contact
               </Link>
               <button 
-                onClick={() => setShowLogin(true)}
+                onClick={onLoginClick}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
               >
                 Login
@@ -138,7 +140,7 @@ const Navbar: React.FC = () => {
           </Link>
           <button
             onClick={() => {
-              setShowLogin(true);
+              onLoginClick();
               setIsOpen(false);
             }}
             className="w-full text-left block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700"
@@ -147,11 +149,8 @@ const Navbar: React.FC = () => {
           </button>
         </div>
       </div>
-
-      {/* Login Modal */}
-      <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
     </nav>
   );
 };
 
-export default Navbar; 
+export default Navbar;

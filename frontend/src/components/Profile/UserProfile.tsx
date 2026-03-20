@@ -57,24 +57,55 @@ const UserProfile: React.FC = () => {
     setSuccess('');
 
     try {
+      // Backend expects form-data, not JSON
+      const body = new FormData();
+      if (formData.full_name) {
+        body.append('full_name', formData.full_name);
+      }
+
       const response = await fetch(API_ENDPOINTS.UPDATE_PROFILE, {
         method: 'PUT',
-        ...fetchOptions,
         headers: {
-          ...fetchOptions.headers,
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(formData)
+        body: body
       });
 
-      if (response.ok) {
-        setSuccess('Profile updated successfully');
-        setIsEditing(false);
-        fetchUserProfile();
-      } else {
+      if (!response.ok) {
         const data = await response.json();
         setError(data.detail || 'Failed to update profile');
+        return;
       }
+
+      // Handle password change if provided
+      if (formData.current_password && formData.new_password) {
+        if (formData.new_password !== formData.confirm_password) {
+          setError('New passwords do not match');
+          return;
+        }
+        const pwBody = new FormData();
+        pwBody.append('current_password', formData.current_password);
+        pwBody.append('new_password', formData.new_password);
+
+        const pwResponse = await fetch(API_ENDPOINTS.UPDATE_PROFILE.replace('/update', '/change-password'), {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: pwBody
+        });
+
+        if (!pwResponse.ok) {
+          const pwData = await pwResponse.json();
+          setError(pwData.detail || 'Failed to change password');
+          return;
+        }
+      }
+
+      setSuccess('Profile updated successfully');
+      setIsEditing(false);
+      setFormData(prev => ({ ...prev, current_password: '', new_password: '', confirm_password: '' }));
+      fetchUserProfile();
     } catch (err) {
       setError('Something went wrong. Please try again.');
     }
