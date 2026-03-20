@@ -36,29 +36,20 @@ const QuizResult: React.FC = () => {
   let timeTaken = "N/A";
   if (result.started_at && result.completed_at) {
     try {
-      // Parse timestamps and ensure they're in the correct format
-      const startTime = new Date(result.started_at);
-      const endTime = new Date(result.completed_at);
+      // We must append 'Z' if missing because the backend sends naive UTC dates without timezones
+      const formatAsUTC = (dateStr: string) => dateStr && !dateStr.endsWith('Z') ? `${dateStr}Z` : dateStr;
+      
+      const startTime = new Date(formatAsUTC(result.started_at));
+      const endTime = new Date(formatAsUTC(result.completed_at));
       
       // Check if timestamps are valid
       if (!isNaN(startTime.getTime()) && !isNaN(endTime.getTime())) {
         // Calculate time difference in milliseconds
         let timeTakenMs = endTime.getTime() - startTime.getTime();
         
-        // If time difference is negative, try to fix it
+        // Prevent negative time due to client-side clock skew
         if (timeTakenMs < 0) {
-          // Try to extract just the time part and compare
-          const startTimeStr = startTime.toTimeString().split(' ')[0];
-          const endTimeStr = endTime.toTimeString().split(' ')[0];
-          
-          // If the dates are the same day but times are reversed, swap them
-          if (startTime.toDateString() === endTime.toDateString() && 
-              startTimeStr > endTimeStr) {
-            timeTakenMs = startTime.getTime() - endTime.getTime();
-          } else {
-            // If we can't determine the correct order, use a fallback
-            timeTakenMs = Math.abs(timeTakenMs);
-          }
+          timeTakenMs = 0;
         }
         
         const minutes = Math.floor(timeTakenMs / (1000 * 60));

@@ -118,10 +118,15 @@ async def get_users(
         "created_at": u.created_at
     } for u in users]
 
+from pydantic import BaseModel
+
+class RoleUpdate(BaseModel):
+    is_superuser: bool
+
 @router.patch("/users/{user_id}/role")
 async def update_user_role(
     user_id: int,
-    is_superuser: bool,
+    payload: RoleUpdate,
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_admin_user)
 ):
@@ -136,10 +141,10 @@ async def update_user_role(
         raise HTTPException(status_code=404, detail="User not found")
     
     # Prevent self-demotion of master account
-    if user.email == "infofitsoftware@gmail.com" and not is_superuser:
+    if user.email == "infofitsoftware@gmail.com" and not payload.is_superuser:
          raise HTTPException(status_code=400, detail="Cannot demote the Master SuperAdmin account")
 
-    user.is_superuser = is_superuser
+    user.is_superuser = payload.is_superuser
     db.commit()
     db.refresh(user)
     

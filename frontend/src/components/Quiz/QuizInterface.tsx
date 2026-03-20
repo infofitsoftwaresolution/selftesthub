@@ -91,24 +91,17 @@ const QuizInterface: React.FC = () => {
 
       const result = await response.json();
       
-      // Get the current time for completion
-      const now = new Date();
+      // We must append 'Z' because the backend sends naive UTC dates without timezones
+      // e.g., '2026-03-20T06:30:00'. Without 'Z', JavaScript parses it as local time!
+      const formatAsUTC = (dateStr: string) => dateStr && !dateStr.endsWith('Z') ? `${dateStr}Z` : dateStr;
+
+      let startTime = result.started_at
+          ? formatAsUTC(result.started_at)
+          : location.state?.startedAt 
+            ? location.state.startedAt 
+            : new Date(new Date().getTime() - ((quiz?.duration || 30) * 60 * 1000)).toISOString();
       
-      // Determine the start time
-      let startTime;
-      if (result.started_at) {
-        startTime = result.started_at;
-      } else if (location.state?.startedAt) {
-        startTime = location.state.startedAt;
-      } else {
-        // Calculate start time based on quiz duration
-        const quizDurationMs = (quiz?.duration || 30) * 60 * 1000;
-        const calculatedStartTime = new Date(now.getTime() - quizDurationMs);
-        startTime = calculatedStartTime.toISOString();
-      }
-      
-      // Use current time for completion
-      const endTime = now.toISOString();
+      const endTime = result.completed_at ? formatAsUTC(result.completed_at) : new Date().toISOString();
       
       const resultWithTimestamps = {
         ...result,

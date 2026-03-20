@@ -57,7 +57,8 @@ const UserManagement: React.FC = () => {
         await fetchUsers(); // Refresh list
       } else {
         const data = await response.json();
-        alert(data.detail || 'Failed to update user role');
+        const errorMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+        alert(errorMsg || 'Failed to update user role');
       }
     } catch (err) {
       alert('Error updating user role');

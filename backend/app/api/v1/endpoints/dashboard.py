@@ -40,6 +40,25 @@ async def get_dashboard_stats(
             .scalar()
             or 0
         )
+        
+        # Include Admin Stats so SuperAdmins can view the Admin Dashboard
+        total_students = (
+            db.query(func.count(User.id))
+            .filter(User.is_superuser.is_(False))
+            .scalar()
+            or 0
+        )
+        active_quizzes = (
+            db.query(func.count(Quiz.id))
+            .filter(Quiz.is_active.is_(True))
+            .scalar()
+            or 0
+        )
+        avg_score = (
+            db.query(func.avg(QuizAttempt.score))
+            .filter(QuizAttempt.is_completed.is_(True))
+            .scalar()
+        )
 
         return {
             "role": "superadmin",
@@ -47,6 +66,9 @@ async def get_dashboard_stats(
             "total_admins": total_admins,
             "total_quizzes": total_quizzes,
             "total_attempts": total_attempts,
+            "total_students": total_students,
+            "active_quizzes": active_quizzes,
+            "avg_performance": round(avg_score, 1) if avg_score else 0,
         }
 
     # ── Admin stats ───────────────────────────────────────────────────
