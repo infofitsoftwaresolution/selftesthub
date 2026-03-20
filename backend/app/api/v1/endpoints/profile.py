@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import Any, Optional
 import os
@@ -23,8 +23,8 @@ class PasswordChange(BaseModel):
 
 @router.put("/update", response_model=dict)
 async def update_profile(
-    full_name: Optional[str] = None,
-    email: Optional[str] = None,
+    full_name: Optional[str] = Form(None),
+    email: Optional[str] = Form(None),
     profile_image: Optional[UploadFile] = File(None),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)

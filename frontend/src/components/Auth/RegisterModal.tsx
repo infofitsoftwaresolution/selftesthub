@@ -89,8 +89,10 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full">
-      <div className="relative top-20 mx-auto p-5 border w-96 shadow-2xl rounded-md bg-white">
+    <div className="fixed inset-0 z-[9999] bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full" onClick={onClose}>
+      <div className="relative top-20 mx-auto p-5 border w-96 shadow-2xl rounded-md bg-white" onClick={(e) => e.stopPropagation()}>
+        {/* Close button */}
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none">&times;</button>
         <div className="mt-3">
           <h3 className="text-2xl font-bold text-center text-gray-900 mb-4">Create Account</h3>
           {error && (
