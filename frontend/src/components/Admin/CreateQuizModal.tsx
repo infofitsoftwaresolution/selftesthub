@@ -18,19 +18,11 @@ interface CreateQuizModalProps {
 const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQuizCreated }) => {
   const [activeTab, setActiveTab] = useState<'manual' | 'upload'>('manual');
   const [quizData, setQuizData] = useState({
-    title: '',
-    type: 'practice',
-    duration: 30,
-    questions: [] as Question[],
-    max_attempts: 1
+    title: '', type: 'practice', duration: 30, questions: [] as Question[], max_attempts: 1
   });
-
   const [currentQuestion, setCurrentQuestion] = useState({
-    text: '',
-    options: ['', '', '', ''],
-    correctAnswer: 0,
+    text: '', options: ['', '', '', ''], correctAnswer: 0,
   });
-
   const [error, setError] = useState('');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -40,26 +32,19 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
     if (isOpen) {
       setQuizData({ title: '', type: 'practice', duration: 30, questions: [], max_attempts: 1 });
       setCurrentQuestion({ text: '', options: ['', '', '', ''], correctAnswer: 0 });
-      setError('');
-      setActiveTab('manual');
-      setUploadFile(null);
-      setUploading(false);
-      setUploadResult('');
+      setError(''); setActiveTab('manual'); setUploadFile(null); setUploading(false); setUploadResult('');
     }
   }, [isOpen]);
 
   const resetForm = () => {
     setQuizData({ title: '', type: 'practice', duration: 30, questions: [], max_attempts: 1 });
     setCurrentQuestion({ text: '', options: ['', '', '', ''], correctAnswer: 0 });
-    setError('');
-    setUploadFile(null);
-    setUploadResult('');
+    setError(''); setUploadFile(null); setUploadResult('');
   };
 
   const addQuestion = () => {
     if (!currentQuestion.text || currentQuestion.options.some(opt => !opt)) {
-      setError('Please fill in all question fields');
-      return;
+      setError('Please fill in all question fields'); return;
     }
     setQuizData(prev => ({
       ...prev,
@@ -73,45 +58,26 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
     try {
       if (!quizData.title) { setError('Please enter a quiz title'); return; }
       if (quizData.questions.length === 0) { setError('Please add at least one question'); return; }
-
-      const formattedQuestions = quizData.questions.map(q => ({
-        text: q.text, options: q.options, correctAnswer: q.correctAnswer
-      }));
-
       const token = localStorage.getItem('token');
       const response = await fetch(API_ENDPOINTS.CREATE_QUIZ, {
-        method: 'POST',
-        ...fetchOptions,
+        method: 'POST', ...fetchOptions,
         headers: { ...fetchOptions.headers, 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
           title: quizData.title, type: quizData.type, duration: quizData.duration,
-          questions: formattedQuestions, is_draft: saveAsDraft,
-          max_attempts: quizData.type === 'exam' ? 1 : quizData.max_attempts
+          questions: quizData.questions.map(q => ({ text: q.text, options: q.options, correctAnswer: q.correctAnswer })),
+          is_draft: saveAsDraft, max_attempts: quizData.type === 'exam' ? 1 : quizData.max_attempts
         })
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Failed to create quiz');
-      }
-      await response.json();
-      onQuizCreated();
-      onClose();
-      resetForm();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create quiz');
-    }
+      if (!response.ok) { const data = await response.json(); throw new Error(data.detail || 'Failed to create quiz'); }
+      await response.json(); onQuizCreated(); onClose(); resetForm();
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to create quiz'); }
   };
 
   const handleFileUpload = async (saveAsDraft = false) => {
     try {
       if (!quizData.title) { setError('Please enter a quiz title'); return; }
       if (!uploadFile) { setError('Please select a JSON or XML file'); return; }
-
-      setUploading(true);
-      setError('');
-      setUploadResult('');
-
+      setUploading(true); setError(''); setUploadResult('');
       const formData = new FormData();
       formData.append('file', uploadFile);
       formData.append('title', quizData.title);
@@ -119,252 +85,166 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
       formData.append('type', quizData.type);
       formData.append('max_attempts', (quizData.type === 'exam' ? 1 : quizData.max_attempts).toString());
       formData.append('is_draft', saveAsDraft.toString());
-
       const token = localStorage.getItem('token');
       const response = await fetch(API_ENDPOINTS.UPLOAD_FILE_QUIZ, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
+        method: 'POST', credentials: 'include',
+        headers: { 'Authorization': `Bearer ${token}` }, body: formData
       });
-
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Failed to create quiz from file');
-
       setUploadResult(`✅ ${data.message}`);
       setTimeout(() => { onQuizCreated(); onClose(); resetForm(); }, 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload file');
-    } finally {
-      setUploading(false);
-    }
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to upload file'); }
+    finally { setUploading(false); }
   };
 
   if (!isOpen) return null;
 
-  // ─── Inline Styles ───
-  const overlay: React.CSSProperties = {
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
-    backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center',
-    justifyContent: 'center', padding: '20px'
+  const inp: React.CSSProperties = {
+    width: '100%', padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: '6px',
+    fontSize: '13px', outline: 'none', boxSizing: 'border-box'
   };
-  const modal: React.CSSProperties = {
-    backgroundColor: '#fff', borderRadius: '12px', width: '100%', maxWidth: '720px',
-    maxHeight: '85vh', display: 'flex', flexDirection: 'column',
-    boxShadow: '0 25px 50px rgba(0,0,0,0.25)', overflow: 'hidden'
-  };
-  const header: React.CSSProperties = {
-    padding: '20px 24px', borderBottom: '1px solid #e5e7eb',
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff'
-  };
-  const tabBar: React.CSSProperties = {
-    display: 'flex', borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb'
-  };
-  const tabStyle = (active: boolean): React.CSSProperties => ({
-    flex: 1, padding: '12px 16px', textAlign: 'center' as const, cursor: 'pointer',
-    fontWeight: 600, fontSize: '14px', border: 'none', outline: 'none',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-    backgroundColor: active ? '#fff' : 'transparent',
-    color: active ? '#2563eb' : '#6b7280',
-    borderBottom: active ? '3px solid #2563eb' : '3px solid transparent',
-    transition: 'all 0.2s'
-  });
-  const scrollArea: React.CSSProperties = {
-    flex: 1, overflowY: 'auto', padding: '20px 24px'
-  };
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '10px 12px', border: '1px solid #d1d5db',
-    borderRadius: '8px', fontSize: '14px', outline: 'none', boxSizing: 'border-box',
-    transition: 'border-color 0.2s'
-  };
-  const labelStyle: React.CSSProperties = {
-    display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151',
-    marginBottom: '4px'
-  };
-  const footerStyle: React.CSSProperties = {
-    padding: '16px 24px', borderTop: '1px solid #e5e7eb',
-    display: 'flex', justifyContent: 'flex-end', gap: '10px', backgroundColor: '#f9fafb'
-  };
-  const btnPrimary: React.CSSProperties = {
-    padding: '10px 20px', backgroundColor: '#2563eb', color: '#fff',
-    border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer',
-    fontSize: '14px', transition: 'background 0.2s'
-  };
-  const btnSecondary: React.CSSProperties = {
-    padding: '10px 20px', backgroundColor: '#6b7280', color: '#fff',
-    border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer',
-    fontSize: '14px'
-  };
-  const btnOutline: React.CSSProperties = {
-    padding: '10px 20px', backgroundColor: '#fff', color: '#374151',
-    border: '1px solid #d1d5db', borderRadius: '8px', fontWeight: 500,
-    cursor: 'pointer', fontSize: '14px'
-  };
-  const sectionCard: React.CSSProperties = {
-    backgroundColor: '#f8fafc', padding: '16px', borderRadius: '10px',
-    border: '1px solid #e2e8f0', marginBottom: '16px'
+  const lbl: React.CSSProperties = { display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '2px' };
+  const btn1: React.CSSProperties = {
+    padding: '8px 16px', backgroundColor: '#2563eb', color: '#fff', border: 'none',
+    borderRadius: '6px', fontWeight: 600, cursor: 'pointer', fontSize: '13px'
   };
 
   return (
-    <div style={overlay} onClick={onClose}>
-      <div style={modal} onClick={(e) => e.stopPropagation()}>
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
+      backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-start',
+      justifyContent: 'center', paddingTop: '40px'
+    }} onClick={onClose}>
+      <div style={{
+        backgroundColor: '#fff', borderRadius: '10px', width: '100%', maxWidth: '680px',
+        maxHeight: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.2)', overflow: 'hidden', margin: '0 16px'
+      }} onClick={e => e.stopPropagation()}>
+
         {/* Header */}
-        <div style={header}>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700 }}>Create New Quiz</h2>
-          <button onClick={onClose} style={{
-            background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '18px'
-          }}><FaTimes /></button>
+        <div style={{
+          padding: '12px 18px', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+          color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700 }}>Create New Quiz</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '16px' }}><FaTimes /></button>
         </div>
 
-        {/* Tab Bar */}
-        <div style={tabBar}>
-          <button style={tabStyle(activeTab === 'manual')}
-            onClick={() => { setActiveTab('manual'); setError(''); }}>
-            <FaEdit /> Manual Entry
-          </button>
-          <button style={tabStyle(activeTab === 'upload')}
-            onClick={() => { setActiveTab('upload'); setError(''); }}>
-            <FaFileCode /> Upload JSON / XML
-          </button>
+        {/* Tabs */}
+        <div style={{ display: 'flex', borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb', flexShrink: 0 }}>
+          {[
+            { key: 'manual' as const, icon: <FaEdit />, label: 'Manual Entry' },
+            { key: 'upload' as const, icon: <FaFileCode />, label: 'Upload JSON / XML' }
+          ].map(t => (
+            <button key={t.key} onClick={() => { setActiveTab(t.key); setError(''); }} style={{
+              flex: 1, padding: '8px 12px', textAlign: 'center', cursor: 'pointer', fontWeight: 600,
+              fontSize: '13px', border: 'none', outline: 'none', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: '6px',
+              backgroundColor: activeTab === t.key ? '#fff' : 'transparent',
+              color: activeTab === t.key ? '#2563eb' : '#6b7280',
+              borderBottom: activeTab === t.key ? '3px solid #2563eb' : '3px solid transparent',
+            }}>{t.icon} {t.label}</button>
+          ))}
         </div>
 
         {/* Messages */}
-        {error && (
-          <div style={{
-            margin: '12px 24px 0', padding: '10px 14px', backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca', color: '#dc2626', borderRadius: '8px',
-            fontSize: '13px', fontWeight: 500
-          }}>{error}</div>
-        )}
-        {uploadResult && (
-          <div style={{
-            margin: '12px 24px 0', padding: '10px 14px', backgroundColor: '#f0fdf4',
-            border: '1px solid #bbf7d0', color: '#16a34a', borderRadius: '8px',
-            fontSize: '13px', fontWeight: 500
-          }}>{uploadResult}</div>
-        )}
+        {error && <div style={{ margin: '8px 14px 0', padding: '6px 10px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: '6px', fontSize: '12px' }}>{error}</div>}
+        {uploadResult && <div style={{ margin: '8px 14px 0', padding: '6px 10px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a', borderRadius: '6px', fontSize: '12px' }}>{uploadResult}</div>}
 
-        {/* Scrollable Content */}
-        <div style={scrollArea}>
-          {/* Quiz Details Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+        {/* Scrollable Body */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 18px' }}>
+
+          {/* Quiz Details - compact row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '10px' }}>
             <div>
-              <label style={labelStyle}>Quiz Title</label>
-              <input type="text" style={inputStyle} placeholder="Enter quiz title"
-                value={quizData.title}
-                onChange={(e) => setQuizData({ ...quizData, title: e.target.value })} />
+              <label style={lbl}>Quiz Title</label>
+              <input type="text" style={inp} placeholder="Enter title" value={quizData.title}
+                onChange={e => setQuizData({ ...quizData, title: e.target.value })} />
             </div>
             <div>
-              <label style={labelStyle}>Duration (minutes)</label>
-              <input type="number" style={inputStyle} min="1"
-                value={quizData.duration}
-                onChange={(e) => setQuizData({ ...quizData, duration: parseInt(e.target.value) || 1 })} />
+              <label style={lbl}>Duration (min)</label>
+              <input type="number" style={inp} min="1" value={quizData.duration}
+                onChange={e => setQuizData({ ...quizData, duration: parseInt(e.target.value) || 1 })} />
             </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
             <div>
-              <label style={labelStyle}>Quiz Type</label>
-              <select style={inputStyle} value={quizData.type}
-                onChange={(e) => setQuizData({ ...quizData, type: e.target.value, max_attempts: e.target.value === 'exam' ? 1 : quizData.max_attempts })}>
+              <label style={lbl}>Type</label>
+              <select style={inp} value={quizData.type}
+                onChange={e => setQuizData({ ...quizData, type: e.target.value, max_attempts: e.target.value === 'exam' ? 1 : quizData.max_attempts })}>
                 <option value="practice">Practice</option>
                 <option value="exam">Exam</option>
               </select>
             </div>
-            {quizData.type === 'practice' && (
-              <div>
-                <label style={labelStyle}>Maximum Attempts</label>
-                <input type="number" style={inputStyle} min="1"
-                  value={quizData.max_attempts}
-                  onChange={(e) => setQuizData({ ...quizData, max_attempts: parseInt(e.target.value) || 1 })} />
-              </div>
-            )}
           </div>
+
+          {quizData.type === 'practice' && (
+            <div style={{ marginBottom: '10px', maxWidth: '200px' }}>
+              <label style={lbl}>Max Attempts</label>
+              <input type="number" style={inp} min="1" value={quizData.max_attempts}
+                onChange={e => setQuizData({ ...quizData, max_attempts: parseInt(e.target.value) || 1 })} />
+            </div>
+          )}
 
           {/* ─── MANUAL TAB ─── */}
           {activeTab === 'manual' && (
             <>
-              <div style={sectionCard}>
-                <h3 style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 600, color: '#1e293b' }}>
-                  Add New Question
-                </h3>
-
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={labelStyle}>Question Text</label>
-                  <input type="text" style={inputStyle} placeholder="Enter your question"
-                    value={currentQuestion.text}
-                    onChange={(e) => setCurrentQuestion({ ...currentQuestion, text: e.target.value })} />
+              <div style={{ backgroundColor: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '10px' }}>
+                <h3 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 600 }}>Add New Question</h3>
+                <div style={{ marginBottom: '8px' }}>
+                  <label style={lbl}>Question Text</label>
+                  <input type="text" style={inp} placeholder="Enter your question" value={currentQuestion.text}
+                    onChange={e => setCurrentQuestion({ ...currentQuestion, text: e.target.value })} />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                  {currentQuestion.options.map((option, index) => (
-                    <div key={index}>
-                      <label style={labelStyle}>Option {String.fromCharCode(65 + index)}</label>
-                      <div style={{ display: 'flex', gap: '0' }}>
-                        <input type="text" value={option}
-                          style={{
-                            ...inputStyle,
-                            borderTopRightRadius: 0, borderBottomRightRadius: 0,
-                            borderRight: 'none'
-                          }}
-                          placeholder={`Option ${String.fromCharCode(65 + index)}`}
-                          onChange={(e) => {
-                            const newOptions = [...currentQuestion.options];
-                            newOptions[index] = e.target.value;
-                            setCurrentQuestion({ ...currentQuestion, options: newOptions });
+                {/* All 4 options in 2x2 grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
+                  {currentQuestion.options.map((option, i) => (
+                    <div key={i}>
+                      <label style={lbl}>Option {String.fromCharCode(65 + i)}</label>
+                      <div style={{ display: 'flex' }}>
+                        <input type="text" value={option} style={{ ...inp, borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' }}
+                          placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                          onChange={e => {
+                            const opts = [...currentQuestion.options]; opts[i] = e.target.value;
+                            setCurrentQuestion({ ...currentQuestion, options: opts });
                           }} />
                         <button type="button"
-                          onClick={() => setCurrentQuestion({ ...currentQuestion, correctAnswer: index })}
+                          onClick={() => setCurrentQuestion({ ...currentQuestion, correctAnswer: i })}
                           style={{
-                            padding: '8px 14px', border: '1px solid #d1d5db',
-                            borderTopRightRadius: '8px', borderBottomRightRadius: '8px',
-                            cursor: 'pointer', fontWeight: 700, fontSize: '14px',
-                            backgroundColor: currentQuestion.correctAnswer === index ? '#22c55e' : '#f3f4f6',
-                            color: currentQuestion.correctAnswer === index ? '#fff' : '#9ca3af',
-                            transition: 'all 0.2s'
+                            padding: '4px 10px', border: '1px solid #d1d5db', borderTopRightRadius: '6px',
+                            borderBottomRightRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '13px',
+                            backgroundColor: currentQuestion.correctAnswer === i ? '#22c55e' : '#f3f4f6',
+                            color: currentQuestion.correctAnswer === i ? '#fff' : '#9ca3af',
                           }}>✓</button>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <button type="button" onClick={addQuestion} style={{
-                  ...btnPrimary, width: '100%', padding: '10px'
-                }}>+ Add Question</button>
+                <button type="button" onClick={addQuestion} style={{ ...btn1, width: '100%', padding: '7px' }}>
+                  + Add Question
+                </button>
               </div>
 
-              {/* Questions List */}
+              {/* Added questions list */}
               {quizData.questions.length > 0 && (
                 <div>
-                  <h3 style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: 600, color: '#1e293b' }}>
-                    Questions Added ({quizData.questions.length})
+                  <h3 style={{ margin: '0 0 6px', fontSize: '13px', fontWeight: 600 }}>
+                    Questions ({quizData.questions.length})
                   </h3>
-                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                    {quizData.questions.map((question, index) => (
-                      <div key={index} style={{
-                        padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px',
-                        border: '1px solid #e2e8f0', marginBottom: '8px'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <strong style={{ color: '#1e293b', fontSize: '13px' }}>Q{index + 1}: {question.text}</strong>
-                          <button onClick={() => setQuizData(prev => ({
-                            ...prev, questions: prev.questions.filter((_, i) => i !== index)
-                          }))} style={{
-                            background: 'none', border: 'none', color: '#ef4444',
-                            cursor: 'pointer', padding: '2px'
-                          }}><FaTrash size={12} /></button>
+                  <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                    {quizData.questions.map((q, i) => (
+                      <div key={i} style={{ padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '4px', fontSize: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <strong>Q{i + 1}: {q.text}</strong>
+                          <button onClick={() => setQuizData(prev => ({ ...prev, questions: prev.questions.filter((_, j) => j !== i) }))}
+                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><FaTrash size={10} /></button>
                         </div>
-                        <div style={{ marginTop: '6px', paddingLeft: '12px' }}>
-                          {question.options.map((opt, optIdx) => (
-                            <div key={optIdx} style={{
-                              fontSize: '12px', padding: '2px 0',
-                              color: optIdx === question.correctAnswer ? '#16a34a' : '#6b7280',
-                              fontWeight: optIdx === question.correctAnswer ? 600 : 400
-                            }}>
-                              {String.fromCharCode(65 + optIdx)}) {opt}
-                              {optIdx === question.correctAnswer && ' ✓'}
-                            </div>
+                        <div style={{ marginTop: '3px', paddingLeft: '8px', color: '#6b7280' }}>
+                          {q.options.map((o, oi) => (
+                            <span key={oi} style={{ marginRight: '10px', color: oi === q.correctAnswer ? '#16a34a' : '#6b7280', fontWeight: oi === q.correctAnswer ? 600 : 400 }}>
+                              {String.fromCharCode(65 + oi)}) {o}{oi === q.correctAnswer ? ' ✓' : ''}
+                            </span>
                           ))}
                         </div>
                       </div>
@@ -378,106 +258,75 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
           {/* ─── UPLOAD TAB ─── */}
           {activeTab === 'upload' && (
             <div>
-              {/* Upload Area */}
               <div style={{
-                padding: '30px 20px', borderRadius: '12px', textAlign: 'center',
-                border: '2px dashed #93c5fd', backgroundColor: '#eff6ff', marginBottom: '20px'
+                padding: '20px', borderRadius: '10px', textAlign: 'center',
+                border: '2px dashed #93c5fd', backgroundColor: '#eff6ff', marginBottom: '12px'
               }}>
-                <FaUpload style={{ fontSize: '32px', color: '#3b82f6', marginBottom: '12px' }} />
-                <h3 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 600, color: '#1e293b' }}>
-                  Upload Quiz File
-                </h3>
-                <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#6b7280' }}>
+                <FaUpload style={{ fontSize: '24px', color: '#3b82f6', marginBottom: '8px' }} />
+                <h3 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 600 }}>Upload Quiz File</h3>
+                <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#6b7280' }}>
                   Upload a <strong>JSON</strong> or <strong>XML</strong> file with your questions
                 </p>
-
                 <input type="file" accept=".json,.xml" id="file-upload" style={{ display: 'none' }}
-                  onChange={(e) => { setUploadFile(e.target.files?.[0] || null); setError(''); setUploadResult(''); }} />
-                <label htmlFor="file-upload" style={{
-                  ...btnPrimary, display: 'inline-block', cursor: 'pointer', padding: '10px 24px'
-                }}>
-                  {uploadFile ? '📄 Change File' : '📁 Select JSON or XML File'}
+                  onChange={e => { setUploadFile(e.target.files?.[0] || null); setError(''); setUploadResult(''); }} />
+                <label htmlFor="file-upload" style={{ ...btn1, display: 'inline-block', cursor: 'pointer', padding: '8px 20px' }}>
+                  {uploadFile ? '📄 Change File' : '📁 Select File'}
                 </label>
-
                 {uploadFile && (
-                  <p style={{ marginTop: '12px', fontSize: '13px', color: '#16a34a', fontWeight: 600 }}>
-                    ✅ Selected: {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)
+                  <p style={{ marginTop: '8px', fontSize: '12px', color: '#16a34a', fontWeight: 600 }}>
+                    ✅ {uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)
                   </p>
                 )}
               </div>
 
-              {/* JSON Format Guide */}
-              <div style={sectionCard}>
-                <h4 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>
-                  📋 JSON Format Example:
-                </h4>
-                <pre style={{
-                  backgroundColor: '#fff', padding: '12px', borderRadius: '8px',
-                  border: '1px solid #e2e8f0', fontSize: '12px', color: '#475569',
-                  fontFamily: 'monospace', whiteSpace: 'pre-wrap', margin: 0, overflowX: 'auto'
-                }}>
-{`{
-  "questions": [
-    {
-      "text": "What is the capital of India?",
-      "options": ["Mumbai", "New Delhi", "Kolkata", "Chennai"],
-      "correctAnswer": 1
-    }
-  ]
-}`}
-                </pre>
-                <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#94a3b8' }}>
-                  correctAnswer is the index (0 = first option, 1 = second, etc.)
-                </p>
-              </div>
-
-              {/* XML Format Guide */}
-              <div style={sectionCard}>
-                <h4 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>
-                  📋 XML Format Example:
-                </h4>
-                <pre style={{
-                  backgroundColor: '#fff', padding: '12px', borderRadius: '8px',
-                  border: '1px solid #e2e8f0', fontSize: '12px', color: '#475569',
-                  fontFamily: 'monospace', whiteSpace: 'pre-wrap', margin: 0, overflowX: 'auto'
-                }}>
+              {/* Compact format guides side by side */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div style={{ backgroundColor: '#f8fafc', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <h4 style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600 }}>📋 JSON Format:</h4>
+                  <pre style={{ backgroundColor: '#fff', padding: '6px', borderRadius: '4px', border: '1px solid #e2e8f0', fontSize: '10px', color: '#475569', fontFamily: 'monospace', whiteSpace: 'pre-wrap', margin: 0 }}>
+{`{ "questions": [
+  { "text": "Q?",
+    "options": ["A","B","C","D"],
+    "correctAnswer": 1 }
+]}`}
+                  </pre>
+                  <p style={{ margin: '4px 0 0', fontSize: '10px', color: '#94a3b8' }}>correctAnswer = index (0-3)</p>
+                </div>
+                <div style={{ backgroundColor: '#f8fafc', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <h4 style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600 }}>📋 XML Format:</h4>
+                  <pre style={{ backgroundColor: '#fff', padding: '6px', borderRadius: '4px', border: '1px solid #e2e8f0', fontSize: '10px', color: '#475569', fontFamily: 'monospace', whiteSpace: 'pre-wrap', margin: 0 }}>
 {`<quiz>
-  <question>
-    <text>What is the capital of India?</text>
-    <option>Mumbai</option>
-    <option correct="true">New Delhi</option>
-    <option>Kolkata</option>
-    <option>Chennai</option>
-  </question>
+ <question>
+  <text>Q?</text>
+  <option>A</option>
+  <option correct="true">B</option>
+ </question>
 </quiz>`}
-                </pre>
-                <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#94a3b8' }}>
-                  Mark the correct option with correct="true"
-                </p>
+                  </pre>
+                  <p style={{ margin: '4px 0 0', fontSize: '10px', color: '#94a3b8' }}>correct="true" on answer</p>
+                </div>
               </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div style={footerStyle}>
-          <button onClick={onClose} style={btnOutline}>Cancel</button>
+        <div style={{ padding: '10px 18px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: '8px', backgroundColor: '#f9fafb', flexShrink: 0 }}>
+          <button onClick={onClose} style={{ padding: '8px 14px', backgroundColor: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: '6px', fontWeight: 500, cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
           {activeTab === 'manual' ? (
             <>
-              <button onClick={() => handleSubmit(true)} style={btnSecondary}>Save as Draft</button>
-              <button onClick={() => handleSubmit(false)} style={btnPrimary}>Publish Quiz</button>
+              <button onClick={() => handleSubmit(true)} style={{ padding: '8px 14px', backgroundColor: '#6b7280', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}>Save as Draft</button>
+              <button onClick={() => handleSubmit(false)} style={btn1}>Publish Quiz</button>
             </>
           ) : (
             <>
-              <button onClick={() => handleFileUpload(true)}
-                disabled={uploading || !uploadFile}
-                style={{ ...btnSecondary, opacity: (uploading || !uploadFile) ? 0.5 : 1 }}>
-                {uploading ? '⏳ Processing...' : 'Upload as Draft'}
+              <button onClick={() => handleFileUpload(true)} disabled={uploading || !uploadFile}
+                style={{ padding: '8px 14px', backgroundColor: '#6b7280', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', fontSize: '13px', opacity: (uploading || !uploadFile) ? 0.5 : 1 }}>
+                {uploading ? '⏳...' : 'Upload Draft'}
               </button>
-              <button onClick={() => handleFileUpload(false)}
-                disabled={uploading || !uploadFile}
-                style={{ ...btnPrimary, opacity: (uploading || !uploadFile) ? 0.5 : 1 }}>
-                {uploading ? '⏳ Processing...' : 'Upload & Publish'}
+              <button onClick={() => handleFileUpload(false)} disabled={uploading || !uploadFile}
+                style={{ ...btn1, opacity: (uploading || !uploadFile) ? 0.5 : 1 }}>
+                {uploading ? '⏳...' : 'Upload & Publish'}
               </button>
             </>
           )}
