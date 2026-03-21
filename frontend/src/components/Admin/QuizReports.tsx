@@ -35,6 +35,9 @@ interface QuizStats {
 type SortField = 'score' | 'time_taken' | 'completed_at';
 type SortOrder = 'asc' | 'desc';
 
+// Enforce UTC parsing for naive timestamps from backend
+const formatAsUTC = (dateStr: string) => dateStr && !dateStr.endsWith('Z') ? `${dateStr}Z` : dateStr;
+
 const QuizReports: React.FC = () => {
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,8 +143,8 @@ const QuizReports: React.FC = () => {
   };
 
   const getTimeTaken = (start: string, end: string) => {
-    const startTime = new Date(start).getTime();
-    const endTime = new Date(end).getTime();
+    const startTime = new Date(formatAsUTC(start)).getTime();
+    const endTime = new Date(formatAsUTC(end)).getTime();
     const minutes = Math.round((endTime - startTime) / 60000);
     return minutes;
   };
@@ -290,7 +293,7 @@ const QuizReports: React.FC = () => {
                   {getTimeTaken(attempt.started_at, attempt.completed_at)} minutes
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(attempt.completed_at).toLocaleString()}
+                  {new Date(formatAsUTC(attempt.completed_at)).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
                 </td>
               </tr>
             ))}

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Dict
 from datetime import datetime
@@ -10,6 +10,7 @@ from app.schemas.quiz import (
     QuizUpdate,
     QuizResponse
 )
+from app.schemas.quiz import QuestionCreate
 from pydantic import BaseModel
 from app.models.quiz import Quiz as QuizModel
 from app.models.user import User
@@ -111,6 +112,136 @@ def create_quiz(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
+        )
+
+@router.post("/upload-file")
+def upload_quiz_file(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    duration: int = Form(30),
+    type: str = Form("practice"),
+    max_attempts: int = Form(1),
+    is_draft: bool = Form(False),
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    """Create quiz from uploaded JSON or XML file"""
+    try:
+        filename = file.filename.lower()
+        if not (filename.endswith('.json') or filename.endswith('.xml')):
+            raise HTTPException(status_code=400, detail="Only JSON (.json) or XML (.xml) files are allowed")
+        
+        file_content = file.file.read().decode('utf-8')
+        questions = []
+        
+        if filename.endswith('.json'):
+            # Parse JSON format
+            import json
+            try:
+                data = json.loads(file_content)
+            except json.JSONDecodeError as e:
+                raise HTTPException(status_code=400, detail=f"Invalid JSON file: {str(e)}")
+            
+            # Support both {"questions": [...]} and plain [...]
+            q_list = data.get("questions", data) if isinstance(data, dict) else data
+            
+            if not isinstance(q_list, list):
+                raise HTTPException(status_code=400, detail="JSON must contain an array of questions")
+            
+            for i, q in enumerate(q_list):
+                if not isinstance(q, dict):
+                    raise HTTPException(status_code=400, detail=f"Question {i+1} is not a valid object")
+                
+                text = q.get("text") or q.get("question") or ""
+                options = q.get("options", [])
+                correct = q.get("correctAnswer") if q.get("correctAnswer") is not None else q.get("correct_answer") if q.get("correct_answer") is not None else q.get("answer", 0)
+                
+                if not text:
+                    raise HTTPException(status_code=400, detail=f"Question {i+1} is missing 'text' field")
+                if len(options) < 2:
+                    raise HTTPException(status_code=400, detail=f"Question {i+1} needs at least 2 options")
+                
+                # Handle string answer like "a", "b", "c", "d"
+                if isinstance(correct, str):
+                    answer_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3}
+                    correct = answer_map.get(correct.lower(), 0)
+                
+                # Pad options to 4
+                while len(options) < 4:
+                    options.append("")
+                
+                questions.append({
+                    "text": text,
+                    "options": options[:4],
+                    "correctAnswer": int(correct)
+                })
+        
+        else:
+            # Parse XML format
+            import xml.etree.ElementTree as ET
+            try:
+                root = ET.fromstring(file_content)
+            except ET.ParseError as e:
+                raise HTTPException(status_code=400, detail=f"Invalid XML file: {str(e)}")
+            
+            for i, q_elem in enumerate(root.findall('.//question')):
+                text = ""
+                text_elem = q_elem.find('text')
+                if text_elem is not None and text_elem.text:
+                    text = text_elem.text.strip()
+                
+                if not text:
+                    raise HTTPException(status_code=400, detail=f"Question {i+1} is missing <text> element")
+                
+                options = []
+                correct = 0
+                for j, opt_elem in enumerate(q_elem.findall('option')):
+                    opt_text = opt_elem.text.strip() if opt_elem.text else ""
+                    options.append(opt_text)
+                    if opt_elem.get('correct', '').lower() in ('true', '1', 'yes'):
+                        correct = j
+                
+                if len(options) < 2:
+                    raise HTTPException(status_code=400, detail=f"Question {i+1} needs at least 2 <option> elements")
+                
+                while len(options) < 4:
+                    options.append("")
+                
+                questions.append({
+                    "text": text,
+                    "options": options[:4],
+                    "correctAnswer": correct
+                })
+        
+        if not questions:
+            raise HTTPException(status_code=400, detail="No questions found in the file")
+        
+        # Create the quiz using existing CRUD
+        quiz_data = QuizCreate(
+            title=title,
+            duration=duration,
+            type=type,
+            is_active=True,
+            questions=[QuestionCreate(**q) for q in questions],
+            is_draft=is_draft,
+            max_attempts=max_attempts if type == 'practice' else 1
+        )
+        
+        quiz = quiz_crud.create_quiz(db=db, quiz=quiz_data, user_id=current_user.id)
+        
+        return {
+            "message": f"Quiz created successfully with {len(questions)} questions",
+            "quiz_id": quiz.id,
+            "questions_parsed": len(questions)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"File upload error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing file: {str(e)}"
         )
 
 @router.get("/{quiz_id}", response_model=QuizSchema)

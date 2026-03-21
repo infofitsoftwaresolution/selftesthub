@@ -102,7 +102,8 @@ ALLOWED_EMAILS = {
     "infofitsoftwaresolution@gmail.com",
     "kumariananta848@gmail.com",
    'aniluvall@gmail.com',
-   'okwytex4810@gmail.com'
+   'okwytex4810@gmail.com',
+   'Okeolusola2@gmail.com'
 }
 
 # Add these models to your schemas
