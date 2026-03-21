@@ -293,7 +293,7 @@ const QuizReports: React.FC = () => {
                   {getTimeTaken(attempt.started_at, attempt.completed_at)} minutes
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(formatAsUTC(attempt.completed_at)).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+                  {new Date(formatAsUTC(attempt.completed_at)).toLocaleString()}
                 </td>
               </tr>
             ))}

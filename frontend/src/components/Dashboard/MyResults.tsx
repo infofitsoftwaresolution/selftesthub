@@ -106,8 +106,7 @@ const MyResults: React.FC = () => {
   const formatAsUTC = (dateStr: string) => dateStr && !dateStr.endsWith('Z') ? `${dateStr}Z` : dateStr;
 
   const formatDate = (dateString: string) => {
-    return new Date(formatAsUTC(dateString)).toLocaleString('en-IN', {
-      timeZone: 'Asia/Kolkata',
+    return new Date(formatAsUTC(dateString)).toLocaleString('en-US', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

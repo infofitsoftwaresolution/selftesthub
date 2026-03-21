@@ -77,7 +77,7 @@ const StudentReports: React.FC = () => {
     const rows = studentReport.attempts.map(attempt => [
       attempt.quiz.title,
       `${attempt.score}%`,
-      new Date(formatAsUTC(attempt.completed_at)).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      new Date(formatAsUTC(attempt.completed_at)).toLocaleDateString(),
       `${Math.floor((new Date(formatAsUTC(attempt.completed_at)).getTime() - new Date(formatAsUTC(attempt.started_at)).getTime()) / 60000)} minutes`
     ]);
 
@@ -176,7 +176,7 @@ const StudentReports: React.FC = () => {
                       <div>
                         <h4 className="font-medium">{attempt.quiz.title}</h4>
                         <p className="text-sm text-gray-600">
-                          Completed: {new Date(formatAsUTC(attempt.completed_at)).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+                          Completed: {new Date(formatAsUTC(attempt.completed_at)).toLocaleString()}
                         </p>
                       </div>
                       <div className="text-lg font-semibold">
