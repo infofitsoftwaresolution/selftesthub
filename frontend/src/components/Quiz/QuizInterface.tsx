@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 // import TimerDebug from './TimerDebug';
 import { Quiz, Question } from '../../types/quiz';
@@ -18,6 +18,8 @@ const QuizInterface: React.FC = () => {
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [securityViolation, setSecurityViolation] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const timerStarted = useRef(false);
+  const autoSubmitting = useRef(false);
 
   // Start quiz and get attempt ID
   useEffect(() => {
@@ -49,25 +51,14 @@ const QuizInterface: React.FC = () => {
     }
   }, [quizId, navigate]);
 
-  // Add useEffect for timer
+  // Auto-submit when timer reaches 0 (only after timer has actually started)
   useEffect(() => {
-    if (timeLeft <= 0) {
+    if (timerStarted.current && timeLeft <= 0 && !autoSubmitting.current && attemptId) {
+      autoSubmitting.current = true;
+      alert('⏰ Time is up! Your quiz is being auto-submitted.');
       handleSubmit();
-      return;
     }
-
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 0) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeLeft]);
+  }, [timeLeft, attemptId]);
 
   // Modify handleSubmit to handle auto-submission
   const handleSubmit = async () => {
@@ -166,6 +157,9 @@ const QuizInterface: React.FC = () => {
       const initialRemaining = Math.max(0, Math.floor((endTime.getTime() - new Date().getTime()) / 1000));
       setTimeLeft(initialRemaining);
 
+      // Mark timer as started so auto-submit logic activates
+      setTimeout(() => { timerStarted.current = true; }, 1000);
+
       const interval = setInterval(() => {
         setTimeLeft(prev => {
           if (prev === null || prev <= 0) {
@@ -180,16 +174,10 @@ const QuizInterface: React.FC = () => {
     }
   }, [quiz]);
 
-  // Add answer handler with auto-navigation
+  // Answer handler - NO auto-navigation, user clicks Next manually
   const handleAnswer = useCallback((questionIndex: number, optionIndex: number) => {
     setAnswers(prev => ({ ...prev, [questionIndex]: optionIndex }));
-    
-    setTimeout(() => {
-      if (questionIndex < (quiz?.questions.length || 0) - 1) {
-        setCurrentQuestion(questionIndex + 1);
-      }
-    }, 500);
-  }, [quiz?.questions.length]);
+  }, []);
 
   // Add security violation handler
   const handleSecurityViolation = useCallback(async () => {
