@@ -176,7 +176,7 @@ const StudentReports: React.FC = () => {
                       <div>
                         <h4 className="font-medium">{attempt.quiz.title}</h4>
                         <p className="text-sm text-gray-600">
-                          Completed: {new Date(formatAsUTC(attempt.completed_at)).toLocaleString()}
+                          Completed: {new Date(formatAsUTC(attempt.completed_at)).toLocaleDateString('en-IN')}
                         </p>
                       </div>
                       <div className="text-lg font-semibold">

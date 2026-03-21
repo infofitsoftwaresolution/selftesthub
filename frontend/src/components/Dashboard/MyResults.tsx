@@ -106,12 +106,10 @@ const MyResults: React.FC = () => {
   const formatAsUTC = (dateStr: string) => dateStr && !dateStr.endsWith('Z') ? `${dateStr}Z` : dateStr;
 
   const formatDate = (dateString: string) => {
-    return new Date(formatAsUTC(dateString)).toLocaleString('en-US', {
+    return new Date(formatAsUTC(dateString)).toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      year: 'numeric'
     });
   };
 
