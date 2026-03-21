@@ -25,6 +25,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
   });
   const [error, setError] = useState('');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<string>('');
 
@@ -32,7 +33,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
     if (isOpen) {
       setQuizData({ title: '', type: 'practice', duration: 30, questions: [], max_attempts: 1 });
       setCurrentQuestion({ text: '', options: ['', '', '', ''], correctAnswer: 0 });
-      setError(''); setActiveTab('manual'); setUploadFile(null); setUploading(false); setUploadResult('');
+      setError(''); setActiveTab('manual'); setUploadFile(null); setUploading(false); setUploadResult(''); setSubmitting(false);
     }
   }, [isOpen]);
 
@@ -58,6 +59,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
     try {
       if (!quizData.title) { setError('Please enter a quiz title'); return; }
       if (quizData.questions.length === 0) { setError('Please add at least one question'); return; }
+      setSubmitting(true); setError('');
       const token = localStorage.getItem('token');
       const response = await fetch(API_ENDPOINTS.CREATE_QUIZ, {
         method: 'POST', ...fetchOptions,
@@ -71,6 +73,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
       if (!response.ok) { const data = await response.json(); throw new Error(data.detail || 'Failed to create quiz'); }
       await response.json(); onQuizCreated(); onClose(); resetForm();
     } catch (err) { setError(err instanceof Error ? err.message : 'Failed to create quiz'); }
+    finally { setSubmitting(false); }
   };
 
   const handleFileUpload = async (saveAsDraft = false) => {
@@ -315,18 +318,31 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
           <button onClick={onClose} style={{ padding: '8px 14px', backgroundColor: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: '6px', fontWeight: 500, cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
           {activeTab === 'manual' ? (
             <>
-              <button onClick={() => handleSubmit(true)} style={{ padding: '8px 14px', backgroundColor: '#6b7280', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}>Save as Draft</button>
-              <button onClick={() => handleSubmit(false)} style={btn1}>Publish Quiz</button>
+              <button onClick={() => handleSubmit(true)} disabled={submitting}
+                style={{ padding: '8px 14px', backgroundColor: '#6b7280', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: submitting ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: submitting ? 0.6 : 1 }}>
+                {submitting ? '⏳ Saving...' : 'Save as Draft'}
+              </button>
+              <button onClick={() => handleSubmit(false)} disabled={submitting}
+                style={{ ...btn1, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {submitting ? (
+                  <><span style={{ display: 'inline-block', width: '12px', height: '12px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Publishing...</>
+                ) : 'Publish Quiz'}
+              </button>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </>
           ) : (
             <>
               <button onClick={() => handleFileUpload(true)} disabled={uploading || !uploadFile}
-                style={{ padding: '8px 14px', backgroundColor: '#6b7280', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', fontSize: '13px', opacity: (uploading || !uploadFile) ? 0.5 : 1 }}>
-                {uploading ? '⏳...' : 'Upload Draft'}
+                style={{ padding: '8px 14px', backgroundColor: '#6b7280', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: (uploading || !uploadFile) ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: (uploading || !uploadFile) ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {uploading ? (
+                  <><span style={{ display: 'inline-block', width: '12px', height: '12px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Uploading...</>
+                ) : 'Upload Draft'}
               </button>
               <button onClick={() => handleFileUpload(false)} disabled={uploading || !uploadFile}
-                style={{ ...btn1, opacity: (uploading || !uploadFile) ? 0.5 : 1 }}>
-                {uploading ? '⏳...' : 'Upload & Publish'}
+                style={{ ...btn1, cursor: (uploading || !uploadFile) ? 'not-allowed' : 'pointer', opacity: (uploading || !uploadFile) ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {uploading ? (
+                  <><span style={{ display: 'inline-block', width: '12px', height: '12px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Publishing...</>
+                ) : 'Upload & Publish'}
               </button>
             </>
           )}
