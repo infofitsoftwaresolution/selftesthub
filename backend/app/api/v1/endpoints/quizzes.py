@@ -290,9 +290,9 @@ async def submit_video_attempt(
             safe_filename,
             ExtraArgs={'ContentType': 'video/webm'}
         )
-    except ClientError as e:
+    except Exception as e:
         print(f"Failed to upload to S3: {e}")
-        raise HTTPException(status_code=500, detail="S3 Upload Failed")
+        raise HTTPException(status_code=500, detail=f"S3 Upload Failed: {str(e)}")
             
     # save url mapping
     video_url = f"s3://{safe_filename}"
