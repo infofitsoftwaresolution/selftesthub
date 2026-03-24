@@ -142,7 +142,11 @@ const VideoQuizInterface: React.FC = () => {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: formData
         });
-        if (!uploadRes.ok) throw new Error("Video upload failed on the server.");
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json().catch(() => ({}));
+          console.error("Backend AWS Error Details:", errData);
+          throw new Error(errData.detail || "Video upload failed on the server.");
+        }
 
         // 2. Complete the standard attempt
         await fetch(API_ENDPOINTS.SUBMIT_QUIZ(quizId as string, attemptId.toString()), {
@@ -155,9 +159,9 @@ const VideoQuizInterface: React.FC = () => {
         });
 
         navigate('/dashboard');
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to upload video", err);
-        alert("There was an error submitting your interview. Please contact support.");
+        alert(err.message || "There was an error submitting your interview. Please contact support.");
         setIsSubmitting(false);
       }
     }, 1000);
