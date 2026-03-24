@@ -18,6 +18,7 @@ interface QuizAttempt {
   started_at: string;
   completed_at: string;
   score: number;
+  video_url?: string;
 }
 
 interface StudentReport {
@@ -182,7 +183,7 @@ const StudentReports: React.FC = () => {
                       <div className="flex items-center gap-4">
                         {attempt.video_url && (
                           <a 
-                            href={`http://localhost:8000${attempt.video_url}`} 
+                            href={attempt.video_url} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 flex items-center gap-2 transition"

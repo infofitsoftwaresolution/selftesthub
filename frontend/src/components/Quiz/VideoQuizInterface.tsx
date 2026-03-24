@@ -158,6 +158,12 @@ const VideoQuizInterface: React.FC = () => {
           body: JSON.stringify({ answers: {}, attemptId }) // empty answers for video quiz
         });
 
+        // Stop camera before navigating away
+        if (videoRef.current?.srcObject) {
+          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+          tracks.forEach(track => track.stop());
+          videoRef.current.srcObject = null;
+        }
         navigate('/dashboard');
       } catch (err: any) {
         console.error("Failed to upload video", err);
