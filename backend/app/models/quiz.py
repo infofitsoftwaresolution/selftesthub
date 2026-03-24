@@ -12,11 +12,11 @@ class Quiz(Base):
     type = Column(String, nullable=False)  # 'mcq' or 'test'
     duration = Column(Integer, nullable=False)  # in minutes
     questions = Column(JSON, nullable=False)
-    is_active = Column(Boolean, server_default='true')
-    created_at = Column(DateTime, server_default=text('now()'))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    max_attempts = Column(Integer, nullable=False, server_default='1')
-    is_draft = Column(Boolean, server_default='false')
+    max_attempts = Column(Integer, nullable=False, default=1)
+    is_draft = Column(Boolean, default=False)
     
     # Relationships
     creator = relationship("User", back_populates="quizzes")

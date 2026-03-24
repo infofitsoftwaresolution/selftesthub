@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     # Static files settings
     STATIC_FILES_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static")
 
+    # AWS S3 Settings
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = "ap-south-1"  # Defaulting to Mumbai region like the RDS instance
+    AWS_S3_BUCKET: str = ""
+
     @property
     def CORS_ORIGINS(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS_RAW.split(",") if origin.strip()]

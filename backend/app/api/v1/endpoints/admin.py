@@ -8,10 +8,35 @@ from statistics import mean
 from app.crud.quiz_attempt import get_all_quiz_attempts
 from app.schemas.quiz_attempt import QuizAttemptWithDetails
 import logging
+import boto3
 from app.crud.quiz import get_quizzes
+from app.core.config import settings
 
 router = APIRouter()
 logger = logging.getLogger('quiz_api')
+
+def get_presigned_url(video_url: str):
+    if not video_url or not video_url.startswith("s3://"):
+        return video_url
+    
+    s3_key = video_url.replace("s3://", "")
+    try:
+        s3_client_args = {'region_name': settings.AWS_REGION}
+        if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+            s3_client_args['aws_access_key_id'] = settings.AWS_ACCESS_KEY_ID
+            s3_client_args['aws_secret_access_key'] = settings.AWS_SECRET_ACCESS_KEY
+            
+        s3_client = boto3.client('s3', **s3_client_args)
+        
+        # Generate 1-hour presigned URL
+        return s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': settings.AWS_S3_BUCKET, 'Key': s3_key},
+            ExpiresIn=3600 
+        )
+    except Exception as e:
+        logger.error(f"Error generating presigned URL: {e}")
+        return None
 
 @router.get("/student-reports")
 async def get_student_reports(
@@ -52,7 +77,8 @@ async def get_student_reports(
                 },
                 "started_at": attempt.started_at,
                 "completed_at": attempt.completed_at,
-                "score": attempt.score
+                "score": attempt.score,
+                "video_url": get_presigned_url(attempt.video_url)
             } for attempt in attempts],
             "averageScore": avg_score
         })

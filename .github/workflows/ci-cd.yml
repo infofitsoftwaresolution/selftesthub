@@ -239,6 +239,8 @@ jobs:
             SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
             DOMAIN_NAME=selftesthub.com
             CORS_ORIGINS_RAW=http://${{ secrets.DEPLOY_HOST }},https://${{ secrets.DEPLOY_HOST }},http://selftesthub.com,https://selftesthub.com,http://www.selftesthub.com,https://www.selftesthub.com
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
             ENV_EOF
 
             # Fix leading whitespace from heredoc

@@ -44,8 +44,11 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
   };
 
   const addQuestion = () => {
-    if (!currentQuestion.text || currentQuestion.options.some(opt => !opt)) {
-      setError('Please fill in all question fields'); return;
+    if (!currentQuestion.text) {
+      setError('Please fill in the question text'); return;
+    }
+    if (quizData.type !== 'video' && currentQuestion.options.some(opt => !opt)) {
+      setError('Please fill in all options'); return;
     }
     setQuizData(prev => ({
       ...prev,
@@ -201,29 +204,31 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
                 </div>
 
                 {/* All 4 options in 2x2 grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
-                  {currentQuestion.options.map((option, i) => (
-                    <div key={i}>
-                      <label style={lbl}>Option {String.fromCharCode(65 + i)}</label>
-                      <div style={{ display: 'flex' }}>
-                        <input type="text" value={option} style={{ ...inp, borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' }}
-                          placeholder={`Option ${String.fromCharCode(65 + i)}`}
-                          onChange={e => {
-                            const opts = [...currentQuestion.options]; opts[i] = e.target.value;
-                            setCurrentQuestion({ ...currentQuestion, options: opts });
-                          }} />
-                        <button type="button"
-                          onClick={() => setCurrentQuestion({ ...currentQuestion, correctAnswer: i })}
-                          style={{
-                            padding: '4px 10px', border: '1px solid #d1d5db', borderTopRightRadius: '6px',
-                            borderBottomRightRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '13px',
-                            backgroundColor: currentQuestion.correctAnswer === i ? '#22c55e' : '#f3f4f6',
-                            color: currentQuestion.correctAnswer === i ? '#fff' : '#9ca3af',
-                          }}>✓</button>
+                {quizData.type !== 'video' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
+                    {currentQuestion.options.map((option, i) => (
+                      <div key={i}>
+                        <label style={lbl}>Option {String.fromCharCode(65 + i)}</label>
+                        <div style={{ display: 'flex' }}>
+                          <input type="text" value={option} style={{ ...inp, borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' }}
+                            placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                            onChange={e => {
+                              const opts = [...currentQuestion.options]; opts[i] = e.target.value;
+                              setCurrentQuestion({ ...currentQuestion, options: opts });
+                            }} />
+                          <button type="button"
+                            onClick={() => setCurrentQuestion({ ...currentQuestion, correctAnswer: i })}
+                            style={{
+                              padding: '4px 10px', border: '1px solid #d1d5db', borderTopRightRadius: '6px',
+                              borderBottomRightRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '13px',
+                              backgroundColor: currentQuestion.correctAnswer === i ? '#22c55e' : '#f3f4f6',
+                              color: currentQuestion.correctAnswer === i ? '#fff' : '#9ca3af',
+                            }}>✓</button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
                 <button type="button" onClick={addQuestion} style={{ ...btn1, width: '100%', padding: '7px' }}>
                   + Add Question
@@ -245,7 +250,7 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
                             style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><FaTrash size={10} /></button>
                         </div>
                         <div style={{ marginTop: '3px', paddingLeft: '8px', color: '#6b7280' }}>
-                          {q.options.map((o, oi) => (
+                          {quizData.type !== 'video' && q.options.map((o, oi) => (
                             <span key={oi} style={{ marginRight: '10px', color: oi === q.correctAnswer ? '#16a34a' : '#6b7280', fontWeight: oi === q.correctAnswer ? 600 : 400 }}>
                               {String.fromCharCode(65 + oi)}) {o}{oi === q.correctAnswer ? ' ✓' : ''}
                             </span>

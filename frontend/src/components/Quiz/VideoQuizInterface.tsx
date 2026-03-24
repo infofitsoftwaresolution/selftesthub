@@ -137,11 +137,12 @@ const VideoQuizInterface: React.FC = () => {
         formData.append('video', blob, `attempt_${attemptId}.webm`);
         formData.append('attempt_id', attemptId.toString());
 
-        await fetch(API_ENDPOINTS.QUIZZES + `/${quizId}/submit-video`, {
+        const uploadRes = await fetch(API_ENDPOINTS.QUIZ(quizId as string) + '/submit-video', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: formData
         });
+        if (!uploadRes.ok) throw new Error("Video upload failed on the server.");
 
         // 2. Complete the standard attempt
         await fetch(API_ENDPOINTS.SUBMIT_QUIZ(quizId as string, attemptId.toString()), {
@@ -174,10 +175,8 @@ const VideoQuizInterface: React.FC = () => {
   if (!quiz) return <div>Loading interview...</div>;
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      <QuizSecurity onViolation={() => handleFinish()}>
-        <div style={{ display: 'none' }}></div>
-      </QuizSecurity>
+    <QuizSecurity onViolation={() => handleFinish()}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', background: '#fff', padding: '15px 20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         <h1 style={{ margin: 0, fontSize: '20px', color: '#1f2937' }}>{quiz.title} (Virtual Interview)</h1>
@@ -245,7 +244,8 @@ const VideoQuizInterface: React.FC = () => {
         </div>
       </div>
     </div>
-  );
+  </QuizSecurity>
+);
 };
 
 export default VideoQuizInterface;

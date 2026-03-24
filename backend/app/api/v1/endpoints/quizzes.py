@@ -246,6 +246,10 @@ def upload_quiz_file(
 
 import os
 import aiofiles
+import boto3
+import uuid
+import asyncio
+from botocore.exceptions import ClientError
 from fastapi import UploadFile, File, Form
 
 @router.post("/{quiz_id}/submit-video")
@@ -256,7 +260,7 @@ async def submit_video_attempt(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
-    """Save the recorded webm video and link to the quiz_attempt"""
+    """Upload the recorded webm video to AWS S3 and link to the quiz_attempt"""
     from app.core.config import settings
     # verify attempt belongs to user
     from app.models.quiz_attempt import QuizAttempt
@@ -264,23 +268,37 @@ async def submit_video_attempt(
     if not attempt:
         raise HTTPException(status_code=404, detail="Attempt not found")
         
-    videos_dir = os.path.join(settings.STATIC_FILES_DIR, "videos")
-    os.makedirs(videos_dir, exist_ok=True)
+    if not settings.AWS_S3_BUCKET:
+        raise HTTPException(status_code=500, detail="S3 bucket not configured")
+        
+    # ensure unique filename
+    safe_filename = f"students/attempt_{attempt_id}_{current_user.id}_{uuid.uuid4().hex[:8]}.webm"
     
-    # ensure it ends with webm
-    safe_filename = f"attempt_{attempt_id}_{current_user.id}.webm"
-    file_path = os.path.join(videos_dir, safe_filename)
-    
-    # Write file safely
-    async with aiofiles.open(file_path, 'wb') as out_file:
-        while content := await video.read(1024 * 1024):  # read in 1MB chunks
-            await out_file.write(content)
+    s3_client_args = {'region_name': settings.AWS_REGION}
+    if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+        s3_client_args['aws_access_key_id'] = settings.AWS_ACCESS_KEY_ID
+        s3_client_args['aws_secret_access_key'] = settings.AWS_SECRET_ACCESS_KEY
+        
+    s3_client = boto3.client('s3', **s3_client_args)
+
+    try:
+        # boto3 upload_fileobj is blocking, so we run it in a thread using asyncio.to_thread
+        await asyncio.to_thread(
+            s3_client.upload_fileobj,
+            video.file,
+            settings.AWS_S3_BUCKET,
+            safe_filename,
+            ExtraArgs={'ContentType': 'video/webm'}
+        )
+    except ClientError as e:
+        print(f"Failed to upload to S3: {e}")
+        raise HTTPException(status_code=500, detail="S3 Upload Failed")
             
     # save url mapping
-    video_url = f"/static/videos/{safe_filename}"
+    video_url = f"s3://{safe_filename}"
     attempt.video_url = video_url
     db.commit()
-    return {"message": "Video saved successfully", "video_url": video_url}
+    return {"message": "Video uploaded to S3 successfully", "video_url": video_url}
 
 @router.get("/{quiz_id}", response_model=QuizSchema)
 def read_quiz(

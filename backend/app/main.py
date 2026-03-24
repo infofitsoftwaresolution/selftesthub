@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.api.v1.api import api_router
 from app.core.config import settings
+from app.db.base import Base
+from app.db.session import engine
 import os
 
 app = FastAPI(
@@ -32,6 +34,12 @@ app.mount("/static", StaticFiles(directory=settings.STATIC_FILES_DIR), name="sta
 
 # Include API router with prefix
 app.include_router(api_router, prefix="/api/v1")
+
+@app.on_event("startup")
+def on_startup():
+    if settings.DATABASE_URL and settings.DATABASE_URL.startswith("sqlite"):
+        print("Initializing SQLite database tables...")
+        Base.metadata.create_all(bind=engine)
 
 @app.middleware("http")
 async def log_requests(request, call_next):
