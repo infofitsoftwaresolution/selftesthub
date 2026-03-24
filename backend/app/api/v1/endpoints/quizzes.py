@@ -274,6 +274,12 @@ async def submit_video_attempt(
     # ensure unique filename
     safe_filename = f"students/attempt_{attempt_id}_{current_user.id}_{uuid.uuid4().hex[:8]}.webm"
     
+    # Debug: log what credentials are available
+    print(f"[S3 DEBUG] AWS_REGION={settings.AWS_REGION}")
+    print(f"[S3 DEBUG] AWS_S3_BUCKET={settings.AWS_S3_BUCKET}")
+    print(f"[S3 DEBUG] AWS_ACCESS_KEY_ID={'SET (' + settings.AWS_ACCESS_KEY_ID[:4] + '...)' if settings.AWS_ACCESS_KEY_ID else 'EMPTY'}")
+    print(f"[S3 DEBUG] AWS_SECRET_ACCESS_KEY={'SET' if settings.AWS_SECRET_ACCESS_KEY else 'EMPTY'}")
+    
     s3_client_args = {'region_name': settings.AWS_REGION}
     if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
         s3_client_args['aws_access_key_id'] = settings.AWS_ACCESS_KEY_ID

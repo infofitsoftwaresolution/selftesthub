@@ -266,6 +266,7 @@ jobs:
             [Service]
             User=${{ secrets.DEPLOY_USER }}
             WorkingDirectory=$DEPLOY_DIR/backend
+            EnvironmentFile=$DEPLOY_DIR/backend/.env
             Environment="PATH=$DEPLOY_DIR/backend/venv/bin"
             ExecStart=$DEPLOY_DIR/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $BACKEND_PORT --workers 2
             Restart=always
