@@ -43,7 +43,7 @@ jobs:
         working-directory: ./frontend
         run: npm run build
         env:
-          VITE_API_URL: http://${{ secrets.DEPLOY_HOST }}/api/v1
+          VITE_API_URL: https://www.selftesthub.com/api/v1
 
       - name: Verify build output
         run: |
@@ -303,6 +303,7 @@ jobs:
             server {
                 listen 80;
                 server_name selftesthub.com www.selftesthub.com;
+                client_max_body_size 500M;
 
                 # Frontend static files
                 root /home/${{ secrets.DEPLOY_USER }}/selftesthub/frontend-dist;
