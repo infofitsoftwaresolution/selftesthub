@@ -18,6 +18,7 @@ class QuizAttempt(BaseModel):
     answers: Dict[str, int] = {}
     score: Optional[int] = None
     is_completed: bool = False
+    video_url: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -46,6 +47,7 @@ class QuizAttemptWithDetails(BaseModel):
     completed_at: Optional[datetime]
     score: Optional[float]
     answers: Optional[Dict[str, int]]
+    video_url: Optional[str]
 
     class Config:
         orm_mode = True 

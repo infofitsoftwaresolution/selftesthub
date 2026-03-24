@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, JSON, Boolean
+from sqlalchemy import Column, Integer, ForeignKey, DateTime, JSON, Boolean, String
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 from datetime import datetime
@@ -14,6 +14,7 @@ class QuizAttempt(Base):
     answers = Column(JSON, default={})
     score = Column(Integer, nullable=True)
     is_completed = Column(Boolean, default=False)
+    video_url = Column(String, nullable=True)
 
     # Relationships
     quiz = relationship("Quiz", back_populates="attempts")

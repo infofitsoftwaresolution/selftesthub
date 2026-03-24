@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaClock, FaQuestionCircle, FaPlay, FaLock } from 'react-icons/fa';
+import { FaClock, FaQuestionCircle, FaPlay, FaLock, FaVideo } from 'react-icons/fa';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import { Quiz } from '../../types/quiz';
 
@@ -62,9 +62,9 @@ const AvailableQuizzes: React.FC = () => {
     }
   };
 
-  const handleStartQuiz = async (quizId: number) => {
+  const handleStartQuiz = async (quiz: any) => {
     try {
-      const response = await fetch(API_ENDPOINTS.START_QUIZ(quizId.toString()), {
+      const response = await fetch(API_ENDPOINTS.START_QUIZ(quiz.id.toString()), {
         method: 'POST',
         ...fetchOptions,
         headers: {
@@ -75,7 +75,8 @@ const AvailableQuizzes: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        navigate(`/quiz/${quizId}`, {
+        const path = quiz.type === 'video' ? `/quiz/${quiz.id}/video` : `/quiz/${quiz.id}`;
+        navigate(path, {
           state: {
             attemptId: data.id,
             startedAt: new Date().toISOString()
@@ -122,7 +123,7 @@ const AvailableQuizzes: React.FC = () => {
               </div>
               <div className="px-6 pb-6">
                 <button
-                  onClick={() => handleStartQuiz(quiz.id)}
+                  onClick={() => handleStartQuiz(quiz)}
                   disabled={hasAttempted}
                   className={`w-full flex items-center justify-center px-4 py-3 rounded-lg transition duration-300 ${
                     hasAttempted
@@ -134,6 +135,11 @@ const AvailableQuizzes: React.FC = () => {
                     <>
                       <FaLock className="h-4 w-4 mr-2" />
                       Already Attempted
+                    </>
+                  ) : quiz.type === 'video' ? (
+                    <>
+                      <FaVideo className="h-4 w-4 mr-2" />
+                      Start Video Interview
                     </>
                   ) : (
                     <>

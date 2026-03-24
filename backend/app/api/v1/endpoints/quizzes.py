@@ -244,6 +244,44 @@ def upload_quiz_file(
             detail=f"Error processing file: {str(e)}"
         )
 
+import os
+import aiofiles
+from fastapi import UploadFile, File, Form
+
+@router.post("/{quiz_id}/submit-video")
+async def submit_video_attempt(
+    quiz_id: int,
+    attempt_id: int = Form(...),
+    video: UploadFile = File(...),
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    """Save the recorded webm video and link to the quiz_attempt"""
+    from app.core.config import settings
+    # verify attempt belongs to user
+    from app.models.quiz_attempt import QuizAttempt
+    attempt = db.query(QuizAttempt).filter(QuizAttempt.id == attempt_id, QuizAttempt.user_id == current_user.id).first()
+    if not attempt:
+        raise HTTPException(status_code=404, detail="Attempt not found")
+        
+    videos_dir = os.path.join(settings.STATIC_FILES_DIR, "videos")
+    os.makedirs(videos_dir, exist_ok=True)
+    
+    # ensure it ends with webm
+    safe_filename = f"attempt_{attempt_id}_{current_user.id}.webm"
+    file_path = os.path.join(videos_dir, safe_filename)
+    
+    # Write file safely
+    async with aiofiles.open(file_path, 'wb') as out_file:
+        while content := await video.read(1024 * 1024):  # read in 1MB chunks
+            await out_file.write(content)
+            
+    # save url mapping
+    video_url = f"/static/videos/{safe_filename}"
+    attempt.video_url = video_url
+    db.commit()
+    return {"message": "Video saved successfully", "video_url": video_url}
+
 @router.get("/{quiz_id}", response_model=QuizSchema)
 def read_quiz(
     quiz_id: int,

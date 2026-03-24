@@ -21,9 +21,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create static directory if it doesn't exist
+# Create static directories if they don't exist
 static_dir = os.path.join(settings.STATIC_FILES_DIR, "profile_images")
+videos_dir = os.path.join(settings.STATIC_FILES_DIR, "videos")
 os.makedirs(static_dir, exist_ok=True)
+os.makedirs(videos_dir, exist_ok=True)
 
 # Mount static files directory
 app.mount("/static", StaticFiles(directory=settings.STATIC_FILES_DIR), name="static")

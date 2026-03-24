@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     
     # CORS Settings
-    CORS_ORIGINS_RAW: str = "http://localhost:3000,https://localhost:3000,http://selftesthub.com,https://selftesthub.com,http://www.selftesthub.com,https://www.selftesthub.com"
+    CORS_ORIGINS_RAW: str = "http://localhost:3000,https://localhost:3000,http://localhost:5173,http://selftesthub.com,https://selftesthub.com,http://www.selftesthub.com,https://www.selftesthub.com"
 
     # Database settings
     POSTGRES_SERVER: str = ""  # Set in .env

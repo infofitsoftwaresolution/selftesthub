@@ -173,9 +173,10 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
             <div>
               <label style={lbl}>Type</label>
               <select style={inp} value={quizData.type}
-                onChange={e => setQuizData({ ...quizData, type: e.target.value, max_attempts: e.target.value === 'exam' ? 1 : quizData.max_attempts })}>
+                onChange={e => setQuizData({ ...quizData, type: e.target.value, max_attempts: ['exam', 'video'].includes(e.target.value) ? 1 : quizData.max_attempts })}>
                 <option value="practice">Practice</option>
                 <option value="exam">Exam</option>
+                <option value="video">Video Interview</option>
               </select>
             </div>
           </div>

@@ -22,6 +22,7 @@ import MyResults from './components/Dashboard/MyResults';
 import StudentReports from './components/Admin/StudentReports';
 import Features from './pages/Features';
 import QuizReports from './components/Admin/QuizReports';
+import VideoQuizInterface from './components/Quiz/VideoQuizInterface';
 
 function App() {
   return (
@@ -63,6 +64,11 @@ function App() {
           <Route path="/quiz/:quizId" element={
             <ProtectedRoute>
               <QuizInterface />
+            </ProtectedRoute>
+          } />
+          <Route path="/quiz/:quizId/video" element={
+            <ProtectedRoute>
+              <VideoQuizInterface />
             </ProtectedRoute>
           } />
           <Route path="/quiz-result" element={

@@ -172,15 +172,28 @@ const StudentReports: React.FC = () => {
               <div className="space-y-4">
                 {selectedStudent.attempts.map((attempt) => (
                   <div key={attempt.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center flex-wrap gap-4">
                       <div>
                         <h4 className="font-medium">{attempt.quiz.title}</h4>
                         <p className="text-sm text-gray-600">
                           Completed: {new Date(formatAsUTC(attempt.completed_at)).toLocaleDateString('en-IN')}
                         </p>
                       </div>
-                      <div className="text-lg font-semibold">
-                        Score: {attempt.score}%
+                      <div className="flex items-center gap-4">
+                        {attempt.video_url && (
+                          <a 
+                            href={`http://localhost:8000${attempt.video_url}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 flex items-center gap-2 transition"
+                          >
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                            Watch Interview
+                          </a>
+                        )}
+                        <div className="text-lg font-semibold">
+                          Score: {attempt.score}%
+                        </div>
                       </div>
                     </div>
                   </div>
