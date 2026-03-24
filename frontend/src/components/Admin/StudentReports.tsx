@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaDownload } from 'react-icons/fa';
+import { FaSearch, FaDownload, FaTrash } from 'react-icons/fa';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 interface User {
@@ -94,6 +94,38 @@ const StudentReports: React.FC = () => {
     a.download = `${studentReport.user.full_name}-report.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteAttempt = async (attemptId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this attempt? This cannot be undone and will permanently delete the associated video if one exists.')) return;
+
+    try {
+      const response = await fetch(API_ENDPOINTS.DELETE_REPORT(attemptId), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete report');
+      }
+
+      // Optimistically update the selected student view
+      if (selectedStudent) {
+        setSelectedStudent({
+          ...selectedStudent,
+          attempts: selectedStudent.attempts.filter(a => a.id !== attemptId)
+        });
+      }
+      
+      // Refresh the background list quietly
+      fetchReports();
+      
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to delete report');
+    }
   };
 
   if (loading) {
@@ -195,6 +227,13 @@ const StudentReports: React.FC = () => {
                         <div className="text-lg font-semibold">
                           Score: {attempt.score}%
                         </div>
+                        <button
+                          onClick={(e) => handleDeleteAttempt(attempt.id, e)}
+                          title="Delete Attempt"
+                          className="ml-2 text-gray-400 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50"
+                        >
+                          <FaTrash size={16} />
+                        </button>
                       </div>
                     </div>
                   </div>

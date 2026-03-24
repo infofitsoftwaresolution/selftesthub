@@ -85,6 +85,43 @@ async def get_student_reports(
     
     return reports
 
+@router.delete("/reports/{attempt_id}")
+async def delete_student_report(
+    attempt_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_admin_user)
+):
+    """
+    Delete a specific quiz attempt globally.
+    If it possesses a video in S3, delete the S3 object.
+    Only accessible by admin users.
+    """
+    attempt = db.query(QuizAttempt).filter(QuizAttempt.id == attempt_id).first()
+    if not attempt:
+        raise HTTPException(status_code=404, detail="Quiz attempt not found")
+        
+    # Delete from S3 if video exists
+    if attempt.video_url and attempt.video_url.startswith("s3://"):
+        s3_key = attempt.video_url.replace("s3://", "")
+        try:
+            s3_client_args = {'region_name': settings.AWS_REGION}
+            if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+                s3_client_args['aws_access_key_id'] = settings.AWS_ACCESS_KEY_ID
+                s3_client_args['aws_secret_access_key'] = settings.AWS_SECRET_ACCESS_KEY
+                
+            s3_client = boto3.client('s3', **s3_client_args)
+            s3_client.delete_object(Bucket=settings.AWS_S3_BUCKET, Key=s3_key)
+            logger.info(f"Deleted S3 video {s3_key} for attempt {attempt_id}")
+        except Exception as e:
+            logger.error(f"Failed to delete video from S3 for attempt {attempt_id}: {e}")
+            # Continuing to delete DB record even if S3 delete fails so admin isn't permanently blocked
+            
+    # Delete from Database
+    db.delete(attempt)
+    db.commit()
+    logger.info(f"Admin {current_user.id} deleted attempt {attempt_id}")
+    return {"message": "Report successfully deleted"}
+
 @router.get("/quiz-attempts", response_model=List[QuizAttemptWithDetails])
 async def get_quiz_attempts(
     quiz_id: int = None,
