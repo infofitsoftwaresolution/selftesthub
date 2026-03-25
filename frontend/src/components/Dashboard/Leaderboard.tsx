@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaMedal, FaCrown, FaStar, FaChartLine, FaUserCircle } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS, fetchOptions, getSecureUrl1 } from '../../config/api';
-
+import PageLoader from '../common/PageLoader';
 interface LeaderboardEntry {
   user_id: number;
   full_name: string;
@@ -118,11 +118,7 @@ const Leaderboard: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="h-64 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error) {

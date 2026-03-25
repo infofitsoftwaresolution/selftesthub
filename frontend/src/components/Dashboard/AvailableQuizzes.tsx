@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaClock, FaQuestionCircle, FaPlay, FaLock, FaVideo } from 'react-icons/fa';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import { Quiz } from '../../types/quiz';
+import PageLoader from '../common/PageLoader';
 
 const AvailableQuizzes: React.FC = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -93,7 +94,7 @@ const AvailableQuizzes: React.FC = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <PageLoader />;
   }
 
   return (

@@ -4,6 +4,7 @@ import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import CreateQuizModal from '../../components/Admin/CreateQuizModal';
 import EditQuizModal from '../../components/Admin/EditQuizModal';
 import { Quiz } from '../../types/quiz';
+import PageLoader from '../../components/common/PageLoader';
 // Component to manage quizzes
 const ManageQuizzes: React.FC = () => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -124,7 +125,7 @@ const ManageQuizzes: React.FC = () => {
     setEditingQuiz(quiz);
   };
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  if (loading) return <PageLoader />;
 
   return (
     <div className="container mx-auto px-4 py-8">

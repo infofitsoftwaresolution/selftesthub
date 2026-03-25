@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaDownload, FaTrash } from 'react-icons/fa';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
+import PageLoader from '../common/PageLoader';
 
 interface User {
   id: number;
@@ -129,11 +130,7 @@ const StudentReports: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error) {
@@ -185,7 +182,7 @@ const StudentReports: React.FC = () => {
         </div>
 
         {/* Detailed View */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 md:sticky md:top-24 self-start max-h-[calc(100vh-8rem)] overflow-y-auto pr-2">
           {selectedStudent ? (
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex justify-between items-start border-b pb-4 mb-4">

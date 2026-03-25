@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
+import PageLoader from '../common/PageLoader';
 
 interface UserData {
   id: number;
@@ -132,11 +133,7 @@ const UserProfile: React.FC = () => {
 
   // Show loading spinner while fetching profile data
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (

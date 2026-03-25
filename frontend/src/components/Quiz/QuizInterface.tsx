@@ -4,6 +4,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Quiz, Question } from '../../types/quiz';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import QuizSecurity from './QuizSecurity';
+import PageLoader from '../common/PageLoader';
 
 const QuizInterface: React.FC = () => {
   const { quizId } = useParams();
@@ -244,7 +245,7 @@ const QuizInterface: React.FC = () => {
     };
   }, []);
 
-  if (isSubmitting || !quiz) return <div>Loading...</div>;
+  if (isSubmitting || !quiz) return <PageLoader />;
   if (securityViolation) return <div>Submitting quiz due to security violation...</div>;
 
   return (

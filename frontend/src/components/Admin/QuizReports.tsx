@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+import PageLoader from '../common/PageLoader';
 
 interface User {
   id: number;
@@ -186,7 +187,7 @@ const QuizReports: React.FC = () => {
     }
   });
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  if (loading) return <PageLoader />;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
 
   return (
