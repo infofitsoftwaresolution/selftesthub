@@ -103,7 +103,7 @@ ALLOWED_EMAILS = {
     "kumariananta848@gmail.com",
    'aniluvall@gmail.com',
    'okwytex4810@gmail.com',
-   'Okeolusola2@gmail.com',
+   'okeolusola2@gmail.com',
    'okoyegerald1000@gmail.com',
    'nonsoemma002@gmail.com',
    'offorchinedu5@gmail.com',
@@ -113,9 +113,8 @@ ALLOWED_EMAILS = {
    'jayrad200@gmail.com',
    'nonsoemma002@gmail.com',
    'Paschalezenwa2006@gmail.com',
-   'Okaforkosisochukwu96@gmail.com',
+   'okaforkosisochukwu96@gmail.com',
    'chinonsosamuel373@gmail.com',
-   'Okaforkosisochukwu96@gmail.com',
    'mc6891842@gmail.com'
 }
 
