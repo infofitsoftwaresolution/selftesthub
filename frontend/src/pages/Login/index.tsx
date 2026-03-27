@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 
 const Login: React.FC = () => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -22,7 +20,7 @@ const Login: React.FC = () => {
       const data = await response.json();
       if (response.ok) {
         localStorage.setItem('token', data.access_token);
-        navigate('/dashboard');
+        window.location.href = '/dashboard';
       } else {
         setError(data.detail || 'Login failed');
       }
