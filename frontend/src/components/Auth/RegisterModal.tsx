@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import PageLoader from '../common/PageLoader';
 
@@ -19,6 +19,18 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Reset all form state when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({ fullName: '', email: '', password: '', confirmPassword: '' });
+      setError('');
+      setOtpSent(false);
+      setOtp('');
+      setIsLoading(false);
+      setIsSuccess(false);
+    }
+  }, [isOpen]);
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();

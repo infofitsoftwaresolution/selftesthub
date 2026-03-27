@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import PageLoader from '../common/PageLoader';
 
@@ -26,6 +26,23 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   // Loading states
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
+
+  // Reset all form state when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({ email: '', password: '' });
+      setError('');
+      setSuccess('');
+      setShowForgotPassword(false);
+      setForgotPasswordEmail('');
+      setOtpSent(false);
+      setOtp('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setIsLoginLoading(false);
+      setIsForgotPasswordLoading(false);
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
