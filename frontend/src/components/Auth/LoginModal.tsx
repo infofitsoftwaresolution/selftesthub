@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
+import PageLoader from '../common/PageLoader';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -174,7 +175,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         {/* Close button */}
         <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none">&times;</button>
         <div className="mt-3">
-          {!showForgotPassword ? (
+          {isLoginLoading || isForgotPasswordLoading ? (
+            <div className="py-8">
+              <PageLoader />
+            </div>
+          ) : !showForgotPassword ? (
             // Login Form
             <>
               <h3 className="text-2xl font-bold text-center text-gray-900 mb-4">Welcome Back</h3>

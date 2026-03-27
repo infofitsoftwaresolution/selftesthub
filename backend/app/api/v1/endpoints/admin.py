@@ -181,7 +181,32 @@ async def get_users(
         "created_at": u.created_at
     } for u in users]
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+class ScoreUpdate(BaseModel):
+    score: int = Field(..., ge=0, le=100, description="Score percentage (0-100)")
+
+@router.patch("/reports/{attempt_id}/score")
+async def update_report_score(
+    attempt_id: int,
+    payload: ScoreUpdate,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_admin_user)
+):
+    """
+    Update the score of a specific quiz attempt.
+    Only accessible by admin users. Used primarily for video interviews.
+    """
+    attempt = db.query(QuizAttempt).filter(QuizAttempt.id == attempt_id).first()
+    if not attempt:
+        raise HTTPException(status_code=404, detail="Quiz attempt not found")
+        
+    attempt.score = payload.score
+    db.commit()
+    db.refresh(attempt)
+    
+    logger.info(f"Admin {current_user.id} updated score for attempt {attempt_id} to {payload.score}")
+    return {"message": "Score updated successfully", "score": attempt.score}
 
 class RoleUpdate(BaseModel):
     is_superuser: bool

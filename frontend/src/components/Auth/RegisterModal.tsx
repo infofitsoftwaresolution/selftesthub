@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
-
+import PageLoader from '../common/PageLoader';
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -95,13 +95,20 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
         <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none">&times;</button>
         <div className="mt-3">
           <h3 className="text-2xl font-bold text-center text-gray-900 mb-4">Create Account</h3>
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
-              {error}
-            </div>
-          )}
           
-          {isSuccess ? (
+          {isLoading ? (
+            <div className="py-8">
+              <PageLoader />
+            </div>
+          ) : (
+            <>
+              {error && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                  {error}
+                </div>
+              )}
+              
+              {isSuccess ? (
             <div className="text-center py-6">
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
                 <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -242,6 +249,8 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
                 </button>
               </div>
             </form>
+          )}
+          </>
           )}
         </div>
       </div>

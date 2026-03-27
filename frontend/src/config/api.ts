@@ -60,6 +60,7 @@ export const API_ENDPOINTS = {
   // Admin endpoints
   ADMIN_REPORTS: `${API_URL}/api/v1/admin/reports`,
   DELETE_REPORT: (id: number) => `${API_URL}/api/v1/admin/reports/${id}`,
+  UPDATE_REPORT_SCORE: (id: number) => `${API_URL}/api/v1/admin/reports/${id}/score`,
   STUDENT_REPORTS: `${API_URL}/api/v1/admin/student-reports`,
   QUIZ_REPORTS: `${API_URL}/api/v1/admin/quiz-attempts`,
   ADMIN_USERS: `${API_URL}/api/v1/admin/users`,
