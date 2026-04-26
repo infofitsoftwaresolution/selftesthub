@@ -249,6 +249,9 @@ import aiofiles
 import boto3
 import uuid
 import asyncio
+import tempfile
+import subprocess
+import shutil
 from botocore.exceptions import ClientError
 from botocore.config import Config
 from fastapi import UploadFile, File, Form
@@ -258,6 +261,26 @@ import re
 def _slugify(value: str, fallback: str = "value") -> str:
     normalized = re.sub(r"[^a-zA-Z0-9]+", "-", (value or "").strip().lower()).strip("-")
     return normalized[:60] or fallback
+
+
+def _make_seekable_webm(input_path: str, output_path: str) -> bool:
+    """
+    Remux WEBM to regenerate container metadata/cues for proper seeking.
+    Returns True on success; False if ffmpeg is unavailable/fails.
+    """
+    if shutil.which("ffmpeg") is None:
+        return False
+    try:
+        process = subprocess.run(
+            ["ffmpeg", "-y", "-i", input_path, "-c", "copy", output_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=120
+        )
+        return process.returncode == 0 and os.path.exists(output_path) and os.path.getsize(output_path) > 0
+    except Exception:
+        return False
 
 @router.post("/{quiz_id}/submit-video")
 async def submit_video_attempt(
@@ -304,18 +327,39 @@ async def submit_video_attempt(
         **s3_client_args
     )
 
+    temp_input_path = None
+    temp_output_path = None
+    upload_path = None
     try:
-        # boto3 upload_fileobj is blocking, so we run it in a thread using asyncio.to_thread
-        await asyncio.to_thread(
-            s3_client.upload_fileobj,
-            video.file,
-            settings.AWS_S3_BUCKET,
-            safe_filename,
-            ExtraArgs={'ContentType': 'video/webm'}
-        )
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_input:
+            temp_input_path = temp_input.name
+            video.file.seek(0)
+            shutil.copyfileobj(video.file, temp_input)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_output:
+            temp_output_path = temp_output.name
+
+        remuxed = await asyncio.to_thread(_make_seekable_webm, temp_input_path, temp_output_path)
+        upload_path = temp_output_path if remuxed else temp_input_path
+
+        with open(upload_path, "rb") as upload_stream:
+            await asyncio.to_thread(
+                s3_client.upload_fileobj,
+                upload_stream,
+                settings.AWS_S3_BUCKET,
+                safe_filename,
+                ExtraArgs={'ContentType': 'video/webm'}
+            )
     except Exception as e:
         logger.exception(f"Failed to upload to S3 for attempt {attempt_id}")
         raise HTTPException(status_code=500, detail=f"S3 Upload Failed: {str(e)}")
+    finally:
+        for path in (temp_input_path, temp_output_path):
+            if path and os.path.exists(path):
+                try:
+                    os.remove(path)
+                except Exception:
+                    logger.warning(f"Could not remove temp file: {path}")
             
     # save url mapping
     video_url = f"s3://{safe_filename}"
