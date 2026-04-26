@@ -25,6 +25,16 @@ logger = logging.getLogger(__name__)
 class QuizSubmission(BaseModel):
     answers: Dict[str, int]
 
+
+class VideoUploadInitRequest(BaseModel):
+    attempt_id: int
+    content_type: str = "video/webm"
+
+
+class VideoUploadCompleteRequest(BaseModel):
+    attempt_id: int
+    s3_key: str
+
 @router.get("/test-auth")
 def test_auth(current_user: User = Depends(deps.get_current_user)):
     return {"msg": "Auth works", "user_id": current_user.id}
@@ -263,6 +273,16 @@ def _slugify(value: str, fallback: str = "value") -> str:
     return normalized[:60] or fallback
 
 
+def _build_video_s3_key(quiz: QuizModel, current_user: User, attempt_id: int) -> str:
+    student_name = _slugify(
+        current_user.full_name or current_user.email.split("@")[0],
+        fallback=f"student-{current_user.id}"
+    )
+    quiz_slug = _slugify(quiz.title, fallback=f"quiz-{quiz.id}")
+    unique_suffix = uuid.uuid4().hex[:10]
+    return f"students/{quiz_slug}/{student_name}_attempt_{attempt_id}_{unique_suffix}.webm"
+
+
 def _make_seekable_webm(input_path: str, output_path: str) -> bool:
     """
     Remux WEBM to regenerate container metadata/cues for proper seeking.
@@ -281,6 +301,86 @@ def _make_seekable_webm(input_path: str, output_path: str) -> bool:
         return process.returncode == 0 and os.path.exists(output_path) and os.path.getsize(output_path) > 0
     except Exception:
         return False
+
+
+@router.post("/{quiz_id}/video-upload-url")
+async def create_video_upload_url(
+    quiz_id: int,
+    payload: VideoUploadInitRequest,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    from app.core.config import settings
+    attempt = db.query(QuizAttempt).filter(
+        QuizAttempt.id == payload.attempt_id,
+        QuizAttempt.quiz_id == quiz_id,
+        QuizAttempt.user_id == current_user.id
+    ).first()
+    if not attempt:
+        raise HTTPException(status_code=404, detail="Attempt not found")
+
+    quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    if not settings.AWS_S3_BUCKET:
+        raise HTTPException(status_code=500, detail="S3 bucket not configured")
+
+    s3_key = _build_video_s3_key(quiz, current_user, payload.attempt_id)
+    s3_client_args = {'region_name': settings.AWS_REGION}
+    if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+        s3_client_args['aws_access_key_id'] = settings.AWS_ACCESS_KEY_ID
+        s3_client_args['aws_secret_access_key'] = settings.AWS_SECRET_ACCESS_KEY
+
+    s3_client = boto3.client(
+        's3',
+        config=Config(connect_timeout=30, read_timeout=180, retries={"max_attempts": 3, "mode": "standard"}),
+        **s3_client_args
+    )
+
+    try:
+        upload_url = s3_client.generate_presigned_url(
+            'put_object',
+            Params={
+                'Bucket': settings.AWS_S3_BUCKET,
+                'Key': s3_key,
+                'ContentType': payload.content_type or 'video/webm'
+            },
+            ExpiresIn=900
+        )
+    except Exception as e:
+        logger.exception("Failed to create presigned upload URL")
+        raise HTTPException(status_code=500, detail=f"Could not create upload URL: {str(e)}")
+
+    return {"upload_url": upload_url, "s3_key": s3_key}
+
+
+@router.post("/{quiz_id}/complete-video-upload")
+async def complete_video_upload(
+    quiz_id: int,
+    payload: VideoUploadCompleteRequest,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    attempt = db.query(QuizAttempt).filter(
+        QuizAttempt.id == payload.attempt_id,
+        QuizAttempt.quiz_id == quiz_id,
+        QuizAttempt.user_id == current_user.id
+    ).first()
+    if not attempt:
+        raise HTTPException(status_code=404, detail="Attempt not found")
+
+    quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    quiz_slug = _slugify(quiz.title, fallback=f"quiz-{quiz.id}")
+    if not payload.s3_key.startswith(f"students/{quiz_slug}/"):
+        raise HTTPException(status_code=400, detail="Invalid upload key")
+
+    attempt.video_url = f"s3://{payload.s3_key}"
+    db.commit()
+    return {"message": "Video upload finalized"}
 
 @router.post("/{quiz_id}/submit-video")
 async def submit_video_attempt(
@@ -305,16 +405,7 @@ async def submit_video_attempt(
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
 
-    student_name = _slugify(
-        current_user.full_name or current_user.email.split("@")[0],
-        fallback=f"student-{current_user.id}"
-    )
-    quiz_slug = _slugify(quiz.title, fallback=f"quiz-{quiz_id}")
-    unique_suffix = uuid.uuid4().hex[:10]
-    safe_filename = (
-        f"students/{quiz_slug}/"
-        f"{student_name}_attempt_{attempt_id}_{unique_suffix}.webm"
-    )
+    safe_filename = _build_video_s3_key(quiz, current_user, attempt_id)
     
     s3_client_args = {'region_name': settings.AWS_REGION}
     if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:

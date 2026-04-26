@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Quiz } from '../../types/quiz';
 import { API_ENDPOINTS, fetchOptions } from '../../config/api';
 import QuizSecurity from './QuizSecurity';
+import fixWebmDuration from 'fix-webm-duration';
 
 const VideoQuizInterface: React.FC = () => {
   const { quizId } = useParams();
@@ -20,6 +21,7 @@ const VideoQuizInterface: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
+  const recordingStartTsRef = useRef<number | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const [permissionHelp, setPermissionHelp] = useState('');
@@ -122,6 +124,7 @@ const VideoQuizInterface: React.FC = () => {
   const startRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
       recordedChunksRef.current = [];
+      recordingStartTsRef.current = Date.now();
       mediaRecorderRef.current.start();
       setIsRecording(true);
     }
@@ -168,25 +171,66 @@ const VideoQuizInterface: React.FC = () => {
         throw new Error('No video data was recorded. Please retry the interview.');
       }
 
-      const formData = new FormData();
-      formData.append('video', blob, `attempt_${attemptId}.webm`);
-      formData.append('attempt_id', attemptId.toString());
+      const recordedDurationMs = recordingStartTsRef.current
+        ? Math.max(1000, Date.now() - recordingStartTsRef.current)
+        : Math.max(1000, (totalTime - timeLeft) * 1000);
+      const fixedBlob = await fixWebmDuration(blob, recordedDurationMs, { logger: false });
 
-      setSubmissionMessage('Uploading your interview video. Please keep this tab open...');
-      const uploadRes = await fetchWithTimeout(
-        API_ENDPOINTS.QUIZ(quizId as string) + '/submit-video',
+      setSubmissionMessage('Preparing secure upload...');
+      const uploadInitRes = await fetchWithTimeout(
+        API_ENDPOINTS.VIDEO_UPLOAD_URL(quizId as string),
         {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-          body: formData
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            attempt_id: attemptId,
+            content_type: 'video/webm'
+          })
         },
-        300000
+        60000
       );
+      if (!uploadInitRes.ok) {
+        const initErr = await uploadInitRes.json().catch(() => ({}));
+        throw new Error(initErr.detail || 'Could not start video upload.');
+      }
+      const uploadInitData = await uploadInitRes.json();
 
-      if (!uploadRes.ok) {
-        const errData = await uploadRes.json().catch(() => ({}));
-        console.error("Backend AWS Error Details:", errData);
-        throw new Error(errData.detail || "Video upload failed on the server.");
+      setSubmissionMessage('Uploading your interview video. Please keep this tab open...');
+      const s3UploadRes = await fetchWithTimeout(
+        uploadInitData.upload_url,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'video/webm' },
+          body: fixedBlob
+        },
+        900000
+      );
+      if (!s3UploadRes.ok) {
+        throw new Error('Video upload failed. Please retry on stable internet.');
+      }
+
+      setSubmissionMessage('Finalizing video upload...');
+      const completeUploadRes = await fetchWithTimeout(
+        API_ENDPOINTS.COMPLETE_VIDEO_UPLOAD(quizId as string),
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            attempt_id: attemptId,
+            s3_key: uploadInitData.s3_key
+          })
+        },
+        60000
+      );
+      if (!completeUploadRes.ok) {
+        const completeErr = await completeUploadRes.json().catch(() => ({}));
+        throw new Error(completeErr.detail || 'Could not finalize video upload.');
       }
 
       setSubmissionMessage('Video uploaded. Finalizing your submission...');

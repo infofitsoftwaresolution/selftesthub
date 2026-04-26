@@ -43,6 +43,8 @@ export const API_ENDPOINTS = {
   UPDATE_QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}`,
   DELETE_QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}`,
   START_QUIZ: (id: string) => `${API_URL}/api/v1/quizzes/${id}/start`,
+  VIDEO_UPLOAD_URL: (id: string) => `${API_URL}/api/v1/quizzes/${id}/video-upload-url`,
+  COMPLETE_VIDEO_UPLOAD: (id: string) => `${API_URL}/api/v1/quizzes/${id}/complete-video-upload`,
   SUBMIT_QUIZ: (quizId: string, attemptId: string) => 
     `${API_URL}/api/v1/quizzes/${quizId}/submit?attempt_id=${attemptId}`,
 
