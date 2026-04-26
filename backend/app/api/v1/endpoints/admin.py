@@ -163,6 +163,8 @@ async def get_quiz_attempts(
         
         attempts = query.all()
         unique_attempts = _latest_attempts_per_student(attempts)
+        for attempt in unique_attempts:
+            attempt.video_url = get_presigned_url(attempt.video_url)
         logger.info(f"Successfully fetched {len(unique_attempts)} deduplicated quiz attempts")
         return unique_attempts
     except Exception as e:

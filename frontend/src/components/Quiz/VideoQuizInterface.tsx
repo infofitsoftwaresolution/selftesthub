@@ -37,8 +37,14 @@ const VideoQuizInterface: React.FC = () => {
           videoRef.current.srcObject = stream;
         }
         
+        const selectedMimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+          ? 'video/webm;codecs=vp9,opus'
+          : (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+            ? 'video/webm;codecs=vp8,opus'
+            : 'video/webm');
+
         // init recorder
-        const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        const recorder = new MediaRecorder(stream, { mimeType: selectedMimeType });
         recorder.ondataavailable = (e) => {
           if (e.data.size > 0) {
             recordedChunksRef.current.push(e.data);
@@ -116,7 +122,7 @@ const VideoQuizInterface: React.FC = () => {
   const startRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
       recordedChunksRef.current = [];
-      mediaRecorderRef.current.start(1000); // chunk every second
+      mediaRecorderRef.current.start();
       setIsRecording(true);
     }
   };
@@ -152,6 +158,7 @@ const VideoQuizInterface: React.FC = () => {
             return;
           }
           mediaRecorderRef.current.onstop = () => resolve();
+          mediaRecorderRef.current.requestData();
           mediaRecorderRef.current.stop();
         });
       }
