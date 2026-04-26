@@ -335,7 +335,15 @@ const QuizReports: React.FC = () => {
                     </span>
                   )}
                   {attempt.video_url && canAssignScore && (
-                    <div className="mt-2">
+                    <div className="mt-2 flex items-center gap-2">
+                      <a
+                        href={attempt.video_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 transition"
+                      >
+                        Watch Interview
+                      </a>
                       <select
                         className="text-xs border border-gray-300 rounded p-1 bg-white"
                         value={attempt.score === null || attempt.score === 0 ? '' : attempt.score}

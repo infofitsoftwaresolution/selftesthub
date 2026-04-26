@@ -214,17 +214,6 @@ const StudentReports: React.FC = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-4">
-                        {attempt.video_url && (
-                          <a 
-                            href={attempt.video_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 flex items-center gap-2 transition"
-                          >
-                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                            Watch Interview
-                          </a>
-                        )}
                         {attempt.video_url ? (
                           <div className="flex items-center gap-2">
                             <div className="text-lg font-semibold">
