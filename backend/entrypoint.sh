@@ -9,4 +9,5 @@ alembic upgrade head
 echo "Migrations complete!"
 
 # Start the application
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+WORKERS=${WEB_CONCURRENCY:-2}
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers "$WORKERS"

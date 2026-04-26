@@ -1,11 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from app.api.v1.api import api_router
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
 import os
+import time
+from collections import defaultdict, deque
 
 app = FastAPI(
     title="Quiz API",
@@ -41,9 +44,44 @@ def on_startup():
         print("Initializing SQLite database tables...")
         Base.metadata.create_all(bind=engine)
 
+request_buckets = defaultdict(deque)
+
+
+def _resolve_rate_limit(path: str):
+    if path.endswith("/auth/login"):
+        return settings.RATE_LIMIT_LOGIN_PER_WINDOW
+    if path.endswith("/submit-video"):
+        return settings.RATE_LIMIT_VIDEO_SUBMIT_PER_WINDOW
+    if path.endswith("/start"):
+        return settings.RATE_LIMIT_QUIZ_START_PER_WINDOW
+    return settings.RATE_LIMIT_DEFAULT_PER_WINDOW
+
+
 @app.middleware("http")
-async def log_requests(request, call_next):
+async def protect_and_log_requests(request: Request, call_next):
     print(f"Incoming request: {request.method} {request.url.path}")
+    if request.url.path.startswith("/api/"):
+        now = time.time()
+        window = settings.RATE_LIMIT_WINDOW_SECONDS
+        limit = _resolve_rate_limit(request.url.path)
+        client_ip = request.client.host if request.client else "unknown"
+        bucket_key = f"{client_ip}:{request.method}:{request.url.path}"
+        bucket = request_buckets[bucket_key]
+
+        while bucket and now - bucket[0] > window:
+            bucket.popleft()
+
+        if len(bucket) >= limit:
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "detail": "Too many requests. Please wait and try again.",
+                    "retry_after_seconds": window
+                }
+            )
+
+        bucket.append(now)
+
     response = await call_next(request)
     print(f"Response status: {response.status_code}")
     return response

@@ -15,6 +15,25 @@ from app.core.config import settings
 router = APIRouter()
 logger = logging.getLogger('quiz_api')
 
+
+def _latest_attempts_per_student(attempts: List[QuizAttempt]) -> List[QuizAttempt]:
+    latest_by_key = {}
+    for attempt in attempts:
+        key = (attempt.quiz_id, attempt.user_id)
+        existing = latest_by_key.get(key)
+        if not existing:
+            latest_by_key[key] = attempt
+            continue
+        existing_ts = existing.completed_at or existing.started_at
+        current_ts = attempt.completed_at or attempt.started_at
+        if current_ts and existing_ts and current_ts > existing_ts:
+            latest_by_key[key] = attempt
+    return sorted(
+        latest_by_key.values(),
+        key=lambda a: a.completed_at or a.started_at,
+        reverse=True
+    )
+
 def get_presigned_url(video_url: str):
     if not video_url or not video_url.startswith("s3://"):
         return video_url
@@ -143,8 +162,9 @@ async def get_quiz_attempts(
             query = query.filter(QuizAttempt.quiz_id == quiz_id)
         
         attempts = query.all()
-        logger.info(f"Successfully fetched {len(attempts)} quiz attempts")
-        return attempts
+        unique_attempts = _latest_attempts_per_student(attempts)
+        logger.info(f"Successfully fetched {len(unique_attempts)} deduplicated quiz attempts")
+        return unique_attempts
     except Exception as e:
         logger.error(f"Error fetching quiz attempts: {str(e)}")
         raise HTTPException(

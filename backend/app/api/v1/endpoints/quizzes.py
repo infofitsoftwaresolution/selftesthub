@@ -250,7 +250,14 @@ import boto3
 import uuid
 import asyncio
 from botocore.exceptions import ClientError
+from botocore.config import Config
 from fastapi import UploadFile, File, Form
+import re
+
+
+def _slugify(value: str, fallback: str = "value") -> str:
+    normalized = re.sub(r"[^a-zA-Z0-9]+", "-", (value or "").strip().lower()).strip("-")
+    return normalized[:60] or fallback
 
 @router.post("/{quiz_id}/submit-video")
 async def submit_video_attempt(
@@ -270,22 +277,32 @@ async def submit_video_attempt(
         
     if not settings.AWS_S3_BUCKET:
         raise HTTPException(status_code=500, detail="S3 bucket not configured")
-        
-    # ensure unique filename
-    safe_filename = f"students/attempt_{attempt_id}_{current_user.id}_{uuid.uuid4().hex[:8]}.webm"
-    
-    # Debug: log what credentials are available
-    print(f"[S3 DEBUG] AWS_REGION={settings.AWS_REGION}")
-    print(f"[S3 DEBUG] AWS_S3_BUCKET={settings.AWS_S3_BUCKET}")
-    print(f"[S3 DEBUG] AWS_ACCESS_KEY_ID={'SET (' + settings.AWS_ACCESS_KEY_ID[:4] + '...)' if settings.AWS_ACCESS_KEY_ID else 'EMPTY'}")
-    print(f"[S3 DEBUG] AWS_SECRET_ACCESS_KEY={'SET' if settings.AWS_SECRET_ACCESS_KEY else 'EMPTY'}")
+
+    quiz = db.query(QuizModel).filter(QuizModel.id == quiz_id).first()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    student_name = _slugify(
+        current_user.full_name or current_user.email.split("@")[0],
+        fallback=f"student-{current_user.id}"
+    )
+    quiz_slug = _slugify(quiz.title, fallback=f"quiz-{quiz_id}")
+    unique_suffix = uuid.uuid4().hex[:10]
+    safe_filename = (
+        f"students/{student_name}/quiz_{quiz_id}_{quiz_slug}/"
+        f"attempt_{attempt_id}_{unique_suffix}.webm"
+    )
     
     s3_client_args = {'region_name': settings.AWS_REGION}
     if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
         s3_client_args['aws_access_key_id'] = settings.AWS_ACCESS_KEY_ID
         s3_client_args['aws_secret_access_key'] = settings.AWS_SECRET_ACCESS_KEY
         
-    s3_client = boto3.client('s3', **s3_client_args)
+    s3_client = boto3.client(
+        's3',
+        config=Config(connect_timeout=30, read_timeout=180, retries={"max_attempts": 3, "mode": "standard"}),
+        **s3_client_args
+    )
 
     try:
         # boto3 upload_fileobj is blocking, so we run it in a thread using asyncio.to_thread
@@ -297,7 +314,7 @@ async def submit_video_attempt(
             ExtraArgs={'ContentType': 'video/webm'}
         )
     except Exception as e:
-        print(f"Failed to upload to S3: {e}")
+        logger.exception(f"Failed to upload to S3 for attempt {attempt_id}")
         raise HTTPException(status_code=500, detail=f"S3 Upload Failed: {str(e)}")
             
     # save url mapping
@@ -603,6 +620,9 @@ async def submit_quiz(
             "completed_at": attempt.completed_at,
             "answers": attempt.answers
         }
+    except HTTPException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         print(f"Error submitting quiz: {str(e)}")  # Add debug logging

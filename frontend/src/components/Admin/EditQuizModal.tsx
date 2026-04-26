@@ -13,6 +13,7 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, onClose, onUpdate }
   const [quizData, setQuizData] = useState<Quiz>(quiz);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isAddingQuestion, setIsAddingQuestion] = useState(false);
 
   useEffect(() => {
     setQuizData(quiz);
@@ -43,12 +44,13 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, onClose, onUpdate }
 
   const handleAddQuestion = () => {
     const newQuestion: Question = {
-      id: Date.now(), // Temporary ID for new questions
+      id: -Date.now(), // Temporary negative ID for new questions
       quiz_id: quiz.id,
       text: '',
       options: ['', '', '', ''],
       correctAnswer: 0
     };
+    setIsAddingQuestion(true);
     setCurrentQuestion(newQuestion);
   };
 
@@ -67,7 +69,7 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, onClose, onUpdate }
     if (!currentQuestion) return;
 
     let updatedQuestions;
-    if (currentQuestion.id === Date.now()) {
+    if (isAddingQuestion || currentQuestion.id < 0) {
       // This is a new question
       const newQuestion = {
         ...currentQuestion,
@@ -85,7 +87,18 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, onClose, onUpdate }
       ...quizData,
       questions: updatedQuestions
     });
+    setIsAddingQuestion(false);
     setCurrentQuestion(null);
+  };
+
+  const moveQuestion = (fromIndex: number, toIndex: number) => {
+    setQuizData(prev => {
+      if (toIndex < 0 || toIndex >= prev.questions.length) return prev;
+      const updated = [...prev.questions];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+      return { ...prev, questions: updated };
+    });
   };
 
   return (
@@ -149,11 +162,29 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, onClose, onUpdate }
           <div>
             <h3 className="text-lg font-medium mb-4">Questions</h3>
             <div className="space-y-4">
-              {quizData.questions.map((question) => (
+              {quizData.questions.map((question, index) => (
                 <div key={question.id} className="border p-4 rounded-md">
                   <div className="flex justify-between items-start mb-2">
-                    <div className="font-medium whitespace-pre-wrap">{question.text}</div>
+                    <div className="font-medium whitespace-pre-wrap">
+                      Q{index + 1}. {question.text}
+                    </div>
                     <div className="flex space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => moveQuestion(index, index - 1)}
+                        disabled={index === 0}
+                        className={`px-2 py-1 border rounded text-xs ${index === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+                      >
+                        Up
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveQuestion(index, index + 1)}
+                        disabled={index === quizData.questions.length - 1}
+                        className={`px-2 py-1 border rounded text-xs ${index === quizData.questions.length - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+                      >
+                        Down
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleEditQuestion(question)}
@@ -248,7 +279,7 @@ const EditQuizModal: React.FC<EditQuizModalProps> = ({ quiz, onClose, onUpdate }
                 <div className="flex justify-end space-x-2">
                   <button
                     type="button"
-                    onClick={() => setCurrentQuestion(null)}
+                    onClick={() => { setCurrentQuestion(null); setIsAddingQuestion(false); }}
                     className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
                   >
                     Cancel

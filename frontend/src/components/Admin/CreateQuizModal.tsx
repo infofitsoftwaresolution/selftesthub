@@ -58,6 +58,16 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
     setError('');
   };
 
+  const moveQuestion = (fromIndex: number, toIndex: number) => {
+    setQuizData(prev => {
+      if (toIndex < 0 || toIndex >= prev.questions.length) return prev;
+      const nextQuestions = [...prev.questions];
+      const [moved] = nextQuestions.splice(fromIndex, 1);
+      nextQuestions.splice(toIndex, 0, moved);
+      return { ...prev, questions: nextQuestions };
+    });
+  };
+
   const handleSubmit = async (saveAsDraft = false) => {
     try {
       if (!quizData.title) { setError('Please enter a quiz title'); return; }
@@ -246,8 +256,26 @@ const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ isOpen, onClose, onQu
                       <div key={i} style={{ padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '4px', fontSize: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <strong>Q{i + 1}: {q.text}</strong>
-                          <button onClick={() => setQuizData(prev => ({ ...prev, questions: prev.questions.filter((_, j) => j !== i) }))}
-                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><FaTrash size={10} /></button>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button
+                              type="button"
+                              onClick={() => moveQuestion(i, i - 1)}
+                              disabled={i === 0}
+                              style={{ background: '#f3f4f6', border: '1px solid #d1d5db', color: i === 0 ? '#9ca3af' : '#374151', borderRadius: '4px', cursor: i === 0 ? 'not-allowed' : 'pointer', fontSize: '11px', padding: '2px 6px' }}
+                            >
+                              Up
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveQuestion(i, i + 1)}
+                              disabled={i === quizData.questions.length - 1}
+                              style={{ background: '#f3f4f6', border: '1px solid #d1d5db', color: i === quizData.questions.length - 1 ? '#9ca3af' : '#374151', borderRadius: '4px', cursor: i === quizData.questions.length - 1 ? 'not-allowed' : 'pointer', fontSize: '11px', padding: '2px 6px' }}
+                            >
+                              Down
+                            </button>
+                            <button onClick={() => setQuizData(prev => ({ ...prev, questions: prev.questions.filter((_, j) => j !== i) }))}
+                              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><FaTrash size={10} /></button>
+                          </div>
                         </div>
                         <div style={{ marginTop: '3px', paddingLeft: '8px', color: '#6b7280' }}>
                           {quizData.type !== 'video' && q.options.map((o, oi) => (

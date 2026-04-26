@@ -11,20 +11,27 @@ const VideoQuizInterface: React.FC = () => {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [totalTime, setTotalTime] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attemptId, setAttemptId] = useState<number | null>(null);
+  const [submissionMessage, setSubmissionMessage] = useState('');
   
   // Video Recording State
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+  const recordedChunksRef = useRef<Blob[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [cameraError, setCameraError] = useState('');
+  const [permissionHelp, setPermissionHelp] = useState('');
 
   // Setup streaming
-  useEffect(() => {
-    const initCamera = async () => {
+  const initCamera = async () => {
+      setCameraError('');
+      setPermissionHelp('');
       try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error('This browser does not support camera access.');
+        }
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -34,15 +41,18 @@ const VideoQuizInterface: React.FC = () => {
         const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
         recorder.ondataavailable = (e) => {
           if (e.data.size > 0) {
-            setRecordedChunks((prev) => [...prev, e.data]);
+            recordedChunksRef.current.push(e.data);
           }
         };
         mediaRecorderRef.current = recorder;
       } catch (err) {
         console.error("Error accessing camera: ", err);
         setCameraError("Camera and microphone permission is required to take this quiz.");
+        setPermissionHelp('Please allow camera and microphone in browser settings, then click Retry Permissions.');
       }
     };
+
+  useEffect(() => {
     initCamera();
 
     return () => {
@@ -68,7 +78,9 @@ const VideoQuizInterface: React.FC = () => {
         if (!res.ok) throw new Error("Failed to load quiz");
         const data = await res.json();
         setQuiz(data);
-        setTimeLeft(data.duration * 60);
+        const initialTime = data.duration * 60;
+        setTimeLeft(initialTime);
+        setTotalTime(initialTime);
 
         // Start attempt
         const startRes = await fetch(API_ENDPOINTS.START_QUIZ(quizId as string), {
@@ -103,8 +115,19 @@ const VideoQuizInterface: React.FC = () => {
 
   const startRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
+      recordedChunksRef.current = [];
       mediaRecorderRef.current.start(1000); // chunk every second
       setIsRecording(true);
+    }
+  };
+
+  const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number) => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      window.clearTimeout(timeoutId);
     }
   };
 
@@ -121,63 +144,88 @@ const VideoQuizInterface: React.FC = () => {
     if (!quiz || !attemptId || isSubmitting) return;
     setIsSubmitting(true);
 
-    // Stop recording
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
+    try {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        await new Promise<void>((resolve) => {
+          if (!mediaRecorderRef.current) {
+            resolve();
+            return;
+          }
+          mediaRecorderRef.current.onstop = () => resolve();
+          mediaRecorderRef.current.stop();
+        });
+      }
 
-    // Wait slightly for the final chunks to be processed
-    setTimeout(async () => {
-      // Assemble video
-      const blob = new Blob(recordedChunks, { type: 'video/webm' });
-      
-      try {
-        // 1. Upload Video
-        const formData = new FormData();
-        formData.append('video', blob, `attempt_${attemptId}.webm`);
-        formData.append('attempt_id', attemptId.toString());
+      const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+      if (!blob.size) {
+        throw new Error('No video data was recorded. Please retry the interview.');
+      }
 
-        const uploadRes = await fetch(API_ENDPOINTS.QUIZ(quizId as string) + '/submit-video', {
+      const formData = new FormData();
+      formData.append('video', blob, `attempt_${attemptId}.webm`);
+      formData.append('attempt_id', attemptId.toString());
+
+      setSubmissionMessage('Uploading your interview video. Please keep this tab open...');
+      const uploadRes = await fetchWithTimeout(
+        API_ENDPOINTS.QUIZ(quizId as string) + '/submit-video',
+        {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           body: formData
-        });
-        if (!uploadRes.ok) {
-          const errData = await uploadRes.json().catch(() => ({}));
-          console.error("Backend AWS Error Details:", errData);
-          throw new Error(errData.detail || "Video upload failed on the server.");
-        }
+        },
+        300000
+      );
 
-        // 2. Complete the standard attempt
-        await fetch(API_ENDPOINTS.SUBMIT_QUIZ(quizId as string, attemptId.toString()), {
+      if (!uploadRes.ok) {
+        const errData = await uploadRes.json().catch(() => ({}));
+        console.error("Backend AWS Error Details:", errData);
+        throw new Error(errData.detail || "Video upload failed on the server.");
+      }
+
+      setSubmissionMessage('Video uploaded. Finalizing your submission...');
+      const submitRes = await fetchWithTimeout(
+        API_ENDPOINTS.SUBMIT_QUIZ(quizId as string, attemptId.toString()),
+        {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ answers: {}, attemptId }) // empty answers for video quiz
-        });
-
-        // Stop camera before navigating away
-        if (videoRef.current?.srcObject) {
-          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-          tracks.forEach(track => track.stop());
-          videoRef.current.srcObject = null;
-        }
-        navigate('/dashboard');
-      } catch (err: any) {
-        console.error("Failed to upload video", err);
-        alert(err.message || "There was an error submitting your interview. Please contact support.");
-        setIsSubmitting(false);
+          body: JSON.stringify({ answers: {}, attemptId })
+        },
+        60000
+      );
+      if (!submitRes.ok) {
+        const submitErr = await submitRes.json().catch(() => ({}));
+        throw new Error(submitErr.detail || 'Could not finalize interview submission.');
       }
-    }, 1000);
+
+      alert('Interview submitted successfully.');
+
+      if (videoRef.current?.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+        tracks.forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
+      navigate('/dashboard');
+    } catch (err: any) {
+      console.error("Failed to upload video", err);
+      const timeoutMessage = err?.name === 'AbortError'
+        ? 'Upload timed out. Please check your internet and retry once.'
+        : err.message || "There was an error submitting your interview. Please contact support.";
+      alert(timeoutMessage);
+      setSubmissionMessage('');
+      setIsSubmitting(false);
+    }
   };
 
   if (cameraError) {
     return (
       <div style={{ padding: '40px', textAlign: 'center' }}>
         <h2 style={{ color: '#ef4444' }}>{cameraError}</h2>
+        {permissionHelp && <p style={{ color: '#6b7280' }}>{permissionHelp}</p>}
         <button onClick={() => window.location.reload()} style={{ padding: '10px 20px', background: '#3b82f6', color: 'white', borderRadius: '5px', marginTop: '20px', cursor: 'pointer', border: 'none' }}>Retry Permissions</button>
+        <button onClick={initCamera} style={{ padding: '10px 20px', background: '#111827', color: 'white', borderRadius: '5px', marginTop: '20px', marginLeft: '10px', cursor: 'pointer', border: 'none' }}>Check Permissions Again</button>
       </div>
     );
   }
@@ -194,6 +242,24 @@ const VideoQuizInterface: React.FC = () => {
           Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
         </div>
       </div>
+      {totalTime > 0 && (
+        <div style={{ marginBottom: '20px', background: '#fff', padding: '12px 16px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#4b5563', marginBottom: '8px' }}>
+            <span>Interview progress by time</span>
+            <span>{Math.floor((totalTime - timeLeft) / 60)}:{((totalTime - timeLeft) % 60).toString().padStart(2, '0')} / {Math.floor(totalTime / 60)}:{(totalTime % 60).toString().padStart(2, '0')}</span>
+          </div>
+          <div style={{ width: '100%', height: '8px', background: '#e5e7eb', borderRadius: '999px', overflow: 'hidden' }}>
+            <div
+              style={{
+                width: `${Math.min(100, Math.max(0, ((totalTime - timeLeft) / totalTime) * 100))}%`,
+                height: '100%',
+                background: '#3b82f6',
+                transition: 'width 0.3s ease'
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: '20px', flexDirection: 'row' }}>
         {/* Left: Camera View */}
@@ -247,6 +313,7 @@ const VideoQuizInterface: React.FC = () => {
                   style={{ width: '100%', padding: '12px', background: currentQuestion === quiz.questions.length - 1 ? '#10b981' : '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', fontSize: '16px', fontWeight: 'bold', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
                   {isSubmitting ? 'Uploading Video...' : (currentQuestion === quiz.questions.length - 1 ? 'Finish & Submit' : 'Next Question')}
                 </button>
+                {submissionMessage && <p style={{ marginTop: '10px', color: '#374151', fontSize: '12px', textAlign: 'center' }}>{submissionMessage}</p>}
               </div>
             </>
           )}

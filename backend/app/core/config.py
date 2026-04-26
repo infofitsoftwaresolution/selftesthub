@@ -36,6 +36,13 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_REGION: str = "ap-south-1"  # Defaulting to Mumbai region like the RDS instance
     AWS_S3_BUCKET: str = ""
+    
+    # Basic API protection settings
+    RATE_LIMIT_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_DEFAULT_PER_WINDOW: int = 180
+    RATE_LIMIT_LOGIN_PER_WINDOW: int = 20
+    RATE_LIMIT_VIDEO_SUBMIT_PER_WINDOW: int = 6
+    RATE_LIMIT_QUIZ_START_PER_WINDOW: int = 40
 
     @property
     def CORS_ORIGINS(self) -> List[str]:
