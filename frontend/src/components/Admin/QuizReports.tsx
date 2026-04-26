@@ -21,8 +21,9 @@ interface QuizAttempt {
   quiz: Quiz;
   started_at: string;
   completed_at: string;
-  score: number;
+  score: number | null;
   answers: Record<string, number>;
+  video_url?: string;
 }
 
 interface QuizStats {
@@ -38,6 +39,13 @@ type SortOrder = 'asc' | 'desc';
 
 // Enforce UTC parsing for naive timestamps from backend
 const formatAsUTC = (dateStr: string) => dateStr && !dateStr.endsWith('Z') ? `${dateStr}Z` : dateStr;
+
+const getCappedTimeTaken = (start: string, end: string, duration: number) => {
+  const startTime = new Date(formatAsUTC(start)).getTime();
+  const endTime = new Date(formatAsUTC(end)).getTime();
+  const minutes = Math.max(0, Math.round((endTime - startTime) / 60000));
+  return Math.min(minutes, duration);
+};
 
 const QuizReports: React.FC = () => {
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
@@ -127,27 +135,21 @@ const QuizReports: React.FC = () => {
       return;
     }
 
-    const scores = attemptData.map(a => a.score);
+    const scoredAttempts = attemptData.filter(a => a.score !== null && !(a.video_url && a.score === 0));
+    const scores = scoredAttempts.map(a => Number(a.score));
     const timeTaken = attemptData.map(a => 
-      getTimeTaken(a.started_at, a.completed_at)
+      getCappedTimeTaken(a.started_at, a.completed_at, a.quiz.duration)
     );
 
     const stats: QuizStats = {
-      averageScore: scores.reduce((a, b) => a + b, 0) / scores.length,
-      highestScore: Math.max(...scores),
-      lowestScore: Math.min(...scores),
+      averageScore: scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0,
+      highestScore: scores.length ? Math.max(...scores) : 0,
+      lowestScore: scores.length ? Math.min(...scores) : 0,
       totalAttempts: attemptData.length,
       averageTimeTaken: timeTaken.reduce((a, b) => a + b, 0) / timeTaken.length
     };
 
     setQuizStats(stats);
-  };
-
-  const getTimeTaken = (start: string, end: string) => {
-    const startTime = new Date(formatAsUTC(start)).getTime();
-    const endTime = new Date(formatAsUTC(end)).getTime();
-    const minutes = Math.round((endTime - startTime) / 60000);
-    return minutes;
   };
 
   const handleSort = (field: SortField) => {
@@ -169,11 +171,11 @@ const QuizReports: React.FC = () => {
     
     switch (sortField) {
       case 'score':
-        return (a.score - b.score) * multiplier;
+        return (((a.video_url && a.score === 0) ? -1 : (a.score ?? -1)) - ((b.video_url && b.score === 0) ? -1 : (b.score ?? -1))) * multiplier;
       case 'time_taken':
         return (
-          (getTimeTaken(a.started_at, a.completed_at) -
-            getTimeTaken(b.started_at, b.completed_at)) *
+          (getCappedTimeTaken(a.started_at, a.completed_at, a.quiz.duration) -
+            getCappedTimeTaken(b.started_at, b.completed_at, b.quiz.duration)) *
           multiplier
         );
       case 'completed_at':
@@ -228,10 +230,10 @@ const QuizReports: React.FC = () => {
               <h3 className="text-lg font-semibold mb-2">Score Distribution</h3>
               <div className="space-y-2">
                 <p>Pass Rate: {
-                  ((sortedAttempts.filter(a => a.score >= 70).length / sortedAttempts.length) * 100).toFixed(1)
+                  ((sortedAttempts.filter(a => a.score !== null && !(a.video_url && a.score === 0) && a.score >= 70).length / sortedAttempts.length) * 100).toFixed(1)
                 }%</p>
                 <p>Fail Rate: {
-                  ((sortedAttempts.filter(a => a.score < 70).length / sortedAttempts.length) * 100).toFixed(1)
+                  ((sortedAttempts.filter(a => a.score !== null && !(a.video_url && a.score === 0) && a.score < 70).length / sortedAttempts.length) * 100).toFixed(1)
                 }%</p>
               </div>
             </div>
@@ -282,16 +284,22 @@ const QuizReports: React.FC = () => {
                   {attempt.quiz.title}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    attempt.score >= 70 ? 'bg-green-100 text-green-800' :
-                    attempt.score >= 50 ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {attempt.score}%
-                  </span>
+                  {attempt.score === null || (attempt.video_url && attempt.score === 0) ? (
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-700">
+                      TBD
+                    </span>
+                  ) : (
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      attempt.score >= 70 ? 'bg-green-100 text-green-800' :
+                      attempt.score >= 50 ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {attempt.score}%
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {getTimeTaken(attempt.started_at, attempt.completed_at)} minutes
+                  {getCappedTimeTaken(attempt.started_at, attempt.completed_at, attempt.quiz.duration)} minutes
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {new Date(formatAsUTC(attempt.completed_at)).toLocaleDateString('en-IN')}

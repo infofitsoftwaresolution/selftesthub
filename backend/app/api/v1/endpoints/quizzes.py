@@ -289,8 +289,8 @@ async def submit_video_attempt(
     quiz_slug = _slugify(quiz.title, fallback=f"quiz-{quiz_id}")
     unique_suffix = uuid.uuid4().hex[:10]
     safe_filename = (
-        f"students/{student_name}/quiz_{quiz_id}_{quiz_slug}/"
-        f"attempt_{attempt_id}_{unique_suffix}.webm"
+        f"students/{quiz_slug}/"
+        f"{student_name}_attempt_{attempt_id}_{unique_suffix}.webm"
     )
     
     s3_client_args = {'region_name': settings.AWS_REGION}
@@ -545,7 +545,7 @@ async def start_quiz(
         started_at=datetime.utcnow(),
         is_completed=False,
         answers={},
-        score=0
+        score=None
     )
 
     db.add(new_attempt)
@@ -601,7 +601,7 @@ async def submit_quiz(
                 if answer == quiz.questions[question_idx]["correctAnswer"]:
                     correct_answers += 1
 
-        score = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+        score = None if quiz.type == "video" else ((correct_answers / total_questions * 100) if total_questions > 0 else 0)
 
         # Update attempt
         attempt.answers = submission.answers

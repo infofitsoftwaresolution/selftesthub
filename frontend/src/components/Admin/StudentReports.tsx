@@ -18,7 +18,7 @@ interface QuizAttempt {
   };
   started_at: string;
   completed_at: string;
-  score: number;
+  score: number | null;
   video_url?: string;
 }
 
@@ -30,6 +30,10 @@ interface StudentReport {
 
 // Enforce UTC parsing to fix 5.5 hour discrepancy
 const formatAsUTC = (dateStr: string) => dateStr && !dateStr.endsWith('Z') ? `${dateStr}Z` : dateStr;
+const getCappedTimeTaken = (start: string, end: string, duration: number) => {
+  const diff = Math.floor((new Date(formatAsUTC(end)).getTime() - new Date(formatAsUTC(start)).getTime()) / 60000);
+  return Math.max(0, Math.min(diff, duration));
+};
 
 const StudentReports: React.FC = () => {
   const [reports, setReports] = useState<StudentReport[]>([]);
@@ -78,9 +82,9 @@ const StudentReports: React.FC = () => {
     const headers = ['Quiz Title', 'Score', 'Date', 'Time Taken'];
     const rows = studentReport.attempts.map(attempt => [
       attempt.quiz.title,
-      `${attempt.score}%`,
+      attempt.score === null || (attempt.video_url && attempt.score === 0) ? 'TBD' : `${attempt.score}%`,
       new Date(formatAsUTC(attempt.completed_at)).toLocaleDateString(),
-      `${Math.floor((new Date(formatAsUTC(attempt.completed_at)).getTime() - new Date(formatAsUTC(attempt.started_at)).getTime()) / 60000)} minutes`
+      `${getCappedTimeTaken(attempt.started_at, attempt.completed_at, attempt.quiz.duration)} minutes`
     ]);
 
     const csvContent = [
@@ -256,14 +260,14 @@ const StudentReports: React.FC = () => {
                         {attempt.video_url ? (
                           <div className="flex items-center gap-2">
                             <div className="text-lg font-semibold">
-                              Score: {attempt.score}%
+                              Score: {attempt.score === null || (attempt.video_url && attempt.score === 0) ? 'TBD' : `${attempt.score}%`}
                             </div>
                             <select
                               className="text-sm border border-gray-300 rounded p-1 bg-white cursor-pointer shadow-sm hover:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
-                              value={attempt.score}
+                              value={attempt.score === null || (attempt.video_url && attempt.score === 0) ? '' : attempt.score}
                               onChange={(e) => handleUpdateScore(attempt.id, Number(e.target.value))}
                             >
-                              <option value={0} disabled>Assign Score...</option>
+                              <option value="" disabled>Assign Score...</option>
                               <option value={100}>Excellent (100%)</option>
                               <option value={80}>Good (80%)</option>
                               <option value={50}>Not Good Not Bad (50%)</option>
@@ -273,7 +277,7 @@ const StudentReports: React.FC = () => {
                           </div>
                         ) : (
                           <div className="text-lg font-semibold">
-                            Score: {attempt.score}%
+                            Score: {attempt.score === null || (attempt.video_url && attempt.score === 0) ? 'TBD' : `${attempt.score}%`}
                           </div>
                         )}
                         <button
