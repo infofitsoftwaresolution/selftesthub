@@ -13,6 +13,7 @@ interface Quiz {
   id: number;
   title: string;
   duration: number;
+  type?: string;
 }
 
 interface QuizAttempt {
@@ -56,6 +57,7 @@ const QuizReports: React.FC = () => {
   const [selectedQuiz, setSelectedQuiz] = useState<number | 'all'>('all');
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [quizStats, setQuizStats] = useState<QuizStats | null>(null);
+  const [updatingAttemptId, setUpdatingAttemptId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchQuizzes();
@@ -120,6 +122,36 @@ const QuizReports: React.FC = () => {
       setError(error instanceof Error ? error.message : 'Failed to load reports');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateScore = async (attemptId: number, newScore: number) => {
+    try {
+      setUpdatingAttemptId(attemptId);
+      const response = await fetch(API_ENDPOINTS.UPDATE_REPORT_SCORE(attemptId), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ score: newScore })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update score');
+      }
+
+      const updatedAttempts = attempts.map((a) =>
+        a.id === attemptId ? { ...a, score: newScore } : a
+      );
+      setAttempts(updatedAttempts);
+      if (selectedQuiz !== 'all') {
+        calculateQuizStats(updatedAttempts);
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to update score');
+    } finally {
+      setUpdatingAttemptId(null);
     }
   };
 
@@ -188,6 +220,11 @@ const QuizReports: React.FC = () => {
         return 0;
     }
   });
+
+  const selectedQuizMeta = selectedQuiz === 'all'
+    ? null
+    : quizzes.find((quiz) => quiz.id === selectedQuiz) || null;
+  const canAssignScore = selectedQuiz !== 'all' && selectedQuizMeta?.type === 'video';
 
   if (loading) return <PageLoader />;
   if (error) return <div className="p-4 text-red-500">{error}</div>;
@@ -296,6 +333,25 @@ const QuizReports: React.FC = () => {
                     }`}>
                       {attempt.score}%
                     </span>
+                  )}
+                  {attempt.video_url && canAssignScore && (
+                    <div className="mt-2">
+                      <select
+                        className="text-xs border border-gray-300 rounded p-1 bg-white"
+                        value={attempt.score === null || attempt.score === 0 ? '' : attempt.score}
+                        disabled={updatingAttemptId === attempt.id}
+                        onChange={(e) => handleUpdateScore(attempt.id, Number(e.target.value))}
+                      >
+                        <option value="" disabled>
+                          {updatingAttemptId === attempt.id ? 'Saving...' : 'Assign score'}
+                        </option>
+                        <option value={100}>Excellent (100%)</option>
+                        <option value={80}>Good (80%)</option>
+                        <option value={50}>Not Good Not Bad (50%)</option>
+                        <option value={30}>Bad (30%)</option>
+                        <option value={10}>Very Bad (10%)</option>
+                      </select>
+                    </div>
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

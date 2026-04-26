@@ -133,38 +133,6 @@ const StudentReports: React.FC = () => {
     }
   };
 
-  const handleUpdateScore = async (attemptId: number, newScore: number) => {
-    try {
-      const response = await fetch(API_ENDPOINTS.UPDATE_REPORT_SCORE(attemptId), {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ score: newScore })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update score');
-      }
-
-      // Optimistically update UI
-      if (selectedStudent) {
-        setSelectedStudent({
-          ...selectedStudent,
-          attempts: selectedStudent.attempts.map((a) =>
-            a.id === attemptId ? { ...a, score: newScore } : a
-          )
-        });
-      }
-      
-      // Refresh background data quietly
-      fetchReports();
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to save the new score');
-    }
-  };
-
   if (loading) {
     return <PageLoader />;
   }
@@ -262,18 +230,6 @@ const StudentReports: React.FC = () => {
                             <div className="text-lg font-semibold">
                               Score: {attempt.score === null || (attempt.video_url && attempt.score === 0) ? 'TBD' : `${attempt.score}%`}
                             </div>
-                            <select
-                              className="text-sm border border-gray-300 rounded p-1 bg-white cursor-pointer shadow-sm hover:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
-                              value={attempt.score === null || (attempt.video_url && attempt.score === 0) ? '' : attempt.score}
-                              onChange={(e) => handleUpdateScore(attempt.id, Number(e.target.value))}
-                            >
-                              <option value="" disabled>Assign Score...</option>
-                              <option value={100}>Excellent (100%)</option>
-                              <option value={80}>Good (80%)</option>
-                              <option value={50}>Not Good Not Bad (50%)</option>
-                              <option value={30}>Bad (30%)</option>
-                              <option value={10}>Very Bad (10%)</option>
-                            </select>
                           </div>
                         ) : (
                           <div className="text-lg font-semibold">
