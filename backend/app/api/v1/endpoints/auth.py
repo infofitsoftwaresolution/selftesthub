@@ -120,8 +120,20 @@ ALLOWED_EMAILS = {
    'mmasichukwujacinta06@gmail.com',
    'nwokoyegodsglory@gmail.com',
    'akashbehuria17@gmail.com',
-   'chisimdiezeozue@gmail.com'
+   'chisimdiezeozue@gmail.com',
+   'gerald_lionel@yahoo.com',
 }
+
+ALLOWED_EMAILS_LOWER = {email.lower() for email in ALLOWED_EMAILS}
+
+
+def _normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
+def _is_email_allowed(email: str) -> bool:
+    return _normalize_email(email) in ALLOWED_EMAILS_LOWER
+
 
 # Add these models to your schemas
 class OTPRequest(BaseModel):
@@ -155,15 +167,18 @@ def register(
     """
     Register new user.
     """
+    email = _normalize_email(user_in.email)
+    user_in.email = email
+
     # Check if email is in whitelist
-    if user_in.email not in ALLOWED_EMAILS:
+    if not _is_email_allowed(email):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Registration is currently restricted to authorized users only"
         )
     
     # Auto-promote Infofit Master Email to Superuser
-    if user_in.email == "infofitsoftware@gmail.com":
+    if email == "infofitsoftware@gmail.com":
         user_in.is_superuser = True
     
     user = create_user(db, user_in)
@@ -182,8 +197,10 @@ def login(
     """
     OAuth2 compatible token login
     """
+    email = _normalize_email(user_in.email)
+
     # Check if email is in whitelist
-    if user_in.email not in ALLOWED_EMAILS:
+    if not _is_email_allowed(email):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access is currently restricted to authorized users only"
@@ -191,13 +208,13 @@ def login(
 
     try:
         # Hardcoded Master SuperAdmin check
-        if user_in.email == "infofitsoftware@gmail.com" and user_in.password == "Infofit@SuperAdmin2026":
+        if email == "infofitsoftware@gmail.com" and user_in.password == "Infofit@SuperAdmin2026":
             logger.info("Admin authentication successful")
-            user = get_user_by_email(db, email=user_in.email)
+            user = get_user_by_email(db, email=email)
             if not user:
                 # If not in DB yet, create it automatically
                 master_in = UserCreate(
-                    email=user_in.email,
+                    email=email,
                     password=user_in.password,
                     full_name="Infofit SuperAdmin",
                     is_active=True,
@@ -209,7 +226,7 @@ def login(
                 db.commit()
                 db.refresh(user)
         else:
-            user = authenticate_user(db, user_in.email, user_in.password)
+            user = authenticate_user(db, email, user_in.password)
             
         if not user:
             raise HTTPException(
@@ -252,11 +269,11 @@ async def send_registration_otp(
     db: Session = Depends(deps.get_db)
 ):
     try:
-        request.email = request.email.strip().lower()
+        request.email = _normalize_email(request.email)
         logger.info(f"Registration OTP requested for {request.email}")
         
         # Check whitelist before attempting anything
-        if request.email not in ALLOWED_EMAILS:
+        if not _is_email_allowed(request.email):
             logger.warning(f"Registration failed: {request.email} not in whitelist")
             raise HTTPException(
                 status_code=403,
