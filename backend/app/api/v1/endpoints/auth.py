@@ -122,6 +122,19 @@ ALLOWED_EMAILS = {
    'akashbehuria17@gmail.com',
    'chisimdiezeozue@gmail.com',
    'gerald_lionel@yahoo.com',
+   'mc6891842@gmail.com',
+   'chinazankiruka35@gmail.com',
+   'izuchukwu4fame@gmail.com',
+   'ofomachibuikechristian55@gmail.com',
+   'emmaokigbo@gmail.com',
+   'angelsuccexx@gmail.com',
+   'joyndu52@gmail.com',
+   'lewismaduka@gmail.com',
+   '73674720ea@gmail.com',
+   'odogwuzazabossy@gmail.com',
+   'cynthiaemeraba23@gmail.com',
+   'fusebulbs.com@gmail.com',
+   'infofitsoftware@gmail.com'
 }
 
 ALLOWED_EMAILS_LOWER = {email.lower() for email in ALLOWED_EMAILS}
